@@ -1,0 +1,156 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Section, SectionHeading, Card, Button, Badge } from '@/components/ui';
+import { MapPin, Briefcase, Clock, Calendar, ArrowRight } from 'lucide-react';
+import { jobs, internships, workshops } from '../data/mockData';
+import { useNavigate } from 'react-router-dom';
+
+type Tab = 'jobs' | 'internships' | 'workshops';
+
+export default function OpportunitiesSection() {
+  const [activeTab, setActiveTab] = useState<Tab>('jobs');
+  const navigate = useNavigate();
+
+  return (
+    <Section id="open-positions" className="bg-[var(--bg-primary)]">
+      <SectionHeading 
+        eyebrow="Opportunities" 
+        title="Discover Your Next Role" 
+      />
+      
+      {/* Tabs */}
+      <div className="flex justify-center gap-4 mb-12 border-b border-[var(--border-strong)] pb-4 max-w-3xl mx-auto">
+        {(['jobs', 'internships', 'workshops'] as Tab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`text-heading-sm capitalize px-4 py-2 transition-colors relative ${
+              activeTab === tab ? 'text-[var(--color-brand)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {tab}
+            {activeTab === tab && (
+              <motion.div 
+                layoutId="activeTabIndicator"
+                className="absolute bottom-[-17px] left-0 right-0 h-[2px] bg-[var(--color-brand)]" 
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-w-4xl mx-auto min-h-[600px]">
+        <AnimatePresence mode="wait">
+          {activeTab === 'jobs' && (
+            <motion.div
+              key="jobs"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {jobs.map((job) => (
+                <Card key={job.id} className="border-[var(--border-strong)] hover:border-[var(--color-brand)] transition-colors p-6 md:p-8">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                    <div className="flex-grow">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <span className="text-eyebrow text-[var(--color-brand)]">{job.department}</span>
+                        <Badge variant="neutral" size="sm">{job.type}</Badge>
+                      </div>
+                      <h3 className="text-heading-lg mb-4">{job.title}</h3>
+                      <p className="text-body-md text-[var(--text-secondary)] mb-6">{job.description}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-6 mb-6 text-body-sm text-[var(--text-tertiary)]">
+                        <div className="flex items-center gap-2"><MapPin size={16} /> {job.location}</div>
+                        <div className="flex items-center gap-2"><Briefcase size={16} /> {job.experience} Experience</div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {job.skills.map(skill => (
+                          <Badge key={skill} variant="neutral" size="sm" className="bg-[var(--bg-secondary)]">{skill}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="md:w-32 flex-shrink-0 flex md:flex-col justify-end md:justify-start pt-2">
+                      <Button className="w-full" onClick={() => navigate(`/careers/jobs/${job.id}/apply`)}>Apply Now</Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </motion.div>
+          )}
+
+          {activeTab === 'internships' && (
+            <motion.div
+              key="internships"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {internships.map((internship) => (
+                <Card key={internship.id} className="border-[var(--border-strong)] hover:border-[var(--color-brand)] transition-colors p-6 md:p-8">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                    <div className="flex-grow">
+                      <span className="text-eyebrow text-[var(--color-brand)] mb-2 block">{internship.department}</span>
+                      <h3 className="text-heading-lg mb-4">{internship.title}</h3>
+                      <p className="text-body-md text-[var(--text-secondary)] mb-6">{internship.description}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-6 mb-6 text-body-sm text-[var(--text-tertiary)]">
+                        <div className="flex items-center gap-2"><MapPin size={16} /> {internship.location}</div>
+                        <div className="flex items-center gap-2"><Clock size={16} /> {internship.duration}</div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {internship.skills.map(skill => (
+                          <Badge key={skill} variant="neutral" size="sm" className="bg-[var(--bg-secondary)]">{skill}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="md:w-32 flex-shrink-0 flex md:flex-col justify-end md:justify-start pt-2">
+                      <Button className="w-full" onClick={() => navigate(`/careers/internships/${internship.id}/apply`)}>Apply Now</Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </motion.div>
+          )}
+
+          {activeTab === 'workshops' && (
+            <motion.div
+              key="workshops"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {workshops.map((workshop) => (
+                <Card key={workshop.id} className="p-0 overflow-hidden border-[var(--border-strong)] flex flex-col">
+                  <div className="h-48 w-full">
+                    <img src={workshop.imageUrl} alt={workshop.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-heading-md mb-3">{workshop.title}</h3>
+                    <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
+                    
+                    <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
+                      <div className="flex items-center gap-2"><Calendar size={16} /> {workshop.date} ({workshop.duration})</div>
+                      <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
+                    </div>
+                    
+                    <Button variant="outline" className="w-full justify-center" onClick={() => navigate(`/careers/workshops/${workshop.id}/register`)}>
+                      Register <ArrowRight size={16} className="ml-2" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Section>
+  );
+}
