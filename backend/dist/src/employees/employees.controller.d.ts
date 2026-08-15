@@ -6,15 +6,15 @@ export declare class PublicEmployeesController {
     private readonly employeesService;
     constructor(employeesService: EmployeesService);
     findAll(): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }[]>;
 }
@@ -23,51 +23,51 @@ export declare class AdminEmployeesController {
     private readonly auditLogService;
     constructor(employeesService: EmployeesService, auditLogService: AuditLogService);
     findAll(): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     create(createEmployeeDto: CreateEmployeeDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     update(id: string, updateEmployeeDto: UpdateEmployeeDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     remove(id: string, session: SessionData, ip: string, userAgent: string): Promise<{

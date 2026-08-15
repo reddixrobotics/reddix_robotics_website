@@ -10,40 +10,122 @@ import {
   UnauthorizedException,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
+import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { CurrentSession } from './decorators/current-session.decorator';
+import type { SessionData } from './session.service';
 import { LoginDto } from './dto/login.dto';
+import { SignupDto } from './dto/signup.dto';
 import { Verify2faDto } from './dto/verify-2fa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserSessionService } from './user-session.service';
 
-@Controller('api/admin/auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
+    private readonly userSessionService: UserSessionService,
+    private readonly prisma: PrismaService,
   ) {}
 
+  /**
+   * Session check — lightweight, allow more requests
+   */
   @Get('session')
+  @SkipThrottle({ default: true, global: true })
   @HttpCode(HttpStatus.OK)
   async getSession(@Req() req: Request) {
-    const token = req.cookies['admin_session'];
-    if (!token) {
-      return { authenticated: false };
+    const adminToken = req.cookies['admin_session'];
+    const userToken = req.cookies['user_session'];
+
+    if (adminToken) {
+      const session = await this.sessionService.verifySession(adminToken);
+      if (session) {
+        const admin = await this.prisma.admin.findUnique({
+          where: { id: session.adminId },
+          select: { twoFactorEnabled: true }
+        });
+
+        return {
+          authenticated: true,
+          session,
+          isTwoFactorSetup: admin?.twoFactorEnabled || false,
+          authStatus: session.authStatus,
+          role: session.role,
+        };
+      }
     }
-    const session = await this.sessionService.verifySession(token);
-    if (!session) {
-      return { authenticated: false };
+
+    if (userToken) {
+      const session = await this.userSessionService.verifySession(userToken);
+      if (session) {
+        return {
+          authenticated: true,
+          session,
+          authStatus: session.authStatus,
+          role: session.role,
+        };
+      }
     }
-    return {
-      authenticated: true,
-      session,
-    };
+
+    return { authenticated: false };
   }
 
+  /**
+   * Admin profile — returns twoFactorEnabled status and email.
+   * Protected: requires a fully authenticated session (no pending 2FA).
+   */
+  @Get('profile')
+  @UseGuards(AdminAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async getProfile(@CurrentSession() session: SessionData) {
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: session.adminId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        twoFactorEnabled: true,
+        createdAt: true,
+      },
+    });
+
+    if (!admin) {
+      throw new UnauthorizedException('Administrator not found');
+    }
+
+    return admin;
+  }
+
+  /**
+   * User Signup
+   */
+  @Post('signup')
+  @Throttle({ default: { ttl: 60_000, limit: 3 } }) // 3 signups per minute per IP
+  @HttpCode(HttpStatus.CREATED)
+  async signup(@Body() signupDto: SignupDto) {
+    return this.authService.signup(
+      signupDto.name,
+      signupDto.email,
+      signupDto.password,
+      signupDto.phone,
+    );
+  }
+
+  /**
+   * Login endpoint — stricter rate limit: 8 attempts per 2 minutes per IP.
+   * Prevents credential brute-forcing.
+   */
   @Post('login')
+  @Throttle({ default: { ttl: 120_000, limit: 8 } })
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
@@ -58,29 +140,100 @@ export class AuthController {
       userAgent,
     );
 
-    // Set cookie
-    res.cookie('admin_session', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
+    const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER'];
 
-    if (result.require2fa) {
-      return {
-        require2fa: true,
-        message: 'Two-factor authentication is required',
-      };
+    // Set appropriate cookie based on role
+    if (adminRoles.includes(result.role)) {
+      res.cookie('admin_session', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      });
+
+      if (result.requireEmailOtp) {
+        return {
+          requireEmailOtp: true,
+          isTwoFactorSetup: result.isTwoFactorSetup,
+          message: 'Email verification is required',
+          role: result.role,
+        };
+      }
+    } else if (result.role === 'USER') {
+      res.cookie('user_session', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      });
     }
 
     return {
-      require2fa: false,
+      requireEmailOtp: false,
       message: 'Login successful',
       session: result.session,
+      role: result.role,
     };
   }
 
+  /**
+   * Verify Email OTP
+   */
+  @Post('verify-email-otp')
+  @Throttle({ default: { ttl: 300_000, limit: 5 } })
+  @HttpCode(HttpStatus.OK)
+  async verifyEmailOtp(
+    @Body('otp') otp: string,
+    @Req() req: Request,
+  ) {
+    const token = req.cookies['admin_session'];
+    if (!token) {
+      throw new UnauthorizedException('No active session found');
+    }
+
+    const session = await this.authService.verifyEmailOtp(token, otp);
+
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: session.adminId },
+      select: { twoFactorEnabled: true }
+    });
+
+    return {
+      success: true,
+      message: 'Email OTP verified',
+      session,
+      isTwoFactorSetup: admin?.twoFactorEnabled || false,
+    };
+  }
+
+  /**
+   * Resend Email OTP
+   */
+  @Post('resend-email-otp')
+  @Throttle({ default: { ttl: 300_000, limit: 3 } })
+  @HttpCode(HttpStatus.OK)
+  async resendEmailOtp(
+    @Req() req: Request,
+  ) {
+    const token = req.cookies['admin_session'];
+    if (!token) {
+      throw new UnauthorizedException('No active session found');
+    }
+
+    await this.authService.resendEmailOtp(token);
+
+    return {
+      success: true,
+      message: 'Email OTP resent',
+    };
+  }
+
+  /**
+   * 2FA verification — strictest rate limit: 5 attempts per 5 minutes per IP.
+   * After 5 failures, the IP is temporarily blocked. This prevents TOTP brute-forcing.
+   */
   @Post('verify-2fa')
+  @Throttle({ default: { ttl: 300_000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async verify2fa(
     @Body() verify2faDto: Verify2faDto,
@@ -102,32 +255,45 @@ export class AuthController {
 
     return {
       success: true,
-      message: '2FA verified successfully',
+      message: 'Authentication successful',
       session,
     };
   }
 
+  /**
+   * Logout — clears session from Redis, DB, and browser cookie.
+   */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = req.cookies['admin_session'];
-    if (token) {
-      await this.authService.logout(token);
+    const adminToken = req.cookies['admin_session'];
+    if (adminToken) {
+      await this.authService.logout(adminToken);
+      res.clearCookie('admin_session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      });
     }
 
-    res.clearCookie('admin_session', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+    const userToken = req.cookies['user_session'];
+    if (userToken) {
+      await this.authService.logoutUser(userToken);
+      res.clearCookie('user_session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      });
+    }
 
     return { message: 'Logged out successfully' };
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { ttl: 600_000, limit: 3 } })
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto.email);

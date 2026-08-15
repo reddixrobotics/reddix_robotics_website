@@ -15,10 +15,10 @@ export declare class PublicProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -35,10 +35,10 @@ export declare class PublicProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -60,10 +60,10 @@ export declare class AdminProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -80,10 +80,10 @@ export declare class AdminProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -100,10 +100,10 @@ export declare class AdminProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -120,10 +120,10 @@ export declare class AdminProductsController {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;

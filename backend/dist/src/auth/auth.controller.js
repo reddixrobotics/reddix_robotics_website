@@ -14,51 +14,140 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const session_service_1 = require("./session.service");
+const admin_auth_guard_1 = require("./guards/admin-auth.guard");
+const current_session_decorator_1 = require("./decorators/current-session.decorator");
 const login_dto_1 = require("./dto/login.dto");
+const signup_dto_1 = require("./dto/signup.dto");
 const verify_2fa_dto_1 = require("./dto/verify-2fa.dto");
 const forgot_password_dto_1 = require("./dto/forgot-password.dto");
 const reset_password_dto_1 = require("./dto/reset-password.dto");
+const prisma_service_1 = require("../prisma/prisma.service");
+const user_session_service_1 = require("./user-session.service");
 let AuthController = class AuthController {
     authService;
     sessionService;
-    constructor(authService, sessionService) {
+    userSessionService;
+    prisma;
+    constructor(authService, sessionService, userSessionService, prisma) {
         this.authService = authService;
         this.sessionService = sessionService;
+        this.userSessionService = userSessionService;
+        this.prisma = prisma;
     }
     async getSession(req) {
-        const token = req.cookies['admin_session'];
-        if (!token) {
-            return { authenticated: false };
+        const adminToken = req.cookies['admin_session'];
+        const userToken = req.cookies['user_session'];
+        if (adminToken) {
+            const session = await this.sessionService.verifySession(adminToken);
+            if (session) {
+                const admin = await this.prisma.admin.findUnique({
+                    where: { id: session.adminId },
+                    select: { twoFactorEnabled: true }
+                });
+                return {
+                    authenticated: true,
+                    session,
+                    isTwoFactorSetup: admin?.twoFactorEnabled || false,
+                    authStatus: session.authStatus,
+                    role: session.role,
+                };
+            }
         }
-        const session = await this.sessionService.verifySession(token);
-        if (!session) {
-            return { authenticated: false };
+        if (userToken) {
+            const session = await this.userSessionService.verifySession(userToken);
+            if (session) {
+                return {
+                    authenticated: true,
+                    session,
+                    authStatus: session.authStatus,
+                    role: session.role,
+                };
+            }
         }
-        return {
-            authenticated: true,
-            session,
-        };
+        return { authenticated: false };
+    }
+    async getProfile(session) {
+        const admin = await this.prisma.admin.findUnique({
+            where: { id: session.adminId },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                twoFactorEnabled: true,
+                createdAt: true,
+            },
+        });
+        if (!admin) {
+            throw new common_1.UnauthorizedException('Administrator not found');
+        }
+        return admin;
+    }
+    async signup(signupDto) {
+        return this.authService.signup(signupDto.name, signupDto.email, signupDto.password, signupDto.phone);
     }
     async login(loginDto, ip, userAgent, res) {
         const result = await this.authService.login(loginDto.email, loginDto.password, ip, userAgent);
-        res.cookie('admin_session', result.token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-        if (result.require2fa) {
-            return {
-                require2fa: true,
-                message: 'Two-factor authentication is required',
-            };
+        const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER'];
+        if (adminRoles.includes(result.role)) {
+            res.cookie('admin_session', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000,
+            });
+            if (result.requireEmailOtp) {
+                return {
+                    requireEmailOtp: true,
+                    isTwoFactorSetup: result.isTwoFactorSetup,
+                    message: 'Email verification is required',
+                    role: result.role,
+                };
+            }
+        }
+        else if (result.role === 'USER') {
+            res.cookie('user_session', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+            });
         }
         return {
-            require2fa: false,
+            requireEmailOtp: false,
             message: 'Login successful',
             session: result.session,
+            role: result.role,
+        };
+    }
+    async verifyEmailOtp(otp, req) {
+        const token = req.cookies['admin_session'];
+        if (!token) {
+            throw new common_1.UnauthorizedException('No active session found');
+        }
+        const session = await this.authService.verifyEmailOtp(token, otp);
+        const admin = await this.prisma.admin.findUnique({
+            where: { id: session.adminId },
+            select: { twoFactorEnabled: true }
+        });
+        return {
+            success: true,
+            message: 'Email OTP verified',
+            session,
+            isTwoFactorSetup: admin?.twoFactorEnabled || false,
+        };
+    }
+    async resendEmailOtp(req) {
+        const token = req.cookies['admin_session'];
+        if (!token) {
+            throw new common_1.UnauthorizedException('No active session found');
+        }
+        await this.authService.resendEmailOtp(token);
+        return {
+            success: true,
+            message: 'Email OTP resent',
         };
     }
     async verify2fa(verify2faDto, req, ip, userAgent) {
@@ -69,20 +158,29 @@ let AuthController = class AuthController {
         const session = await this.authService.verify2fa(token, verify2faDto.token, ip, userAgent);
         return {
             success: true,
-            message: '2FA verified successfully',
+            message: 'Authentication successful',
             session,
         };
     }
     async logout(req, res) {
-        const token = req.cookies['admin_session'];
-        if (token) {
-            await this.authService.logout(token);
+        const adminToken = req.cookies['admin_session'];
+        if (adminToken) {
+            await this.authService.logout(adminToken);
+            res.clearCookie('admin_session', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+            });
         }
-        res.clearCookie('admin_session', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-        });
+        const userToken = req.cookies['user_session'];
+        if (userToken) {
+            await this.authService.logoutUser(userToken);
+            res.clearCookie('user_session', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+            });
+        }
         return { message: 'Logged out successfully' };
     }
     async forgotPassword(forgotPasswordDto) {
@@ -95,6 +193,7 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Get)('session'),
+    (0, throttler_1.SkipThrottle)({ default: true, global: true }),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -102,7 +201,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getSession", null);
 __decorate([
+    (0, common_1.Get)('profile'),
+    (0, common_1.UseGuards)(admin_auth_guard_1.AdminAuthGuard),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, current_session_decorator_1.CurrentSession)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Post)('signup'),
+    (0, throttler_1.Throttle)({ default: { ttl: 60_000, limit: 3 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [signup_dto_1.SignupDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "signup", null);
+__decorate([
     (0, common_1.Post)('login'),
+    (0, throttler_1.Throttle)({ default: { ttl: 120_000, limit: 8 } }),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Ip)()),
@@ -113,7 +231,27 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
+    (0, common_1.Post)('verify-email-otp'),
+    (0, throttler_1.Throttle)({ default: { ttl: 300_000, limit: 5 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)('otp')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyEmailOtp", null);
+__decorate([
+    (0, common_1.Post)('resend-email-otp'),
+    (0, throttler_1.Throttle)({ default: { ttl: 300_000, limit: 3 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resendEmailOtp", null);
+__decorate([
     (0, common_1.Post)('verify-2fa'),
+    (0, throttler_1.Throttle)({ default: { ttl: 300_000, limit: 5 } }),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
@@ -134,6 +272,7 @@ __decorate([
 ], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.Post)('forgot-password'),
+    (0, throttler_1.Throttle)({ default: { ttl: 600_000, limit: 3 } }),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -149,8 +288,10 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "resetPassword", null);
 exports.AuthController = AuthController = __decorate([
-    (0, common_1.Controller)('api/admin/auth'),
+    (0, common_1.Controller)('api/auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
-        session_service_1.SessionService])
+        session_service_1.SessionService,
+        user_session_service_1.UserSessionService,
+        prisma_service_1.PrismaService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

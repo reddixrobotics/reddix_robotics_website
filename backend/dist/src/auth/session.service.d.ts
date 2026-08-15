@@ -4,7 +4,7 @@ export interface SessionData {
     id: string;
     adminId: string;
     role: string;
-    needs2fa: boolean;
+    authStatus: 'PENDING_EMAIL_OTP' | 'PENDING_AUTHENTICATOR' | 'AUTHENTICATED';
     ipAddress?: string;
     userAgent?: string;
     createdAt: string;
@@ -16,15 +16,15 @@ export declare class SessionService {
     private readonly SESSION_TTL;
     constructor(prisma: PrismaService, redis: RedisService);
     private hashToken;
-    createSession(adminId: string, role: string, needs2fa: boolean, ipAddress?: string, userAgent?: string): Promise<{
+    createSession(adminId: string, role: string, authStatus: 'PENDING_EMAIL_OTP' | 'PENDING_AUTHENTICATOR' | 'AUTHENTICATED', ipAddress?: string, userAgent?: string): Promise<{
         token: string;
         session: SessionData;
     }>;
     verifySession(token: string): Promise<SessionData | null>;
-    updateSession(token: string, data: Partial<Pick<SessionData, 'needs2fa'>>): Promise<SessionData | null>;
+    updateSession(token: string, data: Partial<Pick<SessionData, 'authStatus'>>): Promise<SessionData | null>;
     invalidateSession(token: string): Promise<void>;
     invalidateSessionById(adminId: string, id: string): Promise<boolean>;
-    listAdminSessions(adminId: string): Promise<Omit<SessionData, 'needs2fa' | 'role'>[]>;
+    listAdminSessions(adminId: string): Promise<Omit<SessionData, 'authStatus' | 'role'>[]>;
     invalidateAllExcept(adminId: string, currentToken: string): Promise<void>;
     invalidateAllSessions(adminId: string): Promise<void>;
 }

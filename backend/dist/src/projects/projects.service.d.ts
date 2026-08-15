@@ -4,51 +4,51 @@ export declare class ProjectsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     create(dto: CreateProjectDto): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     findAll(): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     update(id: string, dto: UpdateProjectDto): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     remove(id: string): Promise<{

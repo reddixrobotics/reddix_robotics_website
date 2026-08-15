@@ -6,11 +6,11 @@ export declare class PublicCompanyController {
     private readonly companyService;
     constructor(companyService: CompanyService);
     getInfo(): Promise<{
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         phone: string;
         country: string;
         aboutContent: string;
@@ -27,11 +27,11 @@ export declare class AdminCompanyController {
     private readonly auditLogService;
     constructor(companyService: CompanyService, auditLogService: AuditLogService);
     getInfo(): Promise<{
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         phone: string;
         country: string;
         aboutContent: string;
@@ -43,11 +43,11 @@ export declare class AdminCompanyController {
         socialLinks: import("@prisma/client/runtime/client").JsonValue | null;
     }>;
     update(updateDto: UpdateCompanyInfoDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         phone: string;
         country: string;
         aboutContent: string;

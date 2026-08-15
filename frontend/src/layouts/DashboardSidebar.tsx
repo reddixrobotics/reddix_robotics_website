@@ -9,6 +9,7 @@ import {
   Settings, 
   LogOut 
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarItem {
   name: string;
@@ -31,6 +32,7 @@ interface DashboardSidebarProps {
 
 export default function DashboardSidebar({ onItemClick }: DashboardSidebarProps) {
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-secondary)] border-r border-[var(--border-strong)]">
@@ -72,13 +74,13 @@ export default function DashboardSidebar({ onItemClick }: DashboardSidebarProps)
 
       {/* Footer / Logout */}
       <div className="p-4 border-t border-[var(--border-strong)]">
-        <Link
-          to={ROUTES.LOGIN}
-          className="flex items-center px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors group"
+        <button
+          onClick={logout}
+          className="w-full flex items-center px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors group"
         >
           <LogOut size={20} className="mr-3" />
           <span className="font-medium">Logout</span>
-        </Link>
+        </button>
       </div>
     </div>
   );

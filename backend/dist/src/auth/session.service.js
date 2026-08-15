@@ -58,7 +58,7 @@ let SessionService = class SessionService {
     hashToken(token) {
         return crypto.createHash('sha256').update(token).digest('hex');
     }
-    async createSession(adminId, role, needs2fa, ipAddress, userAgent) {
+    async createSession(adminId, role, authStatus, ipAddress, userAgent) {
         const token = crypto.randomBytes(32).toString('hex');
         const tokenHash = this.hashToken(token);
         const expiresAt = new Date(Date.now() + this.SESSION_TTL * 1000);
@@ -69,13 +69,14 @@ let SessionService = class SessionService {
                 expiresAt,
                 ipAddress,
                 userAgent,
+                authStatus,
             },
         });
         const session = {
             id: dbSession.id,
             adminId,
             role,
-            needs2fa,
+            authStatus,
             ipAddress,
             userAgent,
             createdAt: dbSession.createdAt.toISOString(),
@@ -111,7 +112,7 @@ let SessionService = class SessionService {
             id: dbSession.id,
             adminId: dbSession.adminId,
             role: dbSession.admin.role,
-            needs2fa: dbSession.admin.twoFactorEnabled,
+            authStatus: dbSession.authStatus,
             ipAddress: dbSession.ipAddress || undefined,
             userAgent: dbSession.userAgent || undefined,
             createdAt: dbSession.createdAt.toISOString(),
@@ -130,6 +131,13 @@ let SessionService = class SessionService {
         const updatedSession = { ...session, ...data };
         const remainingTtl = Math.max(0, Math.floor((new Date(session.expiresAt).getTime() - Date.now()) / 1000));
         await this.redis.set(`session:${token}`, JSON.stringify(updatedSession), remainingTtl);
+        if (data.authStatus) {
+            const tokenHash = this.hashToken(token);
+            await this.prisma.adminSession.update({
+                where: { tokenHash },
+                data: { authStatus: data.authStatus },
+            });
+        }
         return updatedSession;
     }
     async invalidateSession(token) {

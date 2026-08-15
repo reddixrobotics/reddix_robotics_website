@@ -7,7 +7,7 @@ export interface SessionData {
   id: string;
   adminId: string;
   role: string;
-  needs2fa: boolean;
+  authStatus: 'PENDING_EMAIL_OTP' | 'PENDING_AUTHENTICATOR' | 'AUTHENTICATED';
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
@@ -36,7 +36,7 @@ export class SessionService {
   async createSession(
     adminId: string,
     role: string,
-    needs2fa: boolean,
+    authStatus: 'PENDING_EMAIL_OTP' | 'PENDING_AUTHENTICATOR' | 'AUTHENTICATED',
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ token: string; session: SessionData }> {
@@ -52,6 +52,7 @@ export class SessionService {
         expiresAt,
         ipAddress,
         userAgent,
+        authStatus,
       },
     });
 
@@ -59,7 +60,7 @@ export class SessionService {
       id: dbSession.id,
       adminId,
       role,
-      needs2fa,
+      authStatus,
       ipAddress,
       userAgent,
       createdAt: dbSession.createdAt.toISOString(),
@@ -108,7 +109,7 @@ export class SessionService {
       id: dbSession.id,
       adminId: dbSession.adminId,
       role: dbSession.admin.role,
-      needs2fa: dbSession.admin.twoFactorEnabled, // fallback to admin profile state
+      authStatus: dbSession.authStatus as 'PENDING_EMAIL_OTP' | 'PENDING_AUTHENTICATOR' | 'AUTHENTICATED',
       ipAddress: dbSession.ipAddress || undefined,
       userAgent: dbSession.userAgent || undefined,
       createdAt: dbSession.createdAt.toISOString(),
@@ -128,9 +129,9 @@ export class SessionService {
   }
 
   /**
-   * Update fields (e.g. needs2fa) of an active session
+   * Update fields (e.g. authStatus) of an active session
    */
-  async updateSession(token: string, data: Partial<Pick<SessionData, 'needs2fa'>>): Promise<SessionData | null> {
+  async updateSession(token: string, data: Partial<Pick<SessionData, 'authStatus'>>): Promise<SessionData | null> {
     const session = await this.verifySession(token);
     if (!session) return null;
 
@@ -142,6 +143,15 @@ export class SessionService {
 
     // Save in Redis
     await this.redis.set(`session:${token}`, JSON.stringify(updatedSession), remainingTtl);
+
+    // Save in Database
+    if (data.authStatus) {
+      const tokenHash = this.hashToken(token);
+      await this.prisma.adminSession.update({
+        where: { tokenHash },
+        data: { authStatus: data.authStatus },
+      });
+    }
 
     return updatedSession;
   }
@@ -199,7 +209,7 @@ export class SessionService {
   /**
    * List all active sessions for an admin
    */
-  async listAdminSessions(adminId: string): Promise<Omit<SessionData, 'needs2fa' | 'role'>[]> {
+  async listAdminSessions(adminId: string): Promise<Omit<SessionData, 'authStatus' | 'role'>[]> {
     const dbSessions = await this.prisma.adminSession.findMany({
       where: {
         adminId,

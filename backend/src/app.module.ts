@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -21,6 +23,15 @@ import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
+    // Global rate limiting — 60 requests per 60 seconds per IP (baseline)
+    // Auth endpoints override this with stricter @Throttle() decorators
+    ThrottlerModule.forRoot([
+      {
+        name: 'global',
+        ttl: 60_000, // 60 seconds window
+        limit: 60,   // 60 requests per window (baseline for all routes)
+      },
+    ]),
     PrismaModule,
     RedisModule,
     CryptoModule,
@@ -40,7 +51,14 @@ import { ContactModule } from './contact/contact.module';
     ContactModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Apply ThrottlerGuard globally to all routes
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
 

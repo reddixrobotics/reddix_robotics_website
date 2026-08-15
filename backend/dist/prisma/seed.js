@@ -33,9 +33,14 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 const client_1 = require("@prisma/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
+const pg_1 = require("pg");
 const argon2 = __importStar(require("argon2"));
-const prisma = new client_1.PrismaClient();
+const pool = new pg_1.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new adapter_pg_1.PrismaPg(pool);
+const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('Seeding database...');
     const email = process.env.INITIAL_ADMIN_EMAIL || 'admin@reddixrobotics.com';
@@ -62,11 +67,11 @@ async function main() {
         },
     });
     console.log(`Created seed Admin:`);
-    console.log(`- ID: ${admin.id}`);
+    console.log(`- ID:    ${admin.id}`);
     console.log(`- Email: ${admin.email}`);
-    console.log(`- Role: ${admin.role}`);
+    console.log(`- Role:  ${admin.role}`);
     console.log(`- Temp Password: ${password}`);
-    console.log(`\nIMPORTANT: Please change your password and enable 2FA immediately after logging in!`);
+    console.log(`\nIMPORTANT: Log in, go to /admin/settings, and enable 2FA immediately!`);
 }
 main()
     .catch((e) => {
@@ -75,5 +80,6 @@ main()
 })
     .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
 });
 //# sourceMappingURL=seed.js.map

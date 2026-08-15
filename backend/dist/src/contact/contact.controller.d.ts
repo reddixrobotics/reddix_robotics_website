@@ -6,15 +6,15 @@ export declare class PublicContactController {
     private readonly contactService;
     constructor(contactService: ContactService);
     create(createContactMessageDto: CreateContactMessageDto): Promise<{
+        name: string;
+        subject: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
+        phone: string | null;
         message: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        phone: string | null;
-        subject: string;
     }>;
 }
 export declare class AdminContactController {
@@ -22,37 +22,37 @@ export declare class AdminContactController {
     private readonly auditLogService;
     constructor(contactService: ContactService, auditLogService: AuditLogService);
     findAll(): Promise<{
+        name: string;
+        subject: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
+        phone: string | null;
         message: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        phone: string | null;
-        subject: string;
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        subject: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
+        phone: string | null;
         message: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        phone: string | null;
-        subject: string;
     }>;
     updateStatus(id: string, updateStatusDto: UpdateContactMessageStatusDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
+        subject: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
+        phone: string | null;
         message: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        phone: string | null;
-        subject: string;
     }>;
     remove(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
         success: boolean;

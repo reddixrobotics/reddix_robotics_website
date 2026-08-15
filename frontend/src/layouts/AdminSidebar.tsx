@@ -6,6 +6,7 @@ import {
   FileText, HardHat, UserCircle, MessageSquare, Settings, LogOut 
 } from 'lucide-react';
 import apiClient from '@/services/apiClient';
+import { useAuth } from '@/context/AuthContext';
 
 const coreNav = [
   { name: 'Dashboard', href: ROUTES.ADMIN, icon: LayoutDashboard },
@@ -46,14 +47,11 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { logout } = useAuth();
+
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    try {
-      await apiClient.post('/api/admin/auth/logout');
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-    navigate(ROUTES.ADMIN_LOGIN);
+    await logout();
   };
 
   const renderLinks = (items: any[]) => (

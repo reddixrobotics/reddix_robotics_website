@@ -17,6 +17,7 @@ import {
   useRef,
   useCallback,
   forwardRef,
+  memo,
 } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
@@ -27,6 +28,8 @@ import {
 import { Menu, X, LogIn, UserPlus } from 'lucide-react';
 import { useScrolled, useTheme } from '@/hooks';
 import { NAV_LINKS, AUTH_LINKS, BRAND_NAME } from '@/data';
+import { ROUTES } from '@/routes/routePaths';
+import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { cn } from '@/utils';
 
@@ -139,9 +142,19 @@ interface MobileDrawerProps {
   open: boolean;
   onClose: () => void;
   shouldReduceMotion: boolean;
+  isAuthenticated: boolean;
+  userRole: string | null;
+  logout: () => void;
 }
 
-function MobileDrawer({ open, onClose, shouldReduceMotion }: MobileDrawerProps) {
+const MobileDrawer = memo(function MobileDrawer({ 
+  open, 
+  onClose, 
+  shouldReduceMotion, 
+  isAuthenticated, 
+  userRole, 
+  logout 
+}: MobileDrawerProps) {
   const drawerRef  = useRef<HTMLDivElement>(null);
   const closeRef   = useRef<HTMLButtonElement>(null);
 
@@ -329,59 +342,51 @@ function MobileDrawer({ open, onClose, shouldReduceMotion }: MobileDrawerProps) 
             {/* ── Separator ──────────────────────────────────────── */}
             <div className="mx-6 my-1 separator" aria-hidden="true" />
 
-            {/* ── Auth section ───────────────────────────────────── */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={reducedNav}
-              className="flex flex-col gap-1 px-3 pb-2 pt-2"
-            >
-              <p className="text-label px-3 mb-2">Account</p>
-
-              <motion.div variants={reducedItem}>
-                <Link
-                  to={AUTH_LINKS.login.href}
-                  onClick={onClose}
-                  className={cn(
-                    'flex items-center gap-3 w-full px-3 py-3',
-                    'rounded-lg text-[0.9375rem] font-medium',
-                    'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]',
-                    'transition-colors duration-[var(--duration-base)]',
-                    'focus-ring min-h-[44px]',
-                  )}
-                >
-                  <LogIn size={18} aria-hidden="true" className="text-[var(--text-muted)]" />
-                  Login
-                </Link>
-              </motion.div>
-
-              <motion.div variants={reducedItem}>
-                <Link
-                  to={AUTH_LINKS.signup.href}
-                  onClick={onClose}
-                  className={cn(
-                    'flex items-center gap-3 w-full px-3 py-3',
-                    'rounded-lg text-[0.9375rem] font-medium',
-                    'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]',
-                    'transition-colors duration-[var(--duration-base)]',
-                    'focus-ring min-h-[44px]',
-                  )}
-                >
-                  <UserPlus size={18} aria-hidden="true" className="text-[var(--color-brand)] opacity-75" />
-                  Sign Up
-                </Link>
-              </motion.div>
-            </motion.div>
-
-            {/* ── Separator ──────────────────────────────────────── */}
-            <div className="mx-6 my-1 separator" aria-hidden="true" />
+            {/* ── Drawer footer — Login/CTA ──────────────────────── */}
+            <div className="mt-8 flex flex-col gap-3 px-6">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to={userRole === 'USER' ? ROUTES.DASHBOARD : ROUTES.ADMIN}
+                    className="btn btn-ghost w-full justify-center"
+                    onClick={onClose}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { logout(); onClose(); }}
+                    className="btn btn-primary w-full justify-center"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to={AUTH_LINKS.login.href}
+                    className="btn btn-ghost w-full justify-center"
+                    onClick={onClose}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to={AUTH_LINKS.signup.href}
+                    className="btn btn-primary w-full justify-center shadow-lg shadow-brand/20"
+                    onClick={onClose}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
 
             {/* ── Theme toggle row ────────────────────────────────── */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={reducedNav}
-              className="px-3 py-3"
+              className="px-3 py-3 mt-auto"
             >
               <motion.div variants={reducedItem}>
                 <div
@@ -400,7 +405,6 @@ function MobileDrawer({ open, onClose, shouldReduceMotion }: MobileDrawerProps) 
             </motion.div>
 
             {/* ── Bottom spacer (for safe area) ───────────────────── */}
-            <div className="flex-1" aria-hidden="true" />
             <div className="px-5 pb-6 pt-2">
               <p className="text-caption text-center text-[var(--text-muted)]">
                 Reddix Robotics © {new Date().getFullYear()}
@@ -411,7 +415,7 @@ function MobileDrawer({ open, onClose, shouldReduceMotion }: MobileDrawerProps) 
       )}
     </AnimatePresence>
   );
-}
+});
 
 // ─── Hamburger button ─────────────────────────────────────────────────────────
 
@@ -487,6 +491,8 @@ export default function Navbar() {
   const shouldReduceMotion  = useReducedMotion() ?? false;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const hamburgerRef        = useRef<HTMLButtonElement>(null);
+  
+  const { isAuthenticated, userRole, logout } = useAuth();
 
   // Return focus to hamburger after close
   const closeDrawer = useCallback(() => {
@@ -568,23 +574,44 @@ export default function Navbar() {
           {/* ── Desktop right actions ─────────────────────────────── */}
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
-            {/* Login — text link style */}
-            <Link
-              to={AUTH_LINKS.login.href}
-              className={cn(
-                'btn btn-ghost btn-sm focus-ring',
-                'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
-              )}
-            >
-              Login
-            </Link>
-            {/* CTA */}
-            <Link
-              to="/contact"
-              className="btn btn-primary btn-sm"
-            >
-              Get in Touch
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to={userRole === 'USER' ? ROUTES.DASHBOARD : ROUTES.ADMIN}
+                  className={cn(
+                    'btn btn-ghost btn-sm focus-ring',
+                    'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="btn btn-primary btn-sm"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to={AUTH_LINKS.login.href}
+                  className={cn(
+                    'btn btn-ghost btn-sm focus-ring',
+                    'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  Login
+                </Link>
+                <Link
+                  to={AUTH_LINKS.signup.href}
+                  className="btn btn-primary btn-sm"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* ── Mobile controls ───────────────────────────────────── */}
@@ -605,6 +632,9 @@ export default function Navbar() {
         open={drawerOpen}
         onClose={closeDrawer}
         shouldReduceMotion={shouldReduceMotion}
+        isAuthenticated={isAuthenticated}
+        userRole={userRole}
+        logout={logout}
       />
     </>
   );

@@ -7,10 +7,10 @@ export declare class OrdersService {
     create(dto: CreateOrderDto): Promise<({
         items: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
                 category: string;
                 description: string;
                 price: number;
@@ -27,12 +27,12 @@ export declare class OrdersService {
             orderId: string;
         })[];
         customer: {
+            name: string;
             id: string;
             email: string;
             passwordHash: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             phone: string | null;
         } | null;
     } & {
@@ -51,10 +51,10 @@ export declare class OrdersService {
     findAll(): Promise<({
         items: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
                 category: string;
                 description: string;
                 price: number;
@@ -71,12 +71,12 @@ export declare class OrdersService {
             orderId: string;
         })[];
         customer: {
+            name: string;
             id: string;
             email: string;
             passwordHash: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             phone: string | null;
         } | null;
     } & {
@@ -95,10 +95,10 @@ export declare class OrdersService {
     findOne(id: string): Promise<{
         items: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
                 category: string;
                 description: string;
                 price: number;
@@ -115,12 +115,12 @@ export declare class OrdersService {
             orderId: string;
         })[];
         customer: {
+            name: string;
             id: string;
             email: string;
             passwordHash: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             phone: string | null;
         } | null;
         payments: {
@@ -149,10 +149,10 @@ export declare class OrdersService {
     updateStatus(id: string, status: OrderStatus): Promise<{
         items: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
                 category: string;
                 description: string;
                 price: number;
@@ -169,12 +169,12 @@ export declare class OrdersService {
             orderId: string;
         })[];
         customer: {
+            name: string;
             id: string;
             email: string;
             passwordHash: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             phone: string | null;
         } | null;
     } & {

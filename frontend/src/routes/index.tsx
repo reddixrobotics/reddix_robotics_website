@@ -6,6 +6,8 @@ import RootLayout from '@/layouts/RootLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import apiClient from '@/services/apiClient';
+import { fetchAdminSession } from '@/services/authSession';
+import UserGuard from './UserGuard';
 
 // ─── Page loading fallback ────────────────────────────────────────────────────
 
@@ -36,27 +38,23 @@ function withSuspense(Component: React.ComponentType) {
 
 function AdminGuard() {
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [needs2fa, setNeeds2fa] = useState(false);
+  const [authStatus, setAuthStatus] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    apiClient.get('/api/admin/auth/session')
+    fetchAdminSession()
       .then((res) => {
         if (!active) return;
-        if (res.data.authenticated) {
-          setAuthenticated(true);
-          setNeeds2fa(res.data.session.needs2fa);
+        if (res.data.authenticated && res.data.authStatus) {
+          setAuthStatus(res.data.authStatus);
         } else {
-          setAuthenticated(false);
-          setNeeds2fa(false);
+          setAuthStatus(null);
         }
         setLoading(false);
       })
       .catch(() => {
         if (!active) return;
-        setAuthenticated(false);
-        setNeeds2fa(false);
+        setAuthStatus(null);
         setLoading(false);
       });
     return () => {
@@ -68,12 +66,8 @@ function AdminGuard() {
     return <PageLoader />;
   }
 
-  if (!authenticated) {
-    return <Navigate to={ROUTES.ADMIN_LOGIN} replace />;
-  }
-
-  if (needs2fa) {
-    return <Navigate to={`${ROUTES.ADMIN_LOGIN}?step=2fa`} replace />;
+  if (authStatus !== 'AUTHENTICATED') {
+    return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
   return <AdminLayout />;
@@ -109,8 +103,6 @@ const DashboardOrders = lazy(() => import('@/pages/dashboard/DashboardOrders'));
 const DashboardPayments = lazy(() => import('@/pages/dashboard/DashboardPayments'));
 const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardApplications'));
 const DashboardSettings = lazy(() => import('@/pages/dashboard/DashboardSettings'));
-
-const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
 
 // Admin Pages
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
@@ -158,19 +150,21 @@ export const router = createBrowserRouter([
   },
   {
     path: ROUTES.DASHBOARD,
-    element: <DashboardLayout />,
+    element: <UserGuard />,
     children: [
-      { index: true, element: withSuspense(DashboardOverview) },
-      { path: 'profile', element: withSuspense(DashboardProfile) },
-      { path: 'orders', element: withSuspense(DashboardOrders) },
-      { path: 'payments', element: withSuspense(DashboardPayments) },
-      { path: 'applications', element: withSuspense(DashboardApplications) },
-      { path: 'settings', element: withSuspense(DashboardSettings) },
+      {
+        path: '',
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: withSuspense(DashboardOverview) },
+          { path: 'profile', element: withSuspense(DashboardProfile) },
+          { path: 'orders', element: withSuspense(DashboardOrders) },
+          { path: 'payments', element: withSuspense(DashboardPayments) },
+          { path: 'applications', element: withSuspense(DashboardApplications) },
+          { path: 'settings', element: withSuspense(DashboardSettings) },
+        ],
+      }
     ],
-  },
-  {
-    path: ROUTES.ADMIN_LOGIN,
-    element: withSuspense(AdminLoginPage),
   },
   {
     path: ROUTES.ADMIN,

@@ -4,6 +4,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'luci
 import { InputField } from '@/components/ui/Input';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
+import apiClient from '@/services/apiClient';
 
 export default function SignupForm() {
   const navigate = useNavigate();
@@ -68,18 +69,16 @@ export default function SignupForm() {
     setStatus('submitting');
     setErrorMessage('');
 
-    // Simulate API request to backend
-    setTimeout(() => {
-      // Simulate random error or success
-      if (email === 'error@reddix.com') {
-        setStatus('error');
-        setErrorMessage('Email already in use.');
-      } else {
+    // Send API request to backend
+    apiClient.post('/api/auth/signup', { name, email, password, phone })
+      .then(() => {
         setStatus('success');
-        // Simulate redirect after successful registration
         setTimeout(() => navigate(ROUTES.LOGIN), 1500);
-      }
-    }, 1500);
+      })
+      .catch((err) => {
+        setStatus('error');
+        setErrorMessage(err.message || 'An error occurred during registration.');
+      });
   };
 
   const getStrengthColor = () => {

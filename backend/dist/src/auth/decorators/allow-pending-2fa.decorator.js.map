@@ -1,0 +1,1 @@
+{"version":3,"file":"allow-pending-2fa.decorator.js","sourceRoot":"","sources":["../../../../src/auth/decorators/allow-pending-2fa.decorator.ts"],"names":[],"mappings":";;;AAAA,2CAA6C;AAEhC,QAAA,wBAAwB,GAAG,mBAAmB,CAAC;AACrD,MAAM,eAAe,GAAG,GAAG,EAAE,CAAC,IAAA,oBAAW,EAAC,gCAAwB,EAAE,IAAI,CAAC,CAAC;AAApE,QAAA,eAAe,mBAAqD"}

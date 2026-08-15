@@ -18,8 +18,9 @@ exports.Verify2faDto = Verify2faDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Length)(6, 6, { message: 'TOTP token must be exactly 6 characters long' }),
-    (0, class_validator_1.Matches)(/^\d{6}$/, { message: 'TOTP token must contain only digits' }),
+    (0, class_validator_1.Matches)(/^(\d{6}|[0-9a-fA-F]{8})$/, {
+        message: 'Token must be a 6-digit TOTP code or an 8-character hex backup code',
+    }),
     __metadata("design:type", String)
 ], Verify2faDto.prototype, "token", void 0);
 //# sourceMappingURL=verify-2fa.dto.js.map

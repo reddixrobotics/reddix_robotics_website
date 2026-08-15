@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../crypto/crypto.service';
 import { SessionService, SessionData } from './session.service';
+import { UserSessionService, UserSessionData } from './user-session.service';
 import { MailService } from '../mail/mail.service';
+import { RedisService } from '../redis/redis.service';
 import { generateSecret, verify } from 'otplib';
 import * as crypto from 'crypto';
 
@@ -12,8 +14,38 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly cryptoService: CryptoService,
     private readonly sessionService: SessionService,
+    private readonly userSessionService: UserSessionService,
     private readonly mailService: MailService,
+    private readonly redis: RedisService,
   ) {}
+
+  /**
+   * Register a new normal user
+   */
+  async signup(name: string, email: string, plainTextPass: string, phone?: string): Promise<{ message: string }> {
+    // 1. Check if email already exists in User or Admin table
+    const existingAdmin = await this.prisma.admin.findUnique({ where: { email } });
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+
+    if (existingAdmin || existingUser) {
+      throw new ConflictException('An account with this email already exists.');
+    }
+
+    // 2. Hash the password
+    const passwordHash = await this.cryptoService.hashPassword(plainTextPass);
+
+    // 3. Create the user
+    await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        phone,
+      },
+    });
+
+    return { message: 'Account created successfully.' };
+  }
 
   /**
    * Log in admin by email and password.
@@ -25,42 +57,137 @@ export class AuthService {
     plainTextPass: string,
     ipAddress?: string,
     userAgent?: string,
-  ): Promise<{ require2fa: boolean; token: string; session: SessionData }> {
+  ): Promise<{ requireEmailOtp: boolean; isTwoFactorSetup?: boolean; token: string; session: SessionData | UserSessionData; role: string }> {
+    // 1. Check if it's an admin
     const admin = await this.prisma.admin.findUnique({
       where: { email },
     });
 
+    if (admin) {
+      const passwordValid = await this.cryptoService.verifyPassword(
+        admin.passwordHash,
+        plainTextPass,
+      );
+
+      if (!passwordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Generate 6-digit random OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store in Redis (5 minutes TTL)
+      await this.redis.set(`email_otp:${admin.id}`, otp, 300);
+
+      // Send via email
+      await this.mailService.sendEmailOtp(admin.email, otp);
+
+      const { token, session } = await this.sessionService.createSession(
+        admin.id,
+        admin.role,
+        'PENDING_EMAIL_OTP',
+        ipAddress,
+        userAgent,
+      );
+
+      return {
+        requireEmailOtp: true,
+        isTwoFactorSetup: admin.twoFactorEnabled,
+        token,
+        session,
+        role: admin.role,
+      };
+    }
+
+    // 2. If not admin, check if it's a normal user
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      const passwordValid = await this.cryptoService.verifyPassword(
+        user.passwordHash,
+        plainTextPass,
+      );
+
+      if (!passwordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Create a user session directly
+      const { token, session } = await this.userSessionService.createSession(
+        user.id,
+        'USER', // Default role for normal users
+        ipAddress,
+        userAgent,
+      );
+
+      return {
+        requireEmailOtp: false,
+        token,
+        session,
+        role: 'USER',
+      };
+    }
+
+    // 3. Neither admin nor user found
+    throw new UnauthorizedException('Invalid credentials');
+  }
+
+  /**
+   * Verify the Email OTP
+   */
+  async verifyEmailOtp(token: string, otp: string): Promise<SessionData> {
+    const session = await this.sessionService.verifySession(token);
+    if (!session || session.authStatus !== 'PENDING_EMAIL_OTP') {
+      throw new UnauthorizedException('Invalid or expired session for email verification');
+    }
+
+    const cachedOtp = await this.redis.get(`email_otp:${session.adminId}`);
+    if (!cachedOtp || cachedOtp !== otp) {
+      throw new UnauthorizedException('Invalid or expired verification code');
+    }
+
+    // OTP is valid, remove it
+    await this.redis.del(`email_otp:${session.adminId}`);
+
+    // Upgrade session to PENDING_AUTHENTICATOR
+    const updatedSession = await this.sessionService.updateSession(token, {
+      authStatus: 'PENDING_AUTHENTICATOR',
+    });
+
+    if (!updatedSession) {
+      throw new UnauthorizedException('Failed to update session');
+    }
+
+    return updatedSession;
+  }
+
+  /**
+   * Resend Email OTP
+   */
+  async resendEmailOtp(token: string): Promise<void> {
+    const session = await this.sessionService.verifySession(token);
+    if (!session || session.authStatus !== 'PENDING_EMAIL_OTP') {
+      throw new UnauthorizedException('Invalid or expired session');
+    }
+
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: session.adminId },
+    });
+
     if (!admin) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid admin');
     }
 
-    const passwordValid = await this.cryptoService.verifyPassword(
-      admin.passwordHash,
-      plainTextPass,
-    );
+    // Generate new 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store in Redis (5 minutes TTL)
+    await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-    if (!passwordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const { token, session } = await this.sessionService.createSession(
-      admin.id,
-      admin.role,
-      admin.twoFactorEnabled, // if 2fa is enabled, needs2fa is true
-      ipAddress,
-      userAgent,
-    );
-
-    // Send login alert email if 2FA is not enabled (since 2FA acts as security step itself)
-    if (!admin.twoFactorEnabled) {
-      await this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown');
-    }
-
-    return {
-      require2fa: admin.twoFactorEnabled,
-      token,
-      session,
-    };
+    // Send via email
+    await this.mailService.sendEmailOtp(admin.email, otp);
   }
 
   /**
@@ -73,7 +200,7 @@ export class AuthService {
     userAgent?: string,
   ): Promise<SessionData> {
     const session = await this.sessionService.verifySession(token);
-    if (!session || !session.needs2fa) {
+    if (!session || session.authStatus !== 'PENDING_AUTHENTICATOR') {
       throw new UnauthorizedException('Invalid or inactive 2FA session');
     }
 
@@ -96,34 +223,12 @@ export class AuthService {
     const isTokenValid = verifyResult.valid;
 
     if (!isTokenValid) {
-      // Check if it's a backup code instead
-      const tfaConfig = await this.prisma.twoFactorAuth.findUnique({
-        where: { adminId: admin.id },
-      });
-
-      if (tfaConfig && tfaConfig.backupCodes) {
-        const hashedCodes: string[] = JSON.parse(tfaConfig.backupCodes);
-        const inputCodeHash = crypto.createHash('sha256').update(totpCode).digest('hex');
-        const codeIndex = hashedCodes.indexOf(inputCodeHash);
-
-        if (codeIndex !== -1) {
-          // Backup code matches! Remove it from the list
-          hashedCodes.splice(codeIndex, 1);
-          await this.prisma.twoFactorAuth.update({
-            where: { adminId: admin.id },
-            data: { backupCodes: JSON.stringify(hashedCodes) },
-          });
-        } else {
-          throw new UnauthorizedException('Invalid verification code');
-        }
-      } else {
-        throw new UnauthorizedException('Invalid verification code');
-      }
+      throw new UnauthorizedException('Invalid authenticator code');
     }
 
     // Update session to clear needs2fa requirement
     const updatedSession = await this.sessionService.updateSession(token, {
-      needs2fa: false,
+      authStatus: 'AUTHENTICATED',
     });
 
     if (!updatedSession) {
@@ -141,6 +246,13 @@ export class AuthService {
    */
   async logout(token: string): Promise<void> {
     await this.sessionService.invalidateSession(token);
+  }
+
+  /**
+   * Log out user by invalidating session token
+   */
+  async logoutUser(token: string): Promise<void> {
+    await this.userSessionService.invalidateSession(token);
   }
 
   /**

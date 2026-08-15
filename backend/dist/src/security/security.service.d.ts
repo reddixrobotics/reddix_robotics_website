@@ -15,16 +15,13 @@ export declare class SecurityService {
         secret: string;
         qrCodeUrl: string;
     }>;
-    verify2faSetup(adminId: string, code: string): Promise<{
-        backupCodes: string[];
+    verify2faSetup(adminId: string, code: string, token: string): Promise<{
+        success: boolean;
     }>;
     disable2fa(adminId: string, code: string): Promise<{
         message: string;
     }>;
-    regenerateBackupCodes(adminId: string, plainTextPass: string): Promise<{
-        backupCodes: string[];
-    }>;
-    listActiveSessions(adminId: string, currentToken: string): Promise<(Omit<SessionData, 'needs2fa' | 'role' | 'adminId'> & {
+    listActiveSessions(adminId: string, currentToken: string): Promise<(Omit<SessionData, 'authStatus' | 'role' | 'adminId'> & {
         isCurrent: boolean;
     })[]>;
     terminateSession(adminId: string, sessionId: string): Promise<void>;

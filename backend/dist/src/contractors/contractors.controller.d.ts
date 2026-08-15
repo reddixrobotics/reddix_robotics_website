@@ -6,10 +6,10 @@ export declare class PublicContractorsController {
     private readonly contractorsService;
     constructor(contractorsService: ContractorsService);
     findAll(): Promise<{
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         country: string;
         logoUrl: string;
@@ -22,10 +22,10 @@ export declare class AdminContractorsController {
     private readonly auditLogService;
     constructor(contractorsService: ContractorsService, auditLogService: AuditLogService);
     findAll(): Promise<{
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         country: string;
         logoUrl: string;
@@ -33,10 +33,10 @@ export declare class AdminContractorsController {
         contactInfo: string | null;
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         country: string;
         logoUrl: string;
@@ -44,10 +44,10 @@ export declare class AdminContractorsController {
         contactInfo: string | null;
     }>;
     create(createContractorDto: CreateContractorDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         country: string;
         logoUrl: string;
@@ -55,10 +55,10 @@ export declare class AdminContractorsController {
         contactInfo: string | null;
     }>;
     update(id: string, updateContractorDto: UpdateContractorDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         country: string;
         logoUrl: string;

@@ -1,7 +1,13 @@
+import 'dotenv/config';
 import { PrismaClient, AdminRole } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import * as argon2 from 'argon2';
 
-const prisma = new PrismaClient();
+// Prisma v7 requires an explicit driver adapter — use the same pattern as PrismaService
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Seeding database...');
@@ -39,11 +45,11 @@ async function main() {
   });
 
   console.log(`Created seed Admin:`);
-  console.log(`- ID: ${admin.id}`);
+  console.log(`- ID:    ${admin.id}`);
   console.log(`- Email: ${admin.email}`);
-  console.log(`- Role: ${admin.role}`);
+  console.log(`- Role:  ${admin.role}`);
   console.log(`- Temp Password: ${password}`);
-  console.log(`\nIMPORTANT: Please change your password and enable 2FA immediately after logging in!`);
+  console.log(`\nIMPORTANT: Log in, go to /admin/settings, and enable 2FA immediately!`);
 }
 
 main()
@@ -53,4 +59,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

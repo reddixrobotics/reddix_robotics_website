@@ -17,9 +17,9 @@ const common_1 = require("@nestjs/common");
 const security_service_1 = require("./security.service");
 const admin_auth_guard_1 = require("../auth/guards/admin-auth.guard");
 const current_session_decorator_1 = require("../auth/decorators/current-session.decorator");
+const allow_pending_2fa_decorator_1 = require("../auth/decorators/allow-pending-2fa.decorator");
 const verify_totp_setup_dto_1 = require("./dto/verify-totp-setup.dto");
 const disable_totp_dto_1 = require("./dto/disable-totp.dto");
-const regenerate_backup_codes_dto_1 = require("./dto/regenerate-backup-codes.dto");
 let SecurityController = class SecurityController {
     securityService;
     constructor(securityService) {
@@ -28,14 +28,11 @@ let SecurityController = class SecurityController {
     async setup2fa(session) {
         return this.securityService.setup2fa(session.adminId);
     }
-    async verify2faSetup(session, verifyTotpSetupDto) {
-        return this.securityService.verify2faSetup(session.adminId, verifyTotpSetupDto.token);
+    async verify2faSetup(session, token, verifyTotpSetupDto) {
+        return this.securityService.verify2faSetup(session.adminId, verifyTotpSetupDto.token, token);
     }
     async disable2fa(session, disableTotpDto) {
         return this.securityService.disable2fa(session.adminId, disableTotpDto.code);
-    }
-    async regenerateBackupCodes(session, regenerateDto) {
-        return this.securityService.regenerateBackupCodes(session.adminId, regenerateDto.password);
     }
     async listActiveSessions(session, token) {
         return this.securityService.listActiveSessions(session.adminId, token);
@@ -48,6 +45,7 @@ let SecurityController = class SecurityController {
 exports.SecurityController = SecurityController;
 __decorate([
     (0, common_1.Post)('2fa/setup'),
+    (0, allow_pending_2fa_decorator_1.AllowPending2FA)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, current_session_decorator_1.CurrentSession)()),
     __metadata("design:type", Function),
@@ -56,11 +54,13 @@ __decorate([
 ], SecurityController.prototype, "setup2fa", null);
 __decorate([
     (0, common_1.Post)('2fa/verify'),
+    (0, allow_pending_2fa_decorator_1.AllowPending2FA)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, current_session_decorator_1.CurrentSession)()),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, current_session_decorator_1.CurrentSessionToken)()),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, verify_totp_setup_dto_1.VerifyTotpSetupDto]),
+    __metadata("design:paramtypes", [Object, String, verify_totp_setup_dto_1.VerifyTotpSetupDto]),
     __metadata("design:returntype", Promise)
 ], SecurityController.prototype, "verify2faSetup", null);
 __decorate([
@@ -72,15 +72,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, disable_totp_dto_1.DisableTotpDto]),
     __metadata("design:returntype", Promise)
 ], SecurityController.prototype, "disable2fa", null);
-__decorate([
-    (0, common_1.Post)('backup-codes/regenerate'),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, current_session_decorator_1.CurrentSession)()),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, regenerate_backup_codes_dto_1.RegenerateBackupCodesDto]),
-    __metadata("design:returntype", Promise)
-], SecurityController.prototype, "regenerateBackupCodes", null);
 __decorate([
     (0, common_1.Get)('sessions'),
     __param(0, (0, current_session_decorator_1.CurrentSession)()),

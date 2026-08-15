@@ -5,55 +5,70 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var RedisService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisService = void 0;
 const common_1 = require("@nestjs/common");
-const ioredis_1 = __importDefault(require("ioredis"));
-let RedisService = class RedisService {
-    client;
+let RedisService = RedisService_1 = class RedisService {
+    memoryFallback = new Map();
+    logger = new common_1.Logger(RedisService_1.name);
     onModuleInit() {
-        const host = process.env.REDIS_HOST || 'localhost';
-        const port = parseInt(process.env.REDIS_PORT || '6379', 10);
-        const password = process.env.REDIS_PASSWORD || undefined;
-        this.client = new ioredis_1.default({
-            host,
-            port,
-            password: password === '' ? undefined : password,
-            maxRetriesPerRequest: 3,
-        });
+        this.logger.warn('Redis is disabled for local development. Using in-memory fallback.');
     }
     onModuleDestroy() {
-        this.client.disconnect();
+        this.memoryFallback.clear();
+    }
+    cleanFallback() {
+        const now = Date.now();
+        for (const [key, data] of this.memoryFallback.entries()) {
+            if (data.expiresAt !== null && data.expiresAt < now) {
+                this.memoryFallback.delete(key);
+            }
+        }
     }
     async get(key) {
-        return this.client.get(key);
+        this.cleanFallback();
+        const data = this.memoryFallback.get(key);
+        if (!data)
+            return null;
+        if (data.expiresAt !== null && data.expiresAt < Date.now()) {
+            this.memoryFallback.delete(key);
+            return null;
+        }
+        return data.value;
     }
     async set(key, value, ttlSeconds) {
-        if (ttlSeconds !== undefined && ttlSeconds > 0) {
-            return this.client.set(key, value, 'EX', ttlSeconds);
-        }
-        return this.client.set(key, value);
+        const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null;
+        this.memoryFallback.set(key, { value, expiresAt });
+        return 'OK';
     }
     async del(key) {
-        if (Array.isArray(key)) {
-            if (key.length === 0)
-                return 0;
-            return this.client.del(...key);
+        const keys = Array.isArray(key) ? key : [key];
+        let deleted = 0;
+        for (const k of keys) {
+            if (this.memoryFallback.has(k)) {
+                this.memoryFallback.delete(k);
+                deleted++;
+            }
         }
-        return this.client.del(key);
+        return deleted;
     }
     async keys(pattern) {
-        return this.client.keys(pattern);
+        this.cleanFallback();
+        if (pattern === '*')
+            return Array.from(this.memoryFallback.keys());
+        if (pattern.endsWith('*')) {
+            const prefix = pattern.slice(0, -1);
+            return Array.from(this.memoryFallback.keys()).filter(k => k.startsWith(prefix));
+        }
+        return this.memoryFallback.has(pattern) ? [pattern] : [];
     }
     getClient() {
-        return this.client;
+        return null;
     }
 };
 exports.RedisService = RedisService;
-exports.RedisService = RedisService = __decorate([
+exports.RedisService = RedisService = RedisService_1 = __decorate([
     (0, common_1.Injectable)()
 ], RedisService);
 //# sourceMappingURL=redis.service.js.map

@@ -36,14 +36,14 @@ export declare class CareersService {
     }[]>;
     findOneJob(id: string): Promise<{
         applications: {
+            name: string;
             id: string;
             email: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             type: import("@prisma/client").$Enums.ApplicationType;
-            status: import("@prisma/client").$Enums.ApplicationStatus;
             phone: string;
+            status: import("@prisma/client").$Enums.ApplicationStatus;
             jobId: string | null;
             internshipId: string | null;
             resumeUrl: string;
@@ -107,14 +107,14 @@ export declare class CareersService {
     }[]>;
     findOneInternship(id: string): Promise<{
         applications: {
+            name: string;
             id: string;
             email: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             type: import("@prisma/client").$Enums.ApplicationType;
-            status: import("@prisma/client").$Enums.ApplicationStatus;
             phone: string;
+            status: import("@prisma/client").$Enums.ApplicationStatus;
             jobId: string | null;
             internshipId: string | null;
             resumeUrl: string;
@@ -149,14 +149,14 @@ export declare class CareersService {
         message: string;
     }>;
     createApplication(dto: CreateApplicationDto): Promise<{
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         type: import("@prisma/client").$Enums.ApplicationType;
-        status: import("@prisma/client").$Enums.ApplicationStatus;
         phone: string;
+        status: import("@prisma/client").$Enums.ApplicationStatus;
         jobId: string | null;
         internshipId: string | null;
         resumeUrl: string;
@@ -190,14 +190,14 @@ export declare class CareersService {
             stipend: string | null;
         } | null;
     } & {
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         type: import("@prisma/client").$Enums.ApplicationType;
-        status: import("@prisma/client").$Enums.ApplicationStatus;
         phone: string;
+        status: import("@prisma/client").$Enums.ApplicationStatus;
         jobId: string | null;
         internshipId: string | null;
         resumeUrl: string;
@@ -231,28 +231,28 @@ export declare class CareersService {
             stipend: string | null;
         } | null;
     } & {
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         type: import("@prisma/client").$Enums.ApplicationType;
-        status: import("@prisma/client").$Enums.ApplicationStatus;
         phone: string;
+        status: import("@prisma/client").$Enums.ApplicationStatus;
         jobId: string | null;
         internshipId: string | null;
         resumeUrl: string;
         coverLetter: string | null;
     }>;
     updateApplicationStatus(id: string, status: ApplicationStatus): Promise<{
+        name: string;
         id: string;
         email: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         type: import("@prisma/client").$Enums.ApplicationType;
-        status: import("@prisma/client").$Enums.ApplicationStatus;
         phone: string;
+        status: import("@prisma/client").$Enums.ApplicationStatus;
         jobId: string | null;
         internshipId: string | null;
         resumeUrl: string;

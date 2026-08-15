@@ -70,7 +70,8 @@ export class SecurityService {
   async verify2faSetup(
     adminId: string,
     code: string,
-  ): Promise<{ backupCodes: string[] }> {
+    token: string,
+  ): Promise<{ success: boolean }> {
     const tempKey = `${this.TEMP_SECRET_PREFIX}${adminId}`;
     const encryptedSecret = await this.redis.get(tempKey);
 
@@ -88,43 +89,19 @@ export class SecurityService {
       throw new BadRequestException('Invalid verification code');
     }
 
-    // Generate 10 secure backup codes (e.g. 8-char hex string)
-    const backupCodes: string[] = [];
-    const hashedBackupCodes: string[] = [];
+    // Save to DB (update admin)
+    await this.prisma.admin.update({
+      where: { id: adminId },
+      data: {
+        twoFactorEnabled: true,
+        twoFactorSecretEncrypted: encryptedSecret,
+      },
+    });
 
-    for (let i = 0; i < 10; i++) {
-      const plainCode = crypto.randomBytes(4).toString('hex'); // 8 characters
-      const hashedCode = crypto
-        .createHash('sha256')
-        .update(plainCode)
-        .digest('hex');
-
-      backupCodes.push(plainCode);
-      hashedBackupCodes.push(hashedCode);
-    }
-
-    // Save to DB (update admin + create/update TwoFactorAuth record)
-    await this.prisma.$transaction([
-      this.prisma.admin.update({
-        where: { id: adminId },
-        data: {
-          twoFactorEnabled: true,
-          twoFactorSecretEncrypted: encryptedSecret,
-        },
-      }),
-      this.prisma.twoFactorAuth.upsert({
-        where: { adminId },
-        create: {
-          adminId,
-          backupCodes: JSON.stringify(hashedBackupCodes),
-          verifiedAt: new Date(),
-        },
-        update: {
-          backupCodes: JSON.stringify(hashedBackupCodes),
-          verifiedAt: new Date(),
-        },
-      }),
-    ]);
+    // Upgrade the current session to fully authenticated
+    await this.sessionService.updateSession(token, {
+      authStatus: 'AUTHENTICATED',
+    });
 
     // Cleanup temporary secret
     await this.redis.del(tempKey);
@@ -135,7 +112,7 @@ export class SecurityService {
       await this.mailService.sendTwoFactorStatusShift(admin.email, true);
     }
 
-    return { backupCodes };
+    return { success: true };
   }
 
   /**
@@ -160,110 +137,22 @@ export class SecurityService {
       isCodeValid = verifyResult.valid;
     }
 
-    // 2. If not standard TOTP, check backup codes
     if (!isCodeValid) {
-      const tfa = await this.prisma.twoFactorAuth.findUnique({
-        where: { adminId },
-      });
-
-      if (tfa && tfa.backupCodes) {
-        const hashedCodes: string[] = JSON.parse(tfa.backupCodes);
-        const inputHash = crypto.createHash('sha256').update(code).digest('hex');
-        const codeIndex = hashedCodes.indexOf(inputHash);
-
-        if (codeIndex !== -1) {
-          isCodeValid = true;
-          // Consume the backup code
-          hashedCodes.splice(codeIndex, 1);
-          await this.prisma.twoFactorAuth.update({
-            where: { adminId },
-            data: { backupCodes: JSON.stringify(hashedCodes) },
-          });
-        }
-      }
-    }
-
-    if (!isCodeValid) {
-      throw new BadRequestException(
-        'Invalid verification code or backup code',
-      );
+      throw new BadRequestException('Invalid verification code');
     }
 
     // Disable 2FA in DB
-    await this.prisma.$transaction([
-      this.prisma.admin.update({
-        where: { id: adminId },
-        data: {
-          twoFactorEnabled: false,
-          twoFactorSecretEncrypted: null,
-        },
-      }),
-      this.prisma.twoFactorAuth.delete({
-        where: { adminId },
-      }),
-    ]);
+    await this.prisma.admin.update({
+      where: { id: adminId },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorSecretEncrypted: null,
+      },
+    });
 
     await this.mailService.sendTwoFactorStatusShift(admin.email, false);
 
     return { message: 'Two-factor authentication has been disabled.' };
-  }
-
-  /**
-   * Regenerate Backup Codes
-   * Re-authenticates using password and returns a new set of plaintext backup codes.
-   */
-  async regenerateBackupCodes(
-    adminId: string,
-    plainTextPass: string,
-  ): Promise<{ backupCodes: string[] }> {
-    const admin = await this.prisma.admin.findUnique({
-      where: { id: adminId },
-    });
-
-    if (!admin) {
-      throw new NotFoundException('Administrator not found');
-    }
-
-    // Re-authenticate password
-    const isPasswordValid = await this.cryptoService.verifyPassword(
-      admin.passwordHash,
-      plainTextPass,
-    );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Re-authentication failed: Invalid password');
-    }
-
-    if (!admin.twoFactorEnabled) {
-      throw new BadRequestException(
-        'Two-factor authentication must be enabled to regenerate backup codes',
-      );
-    }
-
-    // Generate 10 new secure backup codes
-    const backupCodes: string[] = [];
-    const hashedBackupCodes: string[] = [];
-
-    for (let i = 0; i < 10; i++) {
-      const plainCode = crypto.randomBytes(4).toString('hex'); // 8 characters
-      const hashedCode = crypto
-        .createHash('sha256')
-        .update(plainCode)
-        .digest('hex');
-
-      backupCodes.push(plainCode);
-      hashedBackupCodes.push(hashedCode);
-    }
-
-    // Save to DB
-    await this.prisma.twoFactorAuth.update({
-      where: { adminId },
-      data: {
-        backupCodes: JSON.stringify(hashedBackupCodes),
-      },
-    });
-
-    return { backupCodes };
   }
 
   /**
@@ -272,7 +161,7 @@ export class SecurityService {
   async listActiveSessions(
     adminId: string,
     currentToken: string,
-  ): Promise<(Omit<SessionData, 'needs2fa' | 'role' | 'adminId'> & { isCurrent: boolean })[]> {
+  ): Promise<(Omit<SessionData, 'authStatus' | 'role' | 'adminId'> & { isCurrent: boolean })[]> {
     const currentSession = await this.sessionService.verifySession(currentToken);
     const sessions = await this.sessionService.listAdminSessions(adminId);
 

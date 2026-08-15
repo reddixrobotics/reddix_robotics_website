@@ -1,9 +1,15 @@
-import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class Verify2faDto {
+  /**
+   * Accepts either:
+   *   - A 6-digit TOTP token (e.g. "123456")
+   *   - An 8-character hex backup code (e.g. "a1b2c3d4")
+   */
   @IsString()
   @IsNotEmpty()
-  @Length(6, 6, { message: 'TOTP token must be exactly 6 characters long' })
-  @Matches(/^\d{6}$/, { message: 'TOTP token must contain only digits' })
+  @Matches(/^(\d{6}|[0-9a-fA-F]{8})$/, {
+    message: 'Token must be a 6-digit TOTP code or an 8-character hex backup code',
+  })
   token: string;
 }

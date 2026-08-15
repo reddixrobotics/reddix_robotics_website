@@ -11,11 +11,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
 const session_service_1 = require("../session.service");
+const allow_pending_2fa_decorator_1 = require("../decorators/allow-pending-2fa.decorator");
 let AdminAuthGuard = class AdminAuthGuard {
     sessionService;
-    constructor(sessionService) {
+    reflector;
+    constructor(sessionService, reflector) {
         this.sessionService = sessionService;
+        this.reflector = reflector;
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
@@ -27,7 +31,11 @@ let AdminAuthGuard = class AdminAuthGuard {
         if (!session) {
             throw new common_1.UnauthorizedException('Invalid or expired session');
         }
-        if (session.needs2fa) {
+        const isAllowPending2FA = this.reflector.getAllAndOverride(allow_pending_2fa_decorator_1.IS_ALLOW_PENDING_2FA_KEY, [context.getHandler(), context.getClass()]);
+        if (session.authStatus === 'PENDING_EMAIL_OTP') {
+            throw new common_1.UnauthorizedException('Email verification required');
+        }
+        if (session.authStatus === 'PENDING_AUTHENTICATOR' && !isAllowPending2FA) {
             throw new common_1.UnauthorizedException('Two-factor authentication required');
         }
         request['session'] = session;
@@ -38,6 +46,7 @@ let AdminAuthGuard = class AdminAuthGuard {
 exports.AdminAuthGuard = AdminAuthGuard;
 exports.AdminAuthGuard = AdminAuthGuard = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [session_service_1.SessionService])
+    __metadata("design:paramtypes", [session_service_1.SessionService,
+        core_1.Reflector])
 ], AdminAuthGuard);
 //# sourceMappingURL=admin-auth.guard.js.map

@@ -51,7 +51,6 @@ const session_service_1 = require("../auth/session.service");
 const mail_service_1 = require("../mail/mail.service");
 const otplib_1 = require("otplib");
 const qrcode = __importStar(require("qrcode"));
-const crypto = __importStar(require("crypto"));
 let SecurityService = class SecurityService {
     prisma;
     cryptoService;
@@ -87,7 +86,7 @@ let SecurityService = class SecurityService {
             qrCodeUrl,
         };
     }
-    async verify2faSetup(adminId, code) {
+    async verify2faSetup(adminId, code, token) {
         const tempKey = `${this.TEMP_SECRET_PREFIX}${adminId}`;
         const encryptedSecret = await this.redis.get(tempKey);
         if (!encryptedSecret) {
@@ -99,44 +98,22 @@ let SecurityService = class SecurityService {
         if (!isValid) {
             throw new common_1.BadRequestException('Invalid verification code');
         }
-        const backupCodes = [];
-        const hashedBackupCodes = [];
-        for (let i = 0; i < 10; i++) {
-            const plainCode = crypto.randomBytes(4).toString('hex');
-            const hashedCode = crypto
-                .createHash('sha256')
-                .update(plainCode)
-                .digest('hex');
-            backupCodes.push(plainCode);
-            hashedBackupCodes.push(hashedCode);
-        }
-        await this.prisma.$transaction([
-            this.prisma.admin.update({
-                where: { id: adminId },
-                data: {
-                    twoFactorEnabled: true,
-                    twoFactorSecretEncrypted: encryptedSecret,
-                },
-            }),
-            this.prisma.twoFactorAuth.upsert({
-                where: { adminId },
-                create: {
-                    adminId,
-                    backupCodes: JSON.stringify(hashedBackupCodes),
-                    verifiedAt: new Date(),
-                },
-                update: {
-                    backupCodes: JSON.stringify(hashedBackupCodes),
-                    verifiedAt: new Date(),
-                },
-            }),
-        ]);
+        await this.prisma.admin.update({
+            where: { id: adminId },
+            data: {
+                twoFactorEnabled: true,
+                twoFactorSecretEncrypted: encryptedSecret,
+            },
+        });
+        await this.sessionService.updateSession(token, {
+            authStatus: 'AUTHENTICATED',
+        });
         await this.redis.del(tempKey);
         const admin = await this.prisma.admin.findUnique({ where: { id: adminId } });
         if (admin) {
             await this.mailService.sendTwoFactorStatusShift(admin.email, true);
         }
-        return { backupCodes };
+        return { success: true };
     }
     async disable2fa(adminId, code) {
         const admin = await this.prisma.admin.findUnique({
@@ -152,73 +129,17 @@ let SecurityService = class SecurityService {
             isCodeValid = verifyResult.valid;
         }
         if (!isCodeValid) {
-            const tfa = await this.prisma.twoFactorAuth.findUnique({
-                where: { adminId },
-            });
-            if (tfa && tfa.backupCodes) {
-                const hashedCodes = JSON.parse(tfa.backupCodes);
-                const inputHash = crypto.createHash('sha256').update(code).digest('hex');
-                const codeIndex = hashedCodes.indexOf(inputHash);
-                if (codeIndex !== -1) {
-                    isCodeValid = true;
-                    hashedCodes.splice(codeIndex, 1);
-                    await this.prisma.twoFactorAuth.update({
-                        where: { adminId },
-                        data: { backupCodes: JSON.stringify(hashedCodes) },
-                    });
-                }
-            }
+            throw new common_1.BadRequestException('Invalid verification code');
         }
-        if (!isCodeValid) {
-            throw new common_1.BadRequestException('Invalid verification code or backup code');
-        }
-        await this.prisma.$transaction([
-            this.prisma.admin.update({
-                where: { id: adminId },
-                data: {
-                    twoFactorEnabled: false,
-                    twoFactorSecretEncrypted: null,
-                },
-            }),
-            this.prisma.twoFactorAuth.delete({
-                where: { adminId },
-            }),
-        ]);
-        await this.mailService.sendTwoFactorStatusShift(admin.email, false);
-        return { message: 'Two-factor authentication has been disabled.' };
-    }
-    async regenerateBackupCodes(adminId, plainTextPass) {
-        const admin = await this.prisma.admin.findUnique({
+        await this.prisma.admin.update({
             where: { id: adminId },
-        });
-        if (!admin) {
-            throw new common_1.NotFoundException('Administrator not found');
-        }
-        const isPasswordValid = await this.cryptoService.verifyPassword(admin.passwordHash, plainTextPass);
-        if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Re-authentication failed: Invalid password');
-        }
-        if (!admin.twoFactorEnabled) {
-            throw new common_1.BadRequestException('Two-factor authentication must be enabled to regenerate backup codes');
-        }
-        const backupCodes = [];
-        const hashedBackupCodes = [];
-        for (let i = 0; i < 10; i++) {
-            const plainCode = crypto.randomBytes(4).toString('hex');
-            const hashedCode = crypto
-                .createHash('sha256')
-                .update(plainCode)
-                .digest('hex');
-            backupCodes.push(plainCode);
-            hashedBackupCodes.push(hashedCode);
-        }
-        await this.prisma.twoFactorAuth.update({
-            where: { adminId },
             data: {
-                backupCodes: JSON.stringify(hashedBackupCodes),
+                twoFactorEnabled: false,
+                twoFactorSecretEncrypted: null,
             },
         });
-        return { backupCodes };
+        await this.mailService.sendTwoFactorStatusShift(admin.email, false);
+        return { message: 'Two-factor authentication has been disabled.' };
     }
     async listActiveSessions(adminId, currentToken) {
         const currentSession = await this.sessionService.verifySession(currentToken);

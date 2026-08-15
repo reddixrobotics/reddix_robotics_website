@@ -19,10 +19,10 @@ export declare class ProductsService {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -39,10 +39,10 @@ export declare class ProductsService {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -59,10 +59,10 @@ export declare class ProductsService {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;
@@ -79,10 +79,10 @@ export declare class ProductsService {
             isPrimary: boolean;
         }[];
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         price: number;

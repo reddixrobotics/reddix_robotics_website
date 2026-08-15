@@ -47,44 +47,118 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const crypto_service_1 = require("../crypto/crypto.service");
 const session_service_1 = require("./session.service");
+const user_session_service_1 = require("./user-session.service");
 const mail_service_1 = require("../mail/mail.service");
+const redis_service_1 = require("../redis/redis.service");
 const otplib_1 = require("otplib");
 const crypto = __importStar(require("crypto"));
 let AuthService = class AuthService {
     prisma;
     cryptoService;
     sessionService;
+    userSessionService;
     mailService;
-    constructor(prisma, cryptoService, sessionService, mailService) {
+    redis;
+    constructor(prisma, cryptoService, sessionService, userSessionService, mailService, redis) {
         this.prisma = prisma;
         this.cryptoService = cryptoService;
         this.sessionService = sessionService;
+        this.userSessionService = userSessionService;
         this.mailService = mailService;
+        this.redis = redis;
+    }
+    async signup(name, email, plainTextPass, phone) {
+        const existingAdmin = await this.prisma.admin.findUnique({ where: { email } });
+        const existingUser = await this.prisma.user.findUnique({ where: { email } });
+        if (existingAdmin || existingUser) {
+            throw new common_1.ConflictException('An account with this email already exists.');
+        }
+        const passwordHash = await this.cryptoService.hashPassword(plainTextPass);
+        await this.prisma.user.create({
+            data: {
+                name,
+                email,
+                passwordHash,
+                phone,
+            },
+        });
+        return { message: 'Account created successfully.' };
     }
     async login(email, plainTextPass, ipAddress, userAgent) {
         const admin = await this.prisma.admin.findUnique({
             where: { email },
         });
+        if (admin) {
+            const passwordValid = await this.cryptoService.verifyPassword(admin.passwordHash, plainTextPass);
+            if (!passwordValid) {
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            await this.redis.set(`email_otp:${admin.id}`, otp, 300);
+            await this.mailService.sendEmailOtp(admin.email, otp);
+            const { token, session } = await this.sessionService.createSession(admin.id, admin.role, 'PENDING_EMAIL_OTP', ipAddress, userAgent);
+            return {
+                requireEmailOtp: true,
+                isTwoFactorSetup: admin.twoFactorEnabled,
+                token,
+                session,
+                role: admin.role,
+            };
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+        });
+        if (user) {
+            const passwordValid = await this.cryptoService.verifyPassword(user.passwordHash, plainTextPass);
+            if (!passwordValid) {
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            const { token, session } = await this.userSessionService.createSession(user.id, 'USER', ipAddress, userAgent);
+            return {
+                requireEmailOtp: false,
+                token,
+                session,
+                role: 'USER',
+            };
+        }
+        throw new common_1.UnauthorizedException('Invalid credentials');
+    }
+    async verifyEmailOtp(token, otp) {
+        const session = await this.sessionService.verifySession(token);
+        if (!session || session.authStatus !== 'PENDING_EMAIL_OTP') {
+            throw new common_1.UnauthorizedException('Invalid or expired session for email verification');
+        }
+        const cachedOtp = await this.redis.get(`email_otp:${session.adminId}`);
+        if (!cachedOtp || cachedOtp !== otp) {
+            throw new common_1.UnauthorizedException('Invalid or expired verification code');
+        }
+        await this.redis.del(`email_otp:${session.adminId}`);
+        const updatedSession = await this.sessionService.updateSession(token, {
+            authStatus: 'PENDING_AUTHENTICATOR',
+        });
+        if (!updatedSession) {
+            throw new common_1.UnauthorizedException('Failed to update session');
+        }
+        return updatedSession;
+    }
+    async resendEmailOtp(token) {
+        const session = await this.sessionService.verifySession(token);
+        if (!session || session.authStatus !== 'PENDING_EMAIL_OTP') {
+            throw new common_1.UnauthorizedException('Invalid or expired session');
+        }
+        const admin = await this.prisma.admin.findUnique({
+            where: { id: session.adminId },
+        });
         if (!admin) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+            throw new common_1.UnauthorizedException('Invalid admin');
         }
-        const passwordValid = await this.cryptoService.verifyPassword(admin.passwordHash, plainTextPass);
-        if (!passwordValid) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
-        }
-        const { token, session } = await this.sessionService.createSession(admin.id, admin.role, admin.twoFactorEnabled, ipAddress, userAgent);
-        if (!admin.twoFactorEnabled) {
-            await this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown');
-        }
-        return {
-            require2fa: admin.twoFactorEnabled,
-            token,
-            session,
-        };
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await this.redis.set(`email_otp:${admin.id}`, otp, 300);
+        await this.mailService.sendEmailOtp(admin.email, otp);
     }
     async verify2fa(token, totpCode, ipAddress, userAgent) {
         const session = await this.sessionService.verifySession(token);
-        if (!session || !session.needs2fa) {
+        if (!session || session.authStatus !== 'PENDING_AUTHENTICATOR') {
             throw new common_1.UnauthorizedException('Invalid or inactive 2FA session');
         }
         const admin = await this.prisma.admin.findUnique({
@@ -100,30 +174,10 @@ let AuthService = class AuthService {
         });
         const isTokenValid = verifyResult.valid;
         if (!isTokenValid) {
-            const tfaConfig = await this.prisma.twoFactorAuth.findUnique({
-                where: { adminId: admin.id },
-            });
-            if (tfaConfig && tfaConfig.backupCodes) {
-                const hashedCodes = JSON.parse(tfaConfig.backupCodes);
-                const inputCodeHash = crypto.createHash('sha256').update(totpCode).digest('hex');
-                const codeIndex = hashedCodes.indexOf(inputCodeHash);
-                if (codeIndex !== -1) {
-                    hashedCodes.splice(codeIndex, 1);
-                    await this.prisma.twoFactorAuth.update({
-                        where: { adminId: admin.id },
-                        data: { backupCodes: JSON.stringify(hashedCodes) },
-                    });
-                }
-                else {
-                    throw new common_1.UnauthorizedException('Invalid verification code');
-                }
-            }
-            else {
-                throw new common_1.UnauthorizedException('Invalid verification code');
-            }
+            throw new common_1.UnauthorizedException('Invalid authenticator code');
         }
         const updatedSession = await this.sessionService.updateSession(token, {
-            needs2fa: false,
+            authStatus: 'AUTHENTICATED',
         });
         if (!updatedSession) {
             throw new common_1.UnauthorizedException('Failed to update session');
@@ -133,6 +187,9 @@ let AuthService = class AuthService {
     }
     async logout(token) {
         await this.sessionService.invalidateSession(token);
+    }
+    async logoutUser(token) {
+        await this.userSessionService.invalidateSession(token);
     }
     async forgotPassword(email) {
         const admin = await this.prisma.admin.findUnique({
@@ -187,6 +244,8 @@ exports.AuthService = AuthService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         crypto_service_1.CryptoService,
         session_service_1.SessionService,
-        mail_service_1.MailService])
+        user_session_service_1.UserSessionService,
+        mail_service_1.MailService,
+        redis_service_1.RedisService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

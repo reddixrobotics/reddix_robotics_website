@@ -4,51 +4,51 @@ export declare class EmployeesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     create(dto: CreateEmployeeDto): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     findAll(): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     update(id: string, dto: UpdateEmployeeDto): Promise<{
+        name: string;
+        priority: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         description: string;
         position: string;
         experience: string;
         linkedInUrl: string | null;
-        priority: number;
         profilePhoto: string;
     }>;
     remove(id: string): Promise<{

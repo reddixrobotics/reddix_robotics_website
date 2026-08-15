@@ -1,67 +1,67 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private memoryFallback = new Map<string, { value: string; expiresAt: number | null }>();
+  private readonly logger = new Logger(RedisService.name);
 
   onModuleInit() {
-    const host = process.env.REDIS_HOST || 'localhost';
-    const port = parseInt(process.env.REDIS_PORT || '6379', 10);
-    const password = process.env.REDIS_PASSWORD || undefined;
-
-    this.client = new Redis({
-      host,
-      port,
-      password: password === '' ? undefined : password,
-      // Prevent crash if Redis server is down during init
-      maxRetriesPerRequest: 3,
-    });
+    this.logger.warn('Redis is disabled for local development. Using in-memory fallback.');
   }
 
   onModuleDestroy() {
-    this.client.disconnect();
+    this.memoryFallback.clear();
   }
 
-  /**
-   * Get a value by key.
-   */
+  private cleanFallback() {
+    const now = Date.now();
+    for (const [key, data] of this.memoryFallback.entries()) {
+      if (data.expiresAt !== null && data.expiresAt < now) {
+        this.memoryFallback.delete(key);
+      }
+    }
+  }
+
   async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+    this.cleanFallback();
+    const data = this.memoryFallback.get(key);
+    if (!data) return null;
+    if (data.expiresAt !== null && data.expiresAt < Date.now()) {
+      this.memoryFallback.delete(key);
+      return null;
+    }
+    return data.value;
   }
 
-  /**
-   * Set a key to hold a string value with optional TTL (in seconds).
-   */
   async set(key: string, value: string, ttlSeconds?: number): Promise<string> {
-    if (ttlSeconds !== undefined && ttlSeconds > 0) {
-      return this.client.set(key, value, 'EX', ttlSeconds);
-    }
-    return this.client.set(key, value);
+    const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null;
+    this.memoryFallback.set(key, { value, expiresAt });
+    return 'OK';
   }
 
-  /**
-   * Delete one or more keys.
-   */
   async del(key: string | string[]): Promise<number> {
-    if (Array.isArray(key)) {
-      if (key.length === 0) return 0;
-      return this.client.del(...key);
+    const keys = Array.isArray(key) ? key : [key];
+    let deleted = 0;
+    for (const k of keys) {
+      if (this.memoryFallback.has(k)) {
+        this.memoryFallback.delete(k);
+        deleted++;
+      }
     }
-    return this.client.del(key);
+    return deleted;
   }
 
-  /**
-   * Find all keys matching a pattern.
-   */
   async keys(pattern: string): Promise<string[]> {
-    return this.client.keys(pattern);
+    this.cleanFallback();
+    if (pattern === '*') return Array.from(this.memoryFallback.keys());
+    if (pattern.endsWith('*')) {
+      const prefix = pattern.slice(0, -1);
+      return Array.from(this.memoryFallback.keys()).filter(k => k.startsWith(prefix));
+    }
+    return this.memoryFallback.has(pattern) ? [pattern] : [];
   }
 
-  /**
-   * Directly expose client if custom commands are needed.
-   */
-  getClient(): Redis {
-    return this.client;
+  getClient(): any {
+    return null;
   }
 }

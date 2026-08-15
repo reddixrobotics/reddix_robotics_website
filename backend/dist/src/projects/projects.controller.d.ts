@@ -6,27 +6,27 @@ export declare class PublicProjectsController {
     private readonly projectsService;
     constructor(projectsService: ProjectsService);
     findAll(): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
 }
@@ -35,51 +35,51 @@ export declare class AdminProjectsController {
     private readonly auditLogService;
     constructor(projectsService: ProjectsService, auditLogService: AuditLogService);
     findAll(): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }[]>;
     findOne(id: string): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     create(createProjectDto: CreateProjectDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     update(id: string, updateProjectDto: UpdateProjectDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        name: string;
+        date: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         category: string;
         description: string;
         images: string[];
         status: string;
-        date: string;
         technologies: string[];
     }>;
     remove(id: string, session: SessionData, ip: string, userAgent: string): Promise<{

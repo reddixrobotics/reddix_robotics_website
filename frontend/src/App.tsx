@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { router } from '@/routes';
 
 /**
@@ -11,7 +12,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <CartProvider>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </CartProvider>
     </ThemeProvider>
   );
