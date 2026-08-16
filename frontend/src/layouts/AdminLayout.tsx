@@ -21,19 +21,17 @@ export default function AdminLayout() {
 
   return (
     // Note: We use 'dark' class inherently if we want to enforce dark mode internally
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-mono flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col md:flex-row">
       
       {/* Mobile Header */}
-      <header className="md:hidden h-14 bg-[#111] border-b border-zinc-800 flex items-center justify-between px-4 sticky top-0 z-40">
+      <header className="md:hidden h-16 bg-[var(--bg-secondary)] border-b border-[var(--border-strong)] flex items-center justify-between px-4 sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center">
-            <span className="text-white font-black text-[10px] tracking-tighter">RX</span>
-          </div>
-          <span className="text-xs font-bold text-white uppercase">Admin</span>
+          <img src="/logo.png" alt="Reddix Robotics Logo" className="h-8 w-auto object-contain" />
+          <span className="text-sm font-bold text-[var(--text-primary)]">Admin Dashboard</span>
         </div>
         <button 
           onClick={() => setMobileMenuOpen(true)}
-          className="p-1.5 text-zinc-400 hover:text-white"
+          className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <Menu size={20} />
         </button>
@@ -55,12 +53,12 @@ export default function AdminLayout() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-[260px] bg-[#111] z-50 md:hidden border-r border-zinc-800"
+              className="fixed inset-y-0 left-0 w-[260px] bg-[var(--bg-secondary)] z-50 md:hidden border-r border-[var(--border-strong)]"
             >
               <div className="absolute top-3 right-3 z-50">
                 <button 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 text-zinc-400 hover:text-white rounded bg-zinc-800/50"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded bg-[var(--bg-tertiary)]"
                 >
                   <X size={18} />
                 </button>

@@ -5,7 +5,8 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Section } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
-import { products } from '@/data/products';
+import { publicProductService } from '@/services/publicProductService';
+import { Product } from '@/data/products';
 import { 
   CheckoutForm, 
   CheckoutSummary, 
@@ -20,7 +21,19 @@ export default function CheckoutPage() {
 
   const queryParams = new URLSearchParams(location.search);
   const buyNowProductId = queryParams.get('productId');
-  const buyNowProduct = buyNowProductId ? products.find(p => p.id === buyNowProductId) : null;
+  const [buyNowProduct, setBuyNowProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    const fetchBuyNowProduct = async () => {
+      if (buyNowProductId) {
+        setIsLoading(true);
+        const product = await publicProductService.getById(buyNowProductId);
+        setBuyNowProduct(product);
+        setIsLoading(false);
+      }
+    };
+    fetchBuyNowProduct();
+  }, [buyNowProductId]);
 
   const items = buyNowProduct ? [{ product: buyNowProduct, quantity: 1 }] : cartItems;
   const subtotal = buyNowProduct ? buyNowProduct.price : cartSubtotal;
@@ -28,10 +41,10 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     // If cart is empty and not a buy now flow, redirect back to cart
-    if (items.length === 0) {
+    if (!buyNowProductId && cartItems.length === 0) {
       navigate(ROUTES.CART);
     }
-  }, [items.length, navigate]);
+  }, [cartItems.length, buyNowProductId, navigate]);
 
   const handleCheckoutSubmit = (formData: any) => {
     // Navigate to payment page and pass form data

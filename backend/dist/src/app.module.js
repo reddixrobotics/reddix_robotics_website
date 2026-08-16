@@ -29,6 +29,12 @@ const projects_module_1 = require("./projects/projects.module");
 const contractors_module_1 = require("./contractors/contractors.module");
 const company_module_1 = require("./company/company.module");
 const contact_module_1 = require("./contact/contact.module");
+const cart_module_1 = require("./cart/cart.module");
+const wishlist_module_1 = require("./wishlist/wishlist.module");
+const featured_projects_module_1 = require("./featured-projects/featured-projects.module");
+const uploads_controller_1 = require("./uploads/uploads.controller");
+const journeys_module_1 = require("./journeys/journeys.module");
+const upcoming_projects_module_1 = require("./upcoming-projects/upcoming-projects.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -56,11 +62,16 @@ exports.AppModule = AppModule = __decorate([
             workshops_module_1.WorkshopsModule,
             employees_module_1.EmployeesModule,
             projects_module_1.ProjectsModule,
+            featured_projects_module_1.FeaturedProjectsModule,
             contractors_module_1.ContractorsModule,
             company_module_1.CompanyModule,
             contact_module_1.ContactModule,
+            cart_module_1.CartModule,
+            wishlist_module_1.WishlistModule,
+            journeys_module_1.JourneysModule,
+            upcoming_projects_module_1.UpcomingProjectsModule,
         ],
-        controllers: [app_controller_1.AppController],
+        controllers: [app_controller_1.AppController, uploads_controller_1.UploadsController],
         providers: [
             app_service_1.AppService,
             {

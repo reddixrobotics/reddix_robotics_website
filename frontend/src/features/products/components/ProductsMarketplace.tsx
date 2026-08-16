@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Filter, ShoppingCart } from 'lucide-react';
-import { products, categories } from '@/data/products';
+import { categories, Product } from '@/data/products';
+import { publicProductService } from '@/services/publicProductService';
 import ProductFilters, { FilterState } from './ProductFilters';
 import ProductGrid from './ProductGrid';
 import Pagination from './Pagination';
@@ -16,15 +17,32 @@ export default function ProductsMarketplace() {
   const { items } = useCart();
   const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     category: 'All',
     availability: 'All',
-    priceRange: [0, 100000]
+    priceRange: [0, Infinity]
   });
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await publicProductService.getAll();
+        setProducts(data);
+      } catch (err) {
+        console.error('Failed to load products', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
 
   // Filter and sort logic
   const filteredProducts = useMemo(() => {
@@ -65,7 +83,7 @@ export default function ProductsMarketplace() {
     });
 
     return result;
-  }, [filters, sortBy]);
+  }, [products, filters, sortBy]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -142,13 +160,21 @@ export default function ProductsMarketplace() {
           </div>
 
           {/* Grid & Pagination */}
-          <ProductGrid products={paginatedProducts} />
-          
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+          {isLoading ? (
+            <div className="text-center text-[var(--text-secondary)] py-20">Loading products...</div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center text-[var(--text-secondary)] py-20">No products match your filters.</div>
+          ) : (
+            <>
+              <ProductGrid products={paginatedProducts} />
+              
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          )}
         </div>
 
       </div>

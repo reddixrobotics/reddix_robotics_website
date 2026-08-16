@@ -117,7 +117,7 @@ export class AuthService {
       // Create a user session directly
       const { token, session } = await this.userSessionService.createSession(
         user.id,
-        'USER', // Default role for normal users
+        user.role,
         ipAddress,
         userAgent,
       );
@@ -126,7 +126,7 @@ export class AuthService {
         requireEmailOtp: false,
         token,
         session,
-        role: 'USER',
+        role: user.role,
       };
     }
 

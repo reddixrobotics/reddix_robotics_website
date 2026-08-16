@@ -25,12 +25,15 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
     onUpdateQuantity(item.product.id, item.quantity + 1);
   };
 
+  const price = item.product.price ?? (item.product as any).basePrice ?? 0;
+  const imageUrl = item.product.imageUrl || (item.product as any).images?.[0]?.url || 'https://placehold.co/300x300?text=No+Image';
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border border-[var(--border-strong)] rounded-xl bg-[var(--bg-secondary)]">
       {/* Image */}
       <Link to={`/products/${item.product.id}`} className="w-full sm:w-24 h-24 flex-shrink-0 bg-[var(--bg-primary)] rounded-lg overflow-hidden block">
         <img 
-          src={item.product.imageUrl} 
+          src={imageUrl} 
           alt={item.product.name} 
           className="w-full h-full object-cover"
         />
@@ -44,7 +47,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
         <span className="text-body-sm text-[var(--text-tertiary)]">{item.product.category}</span>
         
         <div className="mt-2 text-body-md font-medium text-[var(--text-primary)]">
-          {formatPrice(item.product.price)}
+          {formatPrice(price)}
         </div>
       </div>
 
@@ -72,7 +75,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
 
         {/* Subtotal */}
         <div className="text-body-lg font-bold text-[var(--text-primary)] w-24 text-right hidden sm:block">
-          {formatPrice(item.product.price * item.quantity)}
+          {formatPrice(price * item.quantity)}
         </div>
 
         {/* Remove */}

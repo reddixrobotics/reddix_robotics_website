@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
+import { WishlistProvider } from '@/context/WishlistContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { router } from '@/routes';
 
@@ -11,11 +12,13 @@ import { router } from '@/routes';
 export default function App() {
   return (
     <ThemeProvider>
-      <CartProvider>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <RouterProvider router={router} />
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

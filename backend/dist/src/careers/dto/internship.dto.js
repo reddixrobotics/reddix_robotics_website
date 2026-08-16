@@ -19,6 +19,13 @@ class CreateInternshipDto {
     duration;
     stipend;
     requirements;
+    skills;
+    company;
+    location;
+    type;
+    applicationLink;
+    imageUrl;
+    deadline;
     status;
 }
 exports.CreateInternshipDto = CreateInternshipDto;
@@ -53,6 +60,42 @@ __decorate([
     __metadata("design:type", Array)
 ], CreateInternshipDto.prototype, "requirements", void 0);
 __decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateInternshipDto.prototype, "skills", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "company", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "location", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "type", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "applicationLink", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateInternshipDto.prototype, "deadline", void 0);
+__decorate([
     (0, class_validator_1.IsEnum)(client_1.CareerStatus),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
@@ -64,6 +107,13 @@ class UpdateInternshipDto {
     duration;
     stipend;
     requirements;
+    skills;
+    company;
+    location;
+    type;
+    applicationLink;
+    imageUrl;
+    deadline;
     status;
 }
 exports.UpdateInternshipDto = UpdateInternshipDto;
@@ -98,6 +148,42 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
 ], UpdateInternshipDto.prototype, "requirements", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], UpdateInternshipDto.prototype, "skills", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "company", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "location", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "type", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "applicationLink", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateInternshipDto.prototype, "deadline", void 0);
 __decorate([
     (0, class_validator_1.IsEnum)(client_1.CareerStatus),
     (0, class_validator_1.IsOptional)(),

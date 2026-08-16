@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/routePaths';
 import { 
-  LayoutDashboard, Building, Users, Briefcase, Package, Tags, 
+  LayoutDashboard, Building, Users, Map, Briefcase, Package, Tags, 
   ShoppingCart, CreditCard, GraduationCap, School, BookOpen, 
   FileText, HardHat, UserCircle, MessageSquare, Settings, LogOut 
 } from 'lucide-react';
@@ -12,10 +12,12 @@ const coreNav = [
   { name: 'Dashboard', href: ROUTES.ADMIN, icon: LayoutDashboard },
   { name: 'Company', href: ROUTES.ADMIN_COMPANY, icon: Building },
   { name: 'Employees', href: ROUTES.ADMIN_EMPLOYEES, icon: Users },
+  { name: 'Journeys', href: ROUTES.ADMIN_JOURNEYS, icon: Map },
 ];
 
 const catalogNav = [
-  { name: 'Projects', href: ROUTES.ADMIN_PROJECTS, icon: Briefcase },
+  { name: 'Featured Projects', href: ROUTES.ADMIN_FEATURED_PROJECTS, icon: Briefcase },
+  { name: 'Portfolio Projects', href: ROUTES.ADMIN_PROJECTS, icon: Briefcase },
   { name: 'Products', href: ROUTES.ADMIN_PRODUCTS, icon: Package },
   { name: 'Categories', href: ROUTES.ADMIN_CATEGORIES, icon: Tags },
 ];
@@ -63,15 +65,15 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
             <Link
               to={item.href}
               onClick={onItemClick}
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors group ${
+              className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${
                 isActive 
-                  ? 'bg-red-500/10 text-red-500' 
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                  ? 'bg-[var(--color-brand)]/10 text-[var(--color-brand)]' 
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <item.icon 
-                size={18} 
-                className={`mr-3 ${isActive ? 'text-red-500' : 'text-zinc-500 group-hover:text-zinc-300'}`}
+                size={20} 
+                className={`mr-3 ${isActive ? 'text-[var(--color-brand)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
               />
               <span className="font-medium text-sm">{item.name}</span>
             </Link>
@@ -82,15 +84,13 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#111] border-r border-zinc-800 font-mono text-zinc-300">
+    <div className="flex flex-col h-full bg-[var(--bg-secondary)] border-r border-[var(--border-strong)]">
       
       {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-zinc-800 flex-shrink-0">
-        <Link to={ROUTES.HOME} className="flex items-center gap-2 group">
-          <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center">
-            <span className="text-white font-black text-xs tracking-tighter">RX</span>
-          </div>
-          <span className="text-sm font-bold tracking-tight text-white uppercase">System Admin</span>
+      <div className="h-16 flex items-center px-6 border-b border-[var(--border-strong)] flex-shrink-0">
+        <Link to={ROUTES.ADMIN} className="flex items-center gap-2 group">
+          <img src="/logo.png" alt="Reddix Robotics Logo" className="h-8 w-auto object-contain transition-transform duration-150 group-hover:scale-95" />
+          <span className="text-sm font-bold tracking-tight text-[var(--text-primary)] uppercase ml-2">Admin</span>
         </Link>
       </div>
 
@@ -98,39 +98,39 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
         
         <div className="mb-6">
-          <h3 className="px-3 text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Core</h3>
+          <h3 className="px-3 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Core</h3>
           {renderLinks(coreNav)}
         </div>
 
         <div className="mb-6">
-          <h3 className="px-3 text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Catalog</h3>
+          <h3 className="px-3 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Catalog</h3>
           {renderLinks(catalogNav)}
         </div>
 
         <div className="mb-6">
-          <h3 className="px-3 text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Operations</h3>
+          <h3 className="px-3 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Operations</h3>
           {renderLinks(operationsNav)}
         </div>
 
         <div className="mb-6">
-          <h3 className="px-3 text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">HR & Partnerships</h3>
+          <h3 className="px-3 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">HR & Partnerships</h3>
           {renderLinks(hrNav)}
         </div>
 
         <div className="mb-4">
-          <h3 className="px-3 text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">System</h3>
+          <h3 className="px-3 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">System</h3>
           {renderLinks(systemNav)}
         </div>
       </nav>
 
       {/* Footer / Logout */}
-      <div className="p-4 border-t border-zinc-800 bg-[#0a0a0a]">
+      <div className="p-4 border-t border-[var(--border-strong)] bg-[var(--bg-secondary)]">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors group text-left"
+          className="w-full flex items-center px-3 py-2.5 rounded-lg text-[var(--color-brand)] hover:bg-[var(--color-brand)]/10 transition-colors group text-left"
         >
-          <LogOut size={18} className="mr-3" />
-          <span className="font-medium text-sm">Terminate Session</span>
+          <LogOut size={20} className="mr-3" />
+          <span className="font-medium text-sm">Logout Admin</span>
         </button>
       </div>
     </div>

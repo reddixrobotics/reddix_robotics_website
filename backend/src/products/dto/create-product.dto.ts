@@ -29,6 +29,16 @@ export class CreateProductDto {
   @Min(0)
   price: number;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  depositPercentage?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  stock?: number;
+
   @IsArray()
   @IsString({ each: true })
   features: string[];

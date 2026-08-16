@@ -62,9 +62,9 @@ export default function LoginForm() {
             }
           } else if (res.data.session.authStatus === 'AUTHENTICATED') {
             if (res.data.role === 'USER') {
-              window.location.href = ROUTES.DASHBOARD;
+              window.location.href = ROUTES.PROFILE;
             } else {
-              window.location.href = '/admin';
+              window.location.href = ROUTES.ADMIN;
             }
           }
         }
@@ -94,9 +94,9 @@ export default function LoginForm() {
         } else {
           setStatus('success');
           if (res.data.role === 'USER') {
-            window.location.href = ROUTES.DASHBOARD;
+            window.location.href = ROUTES.PROFILE;
           } else {
-            window.location.href = '/admin';
+            window.location.href = ROUTES.ADMIN;
           }
         }
       })
@@ -122,9 +122,13 @@ export default function LoginForm() {
     setIsRateLimited(false);
 
     apiClient.post('/api/auth/verify-2fa', { token: mfaCode })
-      .then(() => {
+      .then((res) => {
         setStatus('success');
-        window.location.href = '/admin';
+        if (res.data.session.role === 'USER') {
+          window.location.href = ROUTES.PROFILE;
+        } else {
+          window.location.href = ROUTES.ADMIN;
+        }
       })
       .catch((err) => {
         const msg = err.message || '';
@@ -158,7 +162,11 @@ export default function LoginForm() {
             setStep('setup_mfa');
           }
         } else if (res.data.session.authStatus === 'AUTHENTICATED') {
-          window.location.href = '/admin';
+          if (res.data.session.role === 'USER') {
+            window.location.href = ROUTES.PROFILE;
+          } else {
+            window.location.href = ROUTES.ADMIN;
+          }
         }
       })
       .catch((err) => {
@@ -297,7 +305,7 @@ export default function LoginForm() {
       <div className="space-y-6">
         <TwoFASetupWizard
           onEnabled={() => {
-            window.location.href = '/admin';
+            window.location.href = ROUTES.ADMIN;
           }}
           onCancel={() => {
             setStep('credentials');

@@ -36,10 +36,10 @@ export declare class AuthController {
     }>;
     getProfile(session: SessionData): Promise<{
         id: string;
+        createdAt: Date;
         email: string;
         role: import("@prisma/client").$Enums.AdminRole;
         twoFactorEnabled: boolean;
-        createdAt: Date;
     }>;
     signup(signupDto: SignupDto): Promise<{
         message: string;

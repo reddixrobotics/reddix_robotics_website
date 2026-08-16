@@ -1,11 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Section, SectionHeading, Modal, ModalHeader, ModalBody, ModalFooter, Button, Badge } from '@/components/ui';
 import { Linkedin } from 'lucide-react';
-import { employees, type Employee } from '../data/mockData';
+import apiClient from '@/services/apiClient';
+
+export interface PublicEmployee {
+  id: string;
+  name: string;
+  designation: string;
+  photoUrl: string;
+  biography: string;
+  skills: string[];
+  experience: string;
+  linkedinUrl: string;
+}
 
 export default function EmployeesSection() {
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<PublicEmployee | null>(null);
+  const [employees, setEmployees] = useState<PublicEmployee[]>([]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await apiClient.get('/api/employees');
+        const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        
+        const mapped = res.data.map((e: any) => {
+          let photo = e.profilePhoto;
+          if (photo && photo.startsWith('/uploads/')) {
+            photo = `${backendUrl}${photo}`;
+          }
+          if (!photo) {
+            photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name)}&background=333333&color=ffffff&size=200`;
+          }
+          return {
+            id: e.id,
+            name: e.name,
+            designation: e.position,
+            photoUrl: photo,
+            biography: e.description,
+            skills: Array.isArray(e.skills) ? e.skills : [],
+            experience: e.experience,
+            linkedinUrl: e.linkedInUrl || '',
+          };
+        });
+        setEmployees(mapped);
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   return (
     <Section className="bg-[var(--bg-secondary)]">
@@ -26,12 +71,13 @@ export default function EmployeesSection() {
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, delay: i * 0.1 }}
           >
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mb-4 border-4 border-transparent group-hover:border-[var(--color-brand)] transition-colors duration-300">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mb-4 border-4 border-transparent group-hover:border-[var(--color-brand)] transition-colors duration-300 bg-[var(--bg-tertiary)] flex items-center justify-center">
               <img 
                 src={emp.photoUrl} 
                 alt={emp.name} 
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                 loading="lazy"
+                onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=333333&color=ffffff&size=200`; }}
               />
             </div>
             <h4 className="text-heading-sm font-semibold group-hover:text-[var(--color-brand)] transition-colors">{emp.name}</h4>
@@ -48,14 +94,15 @@ export default function EmployeesSection() {
             size="lg"
             aria-label={`${selectedEmployee.name} details`}
           >
-            <ModalHeader title="Team Member Profile" onClose={() => setSelectedEmployee(null)} />
+            <ModalHeader title="Team Member Profile" />
             <ModalBody>
               <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="w-48 h-48 rounded-full overflow-hidden flex-shrink-0 border-4 border-[var(--border-strong)]">
+                <div className="w-48 h-48 rounded-full overflow-hidden flex-shrink-0 border-4 border-[var(--border-strong)] bg-[var(--bg-tertiary)] flex items-center justify-center">
                   <img 
                     src={selectedEmployee.photoUrl} 
                     alt={selectedEmployee.name} 
                     className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedEmployee.name)}&background=333333&color=ffffff&size=200`; }}
                   />
                 </div>
                 <div>
@@ -64,7 +111,7 @@ export default function EmployeesSection() {
                   
                   <div className="mb-4">
                     <p className="text-label text-[var(--text-tertiary)] mb-1">Experience</p>
-                    <p className="text-body-md">{selectedEmployee.experience}</p>
+                    <p className="text-body-md">{selectedEmployee.experience} Years</p>
                   </div>
                   
                   <div className="mb-6">
@@ -86,14 +133,16 @@ export default function EmployeesSection() {
               </div>
             </ModalBody>
             <ModalFooter className="flex justify-between items-center mt-6 pt-4 border-t border-[var(--border-primary)]">
-              <Button 
-                variant="outline" 
-                onClick={() => window.open(selectedEmployee.linkedinUrl, '_blank')}
-                className="flex items-center gap-2"
-                aria-label={`View ${selectedEmployee.name}'s LinkedIn profile`}
-              >
-                <Linkedin size={18} /> Connect on LinkedIn
-              </Button>
+              {selectedEmployee.linkedinUrl && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(selectedEmployee.linkedinUrl, '_blank')}
+                  className="flex items-center gap-2"
+                  aria-label={`View ${selectedEmployee.name}'s LinkedIn profile`}
+                >
+                  <Linkedin size={18} /> Connect on LinkedIn
+                </Button>
+              )}
               <Button onClick={() => setSelectedEmployee(null)}>Close</Button>
             </ModalFooter>
           </Modal>

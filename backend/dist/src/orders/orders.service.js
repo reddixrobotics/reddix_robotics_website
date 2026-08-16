@@ -57,6 +57,7 @@ let OrdersService = class OrdersService {
                     remainingAmount,
                     status: client_1.OrderStatus.ORDER_PLACED,
                     paymentStatus: 'PENDING',
+                    shippingDetails: dto.shippingDetails || null,
                 },
             });
             await tx.orderItem.createMany({
@@ -85,6 +86,17 @@ let OrdersService = class OrdersService {
                     include: { product: true },
                 },
                 customer: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async findByUser(userId) {
+        return this.prisma.order.findMany({
+            where: { customerId: userId },
+            include: {
+                items: {
+                    include: { product: { include: { images: true } } },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });

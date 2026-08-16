@@ -6,6 +6,7 @@ export declare class CreateEmployeeDto {
     description: string;
     priority?: number;
     profilePhoto: string;
+    skills?: string[];
 }
 export declare class UpdateEmployeeDto {
     name?: string;
@@ -15,4 +16,5 @@ export declare class UpdateEmployeeDto {
     description?: string;
     priority?: number;
     profilePhoto?: string;
+    skills?: string[];
 }

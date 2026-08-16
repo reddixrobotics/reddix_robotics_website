@@ -33,7 +33,7 @@ export default function OrderSuccessPage() {
             )}
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/dashboard/orders">
+              <Link to={ROUTES.ORDERS}>
                 <Button size="lg" variant="outline">
                   Track Order
                 </Button>

@@ -4,44 +4,44 @@ export declare class ContractorsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     create(dto: CreateContractorDto): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }>;
     findAll(): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }[]>;
     findOne(id: string): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }>;
     update(id: string, dto: UpdateContractorDto): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;

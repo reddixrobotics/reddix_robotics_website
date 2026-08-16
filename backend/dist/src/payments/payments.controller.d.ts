@@ -12,6 +12,7 @@ export declare class PaymentsController {
             createdAt: Date;
             updatedAt: Date;
             customerId: string | null;
+            shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
             status: import("@prisma/client").$Enums.OrderStatus;
             orderNumber: string;
             subtotal: number;
@@ -36,6 +37,7 @@ export declare class PaymentsController {
             createdAt: Date;
             updatedAt: Date;
             customerId: string | null;
+            shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
             status: import("@prisma/client").$Enums.OrderStatus;
             orderNumber: string;
             subtotal: number;

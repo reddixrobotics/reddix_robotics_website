@@ -7,11 +7,11 @@ export declare class PublicWorkshopsController {
     private readonly workshopsService;
     constructor(workshopsService: WorkshopsService);
     findAll(): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -21,20 +21,20 @@ export declare class PublicWorkshopsController {
     }[]>;
     findOne(id: string): Promise<{
         registrations: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
+            email: string;
             phone: string;
             status: import("@prisma/client").$Enums.RegistrationStatus;
             workshopId: string;
         }[];
     } & {
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -44,11 +44,11 @@ export declare class PublicWorkshopsController {
     }>;
     register(createRegistrationDto: CreateRegistrationDto): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -57,10 +57,10 @@ export declare class PublicWorkshopsController {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
@@ -71,11 +71,11 @@ export declare class AdminWorkshopsController {
     private readonly auditLogService;
     constructor(workshopsService: WorkshopsService, auditLogService: AuditLogService);
     findAllWorkshops(): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -85,20 +85,20 @@ export declare class AdminWorkshopsController {
     }[]>;
     findOneWorkshop(id: string): Promise<{
         registrations: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
+            email: string;
             phone: string;
             status: import("@prisma/client").$Enums.RegistrationStatus;
             workshopId: string;
         }[];
     } & {
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -107,11 +107,11 @@ export declare class AdminWorkshopsController {
         capacity: number;
     }>;
     createWorkshop(createWorkshopDto: CreateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -120,11 +120,11 @@ export declare class AdminWorkshopsController {
         capacity: number;
     }>;
     updateWorkshop(id: string, updateWorkshopDto: UpdateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -138,11 +138,11 @@ export declare class AdminWorkshopsController {
     }>;
     findAllRegistrations(): Promise<({
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -151,21 +151,21 @@ export declare class AdminWorkshopsController {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
     })[]>;
     findOneRegistration(id: string): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -174,21 +174,21 @@ export declare class AdminWorkshopsController {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
     }>;
     updateRegistrationStatus(id: string, updateStatusDto: UpdateRegistrationStatusDto, session: SessionData, ip: string, userAgent: string): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -197,10 +197,10 @@ export declare class AdminWorkshopsController {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;

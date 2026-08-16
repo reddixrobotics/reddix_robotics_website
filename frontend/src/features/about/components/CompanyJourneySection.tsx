@@ -1,15 +1,34 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Section, SectionHeading } from '@/components/ui';
+import apiClient from '@/services/apiClient';
 
-const milestones = [
-  { year: "2026", title: "Foundation", desc: "Reddix Robotics founded by Dr. Elena Rostova with a seed round of $10M." },
-  { year: "2027", title: "First Prototype", desc: "Successfully tested the RDX-1, our first autonomous mobile robot prototype." },
-  { year: "2028", title: "Series A", desc: "Raised $50M to scale manufacturing and expand the software engineering team." },
-  { year: "2029", title: "Global Expansion", desc: "Opened offices in London, Tokyo, and New York. Deployed 1,000+ units globally." },
-  { year: "Today", title: "Industry Leader", desc: "Pioneering the next generation of humanoid and specialized industrial automation." }
-];
+interface Milestone {
+  id: string;
+  year: string;
+  title: string;
+  description: string;
+}
 
 export default function CompanyJourneySection() {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  useEffect(() => {
+    const fetchJourneys = async () => {
+      try {
+        const res = await apiClient.get('/api/journeys');
+        setMilestones(res.data);
+      } catch (err) {
+        console.error('Failed to fetch journeys:', err);
+      }
+    };
+    fetchJourneys();
+  }, []);
+
+  if (!milestones || milestones.length === 0) {
+    return null;
+  }
+
   return (
     <Section className="bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] overflow-hidden">
       <SectionHeading 
@@ -26,7 +45,7 @@ export default function CompanyJourneySection() {
             const isEven = i % 2 === 0;
             return (
               <motion.div 
-                key={i}
+                key={milestone.id}
                 className={`relative flex items-start md:items-center ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -43,7 +62,7 @@ export default function CompanyJourneySection() {
                   </span>
                   <h4 className="text-heading-md mb-2">{milestone.title}</h4>
                   <p className="text-body-sm text-[var(--text-secondary)]">
-                    {milestone.desc}
+                    {milestone.description}
                   </p>
                 </div>
               </motion.div>

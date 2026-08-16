@@ -4,6 +4,21 @@ import { EmployeeFormData } from '../components/forms/EmployeeForm';
 import { ProjectFormData } from '../components/forms/ProjectForm';
 import { WorkshopFormData } from '../components/forms/WorkshopForm';
 import { JobFormData } from '../components/forms/JobForm';
+import { InternshipFormData } from '../components/forms/InternshipForm';
+
+// ─── File Upload Service ───────────────────────────────────────────────────────
+
+export const uploadFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const res = await apiClient.post<any>('/api/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data.url;
+}
 
 // ─── Products Service ──────────────────────────────────────────────────────────
 
@@ -16,10 +31,15 @@ export const productService = {
       category: p.category,
       description: p.description,
       price: p.price,
-      depositPercentage: 20,
-      stock: 10,
-      specifications: p.technicalSpecifications ? JSON.stringify(p.technicalSpecifications, null, 2) : '',
+      depositPercentage: p.depositPercentage ?? 20,
+      stock: p.stock ?? 10,
+      specifications: p.technicalSpecifications 
+        ? (Object.keys(p.technicalSpecifications).length === 1 && p.technicalSpecifications.details)
+          ? p.technicalSpecifications.details
+          : Object.entries(p.technicalSpecifications).map(([k, v]) => `${k}: ${v}`).join('\n')
+        : '',
       features: Array.isArray(p.features) ? p.features.join('\n') : (p.features || ''),
+      images: p.images?.map((i: any) => i.url) || [],
     }));
   },
 
@@ -33,25 +53,51 @@ export const productService = {
       category: p.category,
       description: p.description,
       price: p.price,
-      depositPercentage: 20,
-      stock: 10,
-      specifications: p.technicalSpecifications ? JSON.stringify(p.technicalSpecifications, null, 2) : '',
+      depositPercentage: p.depositPercentage ?? 20,
+      stock: p.stock ?? 10,
+      specifications: p.technicalSpecifications 
+        ? (Object.keys(p.technicalSpecifications).length === 1 && p.technicalSpecifications.details)
+          ? p.technicalSpecifications.details
+          : Object.entries(p.technicalSpecifications).map(([k, v]) => `${k}: ${v}`).join('\n')
+        : '',
       features: Array.isArray(p.features) ? p.features.join('\n') : (p.features || ''),
+      images: p.images?.map((i: any) => i.url) || [],
     };
   },
 
   async create(item: Omit<ProductFormData, 'id'>): Promise<ProductFormData> {
     const id = `p_${Date.now()}`;
+    let techSpecs: any = {};
+    if (item.specifications) {
+      try {
+        techSpecs = JSON.parse(item.specifications);
+      } catch (e) {
+        const lines = item.specifications.split('\n');
+        lines.forEach(line => {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx !== -1) {
+            const k = line.slice(0, colonIdx).trim();
+            const v = line.slice(colonIdx + 1).trim();
+            if (k) techSpecs[k] = v;
+          } else if (line.trim()) {
+            techSpecs[line.trim()] = "Yes";
+          }
+        });
+      }
+    }
+
     const payload = {
       id,
       name: item.name,
       category: item.category,
       description: item.description,
       price: Number(item.price),
+      depositPercentage: Number(item.depositPercentage),
+      stock: Number(item.stock),
       features: typeof item.features === 'string' ? item.features.split('\n').filter(Boolean) : item.features || [],
-      technicalSpecifications: item.specifications ? JSON.parse(item.specifications) : {},
+      technicalSpecifications: techSpecs,
       availability: true,
-      images: []
+      images: item.images || []
     };
     const res = await apiClient.post<any>('/api/admin/products', payload);
     return res.data;
@@ -60,6 +106,8 @@ export const productService = {
   async update(id: string | number, updates: Partial<ProductFormData>): Promise<ProductFormData> {
     const payload: any = { ...updates };
     if (updates.price !== undefined) payload.price = Number(updates.price);
+    if (updates.depositPercentage !== undefined) payload.depositPercentage = Number(updates.depositPercentage);
+    if (updates.stock !== undefined) payload.stock = Number(updates.stock);
     if (updates.features !== undefined && typeof updates.features === 'string') {
       payload.features = updates.features.split('\n').filter(Boolean);
     }
@@ -67,7 +115,19 @@ export const productService = {
       try {
         payload.technicalSpecifications = JSON.parse(updates.specifications);
       } catch (e) {
-        payload.technicalSpecifications = {};
+        const lines = updates.specifications.split('\n');
+        const techSpecs: any = {};
+        lines.forEach(line => {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx !== -1) {
+            const k = line.slice(0, colonIdx).trim();
+            const v = line.slice(colonIdx + 1).trim();
+            if (k) techSpecs[k] = v;
+          } else if (line.trim()) {
+            techSpecs[line.trim()] = "Yes";
+          }
+        });
+        payload.technicalSpecifications = techSpecs;
       }
       delete payload.specifications;
     }
@@ -90,9 +150,10 @@ export const employeeService = {
       name: e.name,
       designation: e.position,
       experience: parseInt(e.experience) || 0,
-      skills: 'General',
+      skills: Array.isArray(e.skills) ? e.skills.join(', ') : '',
       biography: e.description,
       linkedinUrl: e.linkedInUrl || '',
+      profilePhoto: e.profilePhoto || '',
     }));
   },
 
@@ -105,9 +166,10 @@ export const employeeService = {
       name: e.name,
       designation: e.position,
       experience: parseInt(e.experience) || 0,
-      skills: 'General',
+      skills: Array.isArray(e.skills) ? e.skills.join(', ') : '',
       biography: e.description,
       linkedinUrl: e.linkedInUrl || '',
+      profilePhoto: e.profilePhoto || '',
     };
   },
 
@@ -118,7 +180,8 @@ export const employeeService = {
       experience: item.experience.toString(),
       description: item.biography,
       linkedInUrl: item.linkedinUrl || undefined,
-      profilePhoto: '/images/placeholder.jpg',
+      profilePhoto: item.profilePhoto || '/images/placeholder.jpg',
+      skills: item.skills.split(',').map(s => s.trim()).filter(Boolean),
       priority: 1
     };
     const res = await apiClient.post<any>('/api/admin/employees', payload);
@@ -132,6 +195,9 @@ export const employeeService = {
     if (updates.experience !== undefined) payload.experience = updates.experience.toString();
     if (updates.biography !== undefined) payload.description = updates.biography;
     if (updates.linkedinUrl !== undefined) payload.linkedInUrl = updates.linkedinUrl;
+    if (updates.profilePhoto !== undefined) payload.profilePhoto = updates.profilePhoto;
+    if (updates.skills !== undefined) payload.skills = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
+    
     const res = await apiClient.patch<any>(`/api/admin/employees/${id}`, payload);
     return res.data;
   },
@@ -330,5 +396,234 @@ export const jobService = {
 
   async delete(id: string | number): Promise<void> {
     await apiClient.delete(`/api/admin/careers/jobs/${id}`);
+  }
+};
+
+// ─── Journeys Service ──────────────────────────────────────────────────────────
+
+export interface JourneyFormData {
+  id?: string;
+  year: string;
+  title: string;
+  description: string;
+}
+
+export const journeyService = {
+  async getAll(): Promise<JourneyFormData[]> {
+    const res = await apiClient.get<any[]>('/api/admin/journeys');
+    return res.data;
+  },
+
+  async getById(id: string | number): Promise<JourneyFormData | null> {
+    const res = await apiClient.get<any>(`/api/admin/journeys/${id}`);
+    return res.data;
+  },
+
+  async create(item: Omit<JourneyFormData, 'id'>): Promise<JourneyFormData> {
+    const res = await apiClient.post<any>('/api/admin/journeys', item);
+    return res.data;
+  },
+
+  async update(id: string | number, updates: Partial<JourneyFormData>): Promise<JourneyFormData> {
+    const res = await apiClient.patch<any>(`/api/admin/journeys/${id}`, updates);
+    return res.data;
+  },
+
+  async delete(id: string | number): Promise<void> {
+    await apiClient.delete(`/api/admin/journeys/${id}`);
+  }
+};
+
+// ─── Upcoming Projects Service ─────────────────────────────────────────────────
+
+export const upcomingProjectService = {
+  getAll: async () => {
+    try {
+      const res = await apiClient.get<any[]>('/api/admin/upcoming-projects');
+      return res.data;
+    } catch (error) {
+      console.error('Failed to fetch upcoming projects', error);
+      throw error;
+    }
+  },
+
+  create: async (payload: any) => {
+    try {
+      const res = await apiClient.post<any>('/api/admin/upcoming-projects', payload);
+      return res.data;
+    } catch (error) {
+      console.error('Failed to create upcoming project', error);
+      throw error;
+    }
+  },
+
+  update: async (id: string, payload: any) => {
+    try {
+      const res = await apiClient.patch<any>(`/api/admin/upcoming-projects/${id}`, payload);
+      return res.data;
+    } catch (error) {
+      console.error('Failed to update upcoming project', error);
+      throw error;
+    }
+  },
+
+  delete: async (id: string) => {
+    try {
+      await apiClient.delete(`/api/admin/upcoming-projects/${id}`);
+    } catch (error) {
+      console.error('Failed to delete upcoming project', error);
+      throw error;
+    }
+  }
+};
+
+// ─── Featured Projects Service ─────────────────────────────────────────────────
+
+export interface FeaturedProjectFormData {
+  id?: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  category: string;
+  projectUrl?: string;
+  status?: string;
+}
+
+export const featuredProjectService = {
+  getAll: async (): Promise<FeaturedProjectFormData[]> => {
+    try {
+      const res = await apiClient.get<any[]>('/api/admin/featured-projects');
+      return res.data;
+    } catch (error) {
+      console.error('Failed to fetch featured projects', error);
+      throw error;
+    }
+  },
+
+  create: async (payload: Omit<FeaturedProjectFormData, 'id'>): Promise<FeaturedProjectFormData> => {
+    try {
+      const res = await apiClient.post<any>('/api/admin/featured-projects', payload);
+      return res.data;
+    } catch (error) {
+      console.error('Failed to create featured project', error);
+      throw error;
+    }
+  },
+
+  update: async (id: string, payload: Partial<FeaturedProjectFormData>): Promise<FeaturedProjectFormData> => {
+    try {
+      const res = await apiClient.patch<any>(`/api/admin/featured-projects/${id}`, payload);
+      return res.data;
+    } catch (error) {
+      console.error('Failed to update featured project', error);
+      throw error;
+    }
+  },
+
+  delete: async (id: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/api/admin/featured-projects/${id}`);
+    } catch (error) {
+      console.error('Failed to delete featured project', error);
+      throw error;
+    }
+  }
+};
+
+// ─── Internships Service ───────────────────────────────────────────────────────
+
+export const internshipService = {
+  async getAll(): Promise<InternshipFormData[]> {
+    const res = await apiClient.get<any[]>('/api/admin/careers/internships');
+    return res.data.map(i => ({
+      id: i.id,
+      title: i.title,
+      company: i.company || '',
+      description: i.description,
+      department: i.department,
+      location: i.location || '',
+      duration: i.duration,
+      type: i.type || '',
+      stipend: i.stipend || '',
+      skills: Array.isArray(i.skills) ? i.skills.join(', ') : '',
+      requirements: Array.isArray(i.requirements) ? i.requirements.join(', ') : '',
+      applicationLink: i.applicationLink || '',
+      imageUrl: i.imageUrl || '',
+      deadline: i.deadline ? new Date(i.deadline).toISOString().split('T')[0] : '',
+      status: i.status || 'DRAFT'
+    }));
+  },
+
+  async getById(id: string | number): Promise<InternshipFormData | null> {
+    const res = await apiClient.get<any>(`/api/admin/careers/internships/${id}`);
+    const i = res.data;
+    if (!i) return null;
+    return {
+      id: i.id,
+      title: i.title,
+      company: i.company || '',
+      description: i.description,
+      department: i.department,
+      location: i.location || '',
+      duration: i.duration,
+      type: i.type || '',
+      stipend: i.stipend || '',
+      skills: Array.isArray(i.skills) ? i.skills.join(', ') : '',
+      requirements: Array.isArray(i.requirements) ? i.requirements.join(', ') : '',
+      applicationLink: i.applicationLink || '',
+      imageUrl: i.imageUrl || '',
+      deadline: i.deadline ? new Date(i.deadline).toISOString().split('T')[0] : '',
+      status: i.status || 'DRAFT'
+    };
+  },
+
+  async create(item: Omit<InternshipFormData, 'id'>): Promise<InternshipFormData> {
+    const payload = {
+      title: item.title,
+      company: item.company,
+      description: item.description,
+      department: item.department,
+      location: item.location,
+      duration: item.duration,
+      type: item.type,
+      stipend: item.stipend,
+      skills: item.skills ? item.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+      requirements: item.requirements ? item.requirements.split(',').map(s => s.trim()).filter(Boolean) : [],
+      applicationLink: item.applicationLink,
+      imageUrl: item.imageUrl,
+      deadline: item.deadline ? new Date(item.deadline).toISOString() : undefined,
+      status: item.status || 'PUBLISHED'
+    };
+    const res = await apiClient.post<any>('/api/admin/careers/internships', payload);
+    return res.data;
+  },
+
+  async update(id: string | number, updates: Partial<InternshipFormData>): Promise<InternshipFormData> {
+    const payload: any = {};
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.company !== undefined) payload.company = updates.company;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.department !== undefined) payload.department = updates.department;
+    if (updates.location !== undefined) payload.location = updates.location;
+    if (updates.duration !== undefined) payload.duration = updates.duration;
+    if (updates.type !== undefined) payload.type = updates.type;
+    if (updates.stipend !== undefined) payload.stipend = updates.stipend;
+    if (updates.skills !== undefined) {
+      payload.skills = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (updates.requirements !== undefined) {
+      payload.requirements = updates.requirements.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (updates.applicationLink !== undefined) payload.applicationLink = updates.applicationLink;
+    if (updates.imageUrl !== undefined) payload.imageUrl = updates.imageUrl;
+    if (updates.deadline !== undefined) payload.deadline = updates.deadline ? new Date(updates.deadline).toISOString() : null;
+    if (updates.status !== undefined) payload.status = updates.status;
+
+    const res = await apiClient.patch<any>(`/api/admin/careers/internships/${id}`, payload);
+    return res.data;
+  },
+
+  async delete(id: string | number): Promise<void> {
+    await apiClient.delete(`/api/admin/careers/internships/${id}`);
   }
 };

@@ -6,11 +6,11 @@ export declare class PublicContractorsController {
     private readonly contractorsService;
     constructor(contractorsService: ContractorsService);
     findAll(): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
@@ -22,44 +22,44 @@ export declare class AdminContractorsController {
     private readonly auditLogService;
     constructor(contractorsService: ContractorsService, auditLogService: AuditLogService);
     findAll(): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }[]>;
     findOne(id: string): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }>;
     create(createContractorDto: CreateContractorDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;
         contactInfo: string | null;
     }>;
     update(id: string, updateContractorDto: UpdateContractorDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        name: string;
         id: string;
+        name: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
         country: string;
         logoUrl: string;
         website: string | null;

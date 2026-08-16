@@ -6,6 +6,13 @@ export declare class CreateInternshipDto {
     duration: string;
     stipend?: string;
     requirements: string[];
+    skills?: string[];
+    company?: string;
+    location?: string;
+    type?: string;
+    applicationLink?: string;
+    imageUrl?: string;
+    deadline?: string;
     status?: CareerStatus;
 }
 export declare class UpdateInternshipDto {
@@ -15,5 +22,12 @@ export declare class UpdateInternshipDto {
     duration?: string;
     stipend?: string;
     requirements?: string[];
+    skills?: string[];
+    company?: string;
+    location?: string;
+    type?: string;
+    applicationLink?: string;
+    imageUrl?: string;
+    deadline?: string;
     status?: CareerStatus;
 }

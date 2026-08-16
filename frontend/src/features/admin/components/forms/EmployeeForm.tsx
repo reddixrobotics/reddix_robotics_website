@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminForm, FormField, FormRow, InputClass, TextareaClass } from '../ui/AdminForm';
 import { FileUpload } from '../ui/FileUpload';
+import { uploadFile } from '../../services/apiService';
 
 export interface EmployeeFormData {
   id?: string;
@@ -10,6 +11,7 @@ export interface EmployeeFormData {
   skills: string;
   biography: string;
   linkedinUrl: string;
+  profilePhoto?: string;
 }
 
 interface EmployeeFormProps {
@@ -26,8 +28,11 @@ export function EmployeeForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     experience: 0,
     skills: '',
     biography: '',
-    linkedinUrl: ''
+    linkedinUrl: '',
+    profilePhoto: '',
   });
+
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -40,8 +45,22 @@ export function EmployeeForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     onSubmit(formData);
   };
 
+  const handleFileUpload = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+    try {
+      setIsUploading(true);
+      const url = await uploadFile(files[0]);
+      setFormData({ ...formData, profilePhoto: url });
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      alert('Failed to upload profile photo');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting}>
+    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting || isUploading}>
       <FormRow>
         <FormField label="Full Name">
           <input required type="text" className={InputClass} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
@@ -69,7 +88,13 @@ export function EmployeeForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       </FormField>
 
       <FormField label="Profile Photo">
-        <FileUpload accept="image/*" />
+        <FileUpload 
+          accept="image/*" 
+          onChange={handleFileUpload} 
+        />
+        {formData.profilePhoto && (
+          <p className="mt-2 text-xs text-green-500">Photo uploaded successfully.</p>
+        )}
       </FormField>
     </AdminForm>
   );

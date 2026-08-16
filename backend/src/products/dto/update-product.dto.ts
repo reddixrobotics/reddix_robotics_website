@@ -25,6 +25,16 @@ export class UpdateProductDto {
   @IsOptional()
   price?: number;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  depositPercentage?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  stock?: number;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

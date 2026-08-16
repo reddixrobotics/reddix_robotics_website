@@ -8,43 +8,47 @@ export declare class PublicProductsController {
     constructor(productsService: ProductsService);
     findAll(search?: string, category?: string, minPrice?: string, maxPrice?: string, availability?: string): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     findOne(id: string): Promise<{
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }
 export declare class AdminProductsController {
@@ -53,83 +57,91 @@ export declare class AdminProductsController {
     constructor(productsService: ProductsService, auditLogService: AuditLogService);
     findAll(search?: string, category?: string, minPrice?: string, maxPrice?: string, availability?: string): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     findOne(id: string): Promise<{
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     create(createProductDto: CreateProductDto, session: SessionData, ip: string, userAgent: string): Promise<{
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     update(id: string, updateProductDto: UpdateProductDto, session: SessionData, ip: string, userAgent: string): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }) | null>;
     remove(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
         success: boolean;

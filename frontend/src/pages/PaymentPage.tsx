@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { Section, Button } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
 import { CheckoutSummary } from '@/features/checkout';
+import apiClient from '@/services/apiClient';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -28,22 +29,30 @@ export default function PaymentPage() {
     }
   }, [items.length, navigate]);
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setIsLoading(true);
     setPaymentError(null);
     
-    // Simulate network delay for payment processing
-    setTimeout(() => {
-      // Simulate 10% chance of random failure
-      if (Math.random() > 0.9) {
-        setPaymentError('Your bank declined the transaction. Please try a different card.');
-        setIsLoading(false);
-      } else {
-        const mockOrderId = Math.random().toString(36).substring(2, 9).toUpperCase();
-        clearCart();
-        navigate(`/order-success/${mockOrderId}`, { replace: true });
-      }
-    }, 2000);
+    try {
+      const payload = {
+        items: items.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity
+        })),
+        shippingDetails: customerInfo
+      };
+
+      const res = await apiClient.post('/api/orders', payload);
+      const createdOrder = res.data;
+      
+      clearCart();
+      navigate(`/order-success/${createdOrder.id}`, { replace: true });
+    } catch (e: any) {
+      console.error('Failed to place order:', e);
+      setPaymentError(e.response?.data?.message || 'Failed to process payment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (items.length === 0) return null;

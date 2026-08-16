@@ -5,4 +5,5 @@ export declare class OrderItemDto {
 export declare class CreateOrderDto {
     customerId?: string;
     items: OrderItemDto[];
+    shippingDetails?: any;
 }

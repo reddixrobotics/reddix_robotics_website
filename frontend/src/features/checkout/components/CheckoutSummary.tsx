@@ -29,7 +29,7 @@ export default function CheckoutSummary({ items, subtotal }: CheckoutSummaryProp
           <div key={item.product.id} className="flex justify-between gap-4">
             <div className="flex gap-4">
               <div className="relative w-16 h-16 bg-[var(--bg-primary)] rounded-md border border-[var(--border-strong)] overflow-hidden flex-shrink-0">
-                <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                <img src={item.product.imageUrl || (item.product as any).images?.[0]?.url || 'https://placehold.co/300x300?text=No+Image'} alt={item.product.name} className="w-full h-full object-cover" />
                 <div className="absolute -top-2 -right-2 bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {item.quantity}
                 </div>

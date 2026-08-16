@@ -6,11 +6,11 @@ export declare class WorkshopsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     createWorkshop(dto: CreateWorkshopDto): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -19,11 +19,11 @@ export declare class WorkshopsService {
         capacity: number;
     }>;
     findAllWorkshops(adminView?: boolean): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -33,20 +33,20 @@ export declare class WorkshopsService {
     }[]>;
     findOneWorkshop(id: string): Promise<{
         registrations: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
+            email: string;
             phone: string;
             status: import("@prisma/client").$Enums.RegistrationStatus;
             workshopId: string;
         }[];
     } & {
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -55,11 +55,11 @@ export declare class WorkshopsService {
         capacity: number;
     }>;
     updateWorkshop(id: string, dto: UpdateWorkshopDto): Promise<{
-        date: Date;
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        date: Date;
         status: import("@prisma/client").$Enums.WorkshopStatus;
         title: string;
         location: string;
@@ -73,11 +73,11 @@ export declare class WorkshopsService {
     }>;
     register(dto: CreateRegistrationDto): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -86,21 +86,21 @@ export declare class WorkshopsService {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
     }>;
     findAllRegistrations(): Promise<({
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -109,21 +109,21 @@ export declare class WorkshopsService {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
     })[]>;
     findOneRegistration(id: string): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -132,21 +132,21 @@ export declare class WorkshopsService {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
     }>;
     updateRegistrationStatus(id: string, status: RegistrationStatus): Promise<{
         workshop: {
-            date: Date;
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            date: Date;
             status: import("@prisma/client").$Enums.WorkshopStatus;
             title: string;
             location: string;
@@ -155,10 +155,10 @@ export declare class WorkshopsService {
             capacity: number;
         };
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
+        email: string;
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;

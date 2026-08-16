@@ -113,12 +113,12 @@ let AuthService = class AuthService {
             if (!passwordValid) {
                 throw new common_1.UnauthorizedException('Invalid credentials');
             }
-            const { token, session } = await this.userSessionService.createSession(user.id, 'USER', ipAddress, userAgent);
+            const { token, session } = await this.userSessionService.createSession(user.id, user.role, ipAddress, userAgent);
             return {
                 requireEmailOtp: false,
                 token,
                 session,
-                role: 'USER',
+                role: user.role,
             };
         }
         throw new common_1.UnauthorizedException('Invalid credentials');

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Product, getRelatedProducts } from '@/data/products';
+import { Product } from '@/data/products';
+import { publicProductService } from '@/services/publicProductService';
 import ProductCard from './ProductCard';
 
 interface RelatedProductsProps {
@@ -18,7 +19,7 @@ export default function RelatedProducts({ category, currentProductId }: RelatedP
     const fetchRelated = async () => {
       setIsLoading(true);
       try {
-        const related = await getRelatedProducts(category, currentProductId);
+        const related = await publicProductService.getRelated(category, currentProductId);
         if (isMounted) {
           setProducts(related);
         }

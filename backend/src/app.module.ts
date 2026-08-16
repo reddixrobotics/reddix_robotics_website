@@ -20,6 +20,12 @@ import { ProjectsModule } from './projects/projects.module';
 import { ContractorsModule } from './contractors/contractors.module';
 import { CompanyModule } from './company/company.module';
 import { ContactModule } from './contact/contact.module';
+import { CartModule } from './cart/cart.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import { FeaturedProjectsModule } from './featured-projects/featured-projects.module';
+import { UploadsController } from './uploads/uploads.controller';
+import { JourneysModule } from './journeys/journeys.module';
+import { UpcomingProjectsModule } from './upcoming-projects/upcoming-projects.module';
 
 @Module({
   imports: [
@@ -46,11 +52,16 @@ import { ContactModule } from './contact/contact.module';
     WorkshopsModule,
     EmployeesModule,
     ProjectsModule,
+    FeaturedProjectsModule,
     ContractorsModule,
     CompanyModule,
     ContactModule,
+    CartModule,
+    WishlistModule,
+    JourneysModule,
+    UpcomingProjectsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UploadsController],
   providers: [
     AppService,
     // Apply ThrottlerGuard globally to all routes
@@ -61,4 +72,3 @@ import { ContactModule } from './contact/contact.module';
   ],
 })
 export class AppModule {}
-

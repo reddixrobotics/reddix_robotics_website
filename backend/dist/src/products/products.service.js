@@ -123,10 +123,18 @@ let ProductsService = class ProductsService {
     }
     async remove(id) {
         await this.findOne(id);
-        await this.prisma.product.delete({
-            where: { id },
-        });
-        return { success: true, message: `Product ${id} has been deleted.` };
+        try {
+            await this.prisma.product.delete({
+                where: { id },
+            });
+            return { success: true, message: `Product ${id} has been deleted.` };
+        }
+        catch (error) {
+            if (error.code === 'P2003') {
+                throw new common_1.ConflictException(`Cannot delete product ${id} because it is referenced by existing orders or other records. Consider marking it as unavailable instead.`);
+            }
+            throw error;
+        }
     }
 };
 exports.ProductsService = ProductsService;

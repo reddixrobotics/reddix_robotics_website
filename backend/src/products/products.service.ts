@@ -158,9 +158,18 @@ export class ProductsService {
    */
   async remove(id: string) {
     await this.findOne(id);
-    await this.prisma.product.delete({
-      where: { id },
-    });
-    return { success: true, message: `Product ${id} has been deleted.` };
+    try {
+      await this.prisma.product.delete({
+        where: { id },
+      });
+      return { success: true, message: `Product ${id} has been deleted.` };
+    } catch (error: any) {
+      if (error.code === 'P2003') {
+        throw new ConflictException(
+          `Cannot delete product ${id} because it is referenced by existing orders or other records. Consider marking it as unavailable instead.`
+        );
+      }
+      throw error;
+    }
   }
 }

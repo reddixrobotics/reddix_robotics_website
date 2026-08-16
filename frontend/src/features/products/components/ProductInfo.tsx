@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '@/data/products';
 import { Button, Badge } from '@/components/ui';
-import { ShoppingCart, CreditCard, Minus, Plus, ShieldCheck, Check } from 'lucide-react';
+import { ShoppingCart, CreditCard, Minus, Plus, ShieldCheck, Check, Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
+import { useAuth } from '@/context/AuthContext';
+import { useMemo } from 'react';
 
 interface ProductInfoProps {
   product: Product;
@@ -13,7 +16,34 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
+  const { items: wishlistItems = [], addToWishlist, removeFromWishlist } = useWishlist();
+  const { isAuthenticated } = useAuth();
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   const navigate = useNavigate();
+
+  const isWishlisted = useMemo(() => {
+    return wishlistItems.some((item) => item.product.id === product.id);
+  }, [wishlistItems, product.id]);
+
+  const toggleWishlist = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    setWishlistLoading(true);
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product);
+      }
+    } catch (error) {
+      console.error('Wishlist error', error);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const getAvailabilityColor = (status: string) => {
     switch (status) {
@@ -37,10 +67,18 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     setAdded(false);
   };
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    try {
+      await addToCart(product, quantity);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -50,7 +88,20 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         {product.isNew && <Badge variant="primary" size="sm">NEW</Badge>}
       </div>
       
-      <h1 className="text-display-sm mb-4">{product.name}</h1>
+      <div className="flex justify-between items-start gap-4 mb-4">
+        <h1 className="text-display-sm">{product.name}</h1>
+        <button
+          onClick={toggleWishlist}
+          disabled={wishlistLoading}
+          className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-full hover:scale-105 hover:border-[var(--color-brand)] transition-all shadow-sm focus-ring flex-shrink-0"
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart 
+            size={24} 
+            className={`transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-[var(--text-secondary)] hover:text-red-500'}`} 
+          />
+        </button>
+      </div>
       
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[var(--border-strong)]">
         <span className="text-heading-lg text-[var(--text-primary)]">{formatPrice(product.price)}</span>

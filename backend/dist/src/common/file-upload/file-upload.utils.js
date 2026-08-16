@@ -14,7 +14,7 @@ exports.ALLOWED_MIMES = [
 exports.secureMulterOptions = {
     storage: (0, multer_1.diskStorage)({
         destination: (req, file, cb) => {
-            const uploadDir = (0, path_1.join)(__dirname, '../../../../uploads');
+            const uploadDir = (0, path_1.join)(__dirname, '../../../uploads');
             if (!(0, fs_1.existsSync)(uploadDir)) {
                 (0, fs_1.mkdirSync)(uploadDir, { recursive: true });
             }

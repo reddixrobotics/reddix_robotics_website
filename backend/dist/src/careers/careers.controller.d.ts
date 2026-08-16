@@ -9,10 +9,10 @@ export declare class PublicCareersController {
     constructor(careersService: CareersService);
     findAllJobs(): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -23,11 +23,11 @@ export declare class PublicCareersController {
     }[]>;
     findOneJob(id: string): Promise<{
         applications: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             type: import("@prisma/client").$Enums.ApplicationType;
             phone: string;
             status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -38,10 +38,10 @@ export declare class PublicCareersController {
         }[];
     } & {
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -52,23 +52,30 @@ export declare class PublicCareersController {
     }>;
     findAllInternships(): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }[]>;
     findOneInternship(id: string): Promise<{
         applications: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             type: import("@prisma/client").$Enums.ApplicationType;
             phone: string;
             status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -79,22 +86,29 @@ export declare class PublicCareersController {
         }[];
     } & {
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }>;
     apply(createApplicationDto: CreateApplicationDto): Promise<{
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         type: import("@prisma/client").$Enums.ApplicationType;
         phone: string;
         status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -110,10 +124,10 @@ export declare class AdminCareersController {
     constructor(careersService: CareersService, auditLogService: AuditLogService);
     findAllJobs(): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -124,11 +138,11 @@ export declare class AdminCareersController {
     }[]>;
     findOneJob(id: string): Promise<{
         applications: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             type: import("@prisma/client").$Enums.ApplicationType;
             phone: string;
             status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -139,10 +153,10 @@ export declare class AdminCareersController {
         }[];
     } & {
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -153,10 +167,10 @@ export declare class AdminCareersController {
     }>;
     createJob(createJobDto: CreateJobDto, session: SessionData, ip: string, userAgent: string): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -167,10 +181,10 @@ export declare class AdminCareersController {
     }>;
     updateJob(id: string, updateJobDto: UpdateJobDto, session: SessionData, ip: string, userAgent: string): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
         type: string;
-        description: string;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
@@ -185,23 +199,30 @@ export declare class AdminCareersController {
     }>;
     findAllInternships(): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }[]>;
     findOneInternship(id: string): Promise<{
         applications: {
-            name: string;
             id: string;
-            email: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             type: import("@prisma/client").$Enums.ApplicationType;
             phone: string;
             status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -212,39 +233,60 @@ export declare class AdminCareersController {
         }[];
     } & {
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }>;
     createInternship(createInternshipDto: CreateInternshipDto, session: SessionData, ip: string, userAgent: string): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }>;
     updateInternship(id: string, updateInternshipDto: UpdateInternshipDto, session: SessionData, ip: string, userAgent: string): Promise<{
         id: string;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
+        type: string | null;
         status: import("@prisma/client").$Enums.CareerStatus;
         title: string;
         department: string;
+        location: string | null;
         requirements: string[];
         duration: string;
         stipend: string | null;
+        skills: string[];
+        company: string | null;
+        applicationLink: string | null;
+        imageUrl: string | null;
+        deadline: Date | null;
     }>;
     removeInternship(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
         success: boolean;
@@ -253,10 +295,10 @@ export declare class AdminCareersController {
     findAllApplications(): Promise<({
         job: {
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
             type: string;
-            description: string;
             status: import("@prisma/client").$Enums.CareerStatus;
             title: string;
             department: string;
@@ -267,22 +309,29 @@ export declare class AdminCareersController {
         } | null;
         internship: {
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            type: string | null;
             status: import("@prisma/client").$Enums.CareerStatus;
             title: string;
             department: string;
+            location: string | null;
             requirements: string[];
             duration: string;
             stipend: string | null;
+            skills: string[];
+            company: string | null;
+            applicationLink: string | null;
+            imageUrl: string | null;
+            deadline: Date | null;
         } | null;
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         type: import("@prisma/client").$Enums.ApplicationType;
         phone: string;
         status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -294,10 +343,10 @@ export declare class AdminCareersController {
     findOneApplication(id: string): Promise<{
         job: {
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
             type: string;
-            description: string;
             status: import("@prisma/client").$Enums.CareerStatus;
             title: string;
             department: string;
@@ -308,22 +357,29 @@ export declare class AdminCareersController {
         } | null;
         internship: {
             id: string;
+            description: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
+            type: string | null;
             status: import("@prisma/client").$Enums.CareerStatus;
             title: string;
             department: string;
+            location: string | null;
             requirements: string[];
             duration: string;
             stipend: string | null;
+            skills: string[];
+            company: string | null;
+            applicationLink: string | null;
+            imageUrl: string | null;
+            deadline: Date | null;
         } | null;
     } & {
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         type: import("@prisma/client").$Enums.ApplicationType;
         phone: string;
         status: import("@prisma/client").$Enums.ApplicationStatus;
@@ -333,11 +389,11 @@ export declare class AdminCareersController {
         coverLetter: string | null;
     }>;
     updateApplicationStatus(id: string, updateStatusDto: UpdateApplicationStatusDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         type: import("@prisma/client").$Enums.ApplicationType;
         phone: string;
         status: import("@prisma/client").$Enums.ApplicationStatus;

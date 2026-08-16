@@ -18,6 +18,7 @@ import {
   useCallback,
   forwardRef,
   memo,
+  useMemo,
 } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
@@ -25,13 +26,15 @@ import {
   AnimatePresence,
   useReducedMotion,
 } from 'framer-motion';
-import { Menu, X, LogIn, UserPlus } from 'lucide-react';
+import { Menu, X, LogIn, UserPlus, Heart, ShoppingCart } from 'lucide-react';
 import { useScrolled, useTheme } from '@/hooks';
 import { NAV_LINKS, AUTH_LINKS, BRAND_NAME } from '@/data';
 import { ROUTES } from '@/routes/routePaths';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { cn } from '@/utils';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -145,16 +148,20 @@ interface MobileDrawerProps {
   isAuthenticated: boolean;
   userRole: string | null;
   logout: () => void;
+  navLinks: Array<{ label: string; href: string }>;
 }
 
 const MobileDrawer = memo(function MobileDrawer({ 
   open, 
   onClose, 
   shouldReduceMotion, 
-  isAuthenticated, 
+  isAuthenticated,
   userRole, 
-  logout 
+  logout,
+  navLinks
 }: MobileDrawerProps) {
+  const { totalItems: cartItems } = useCart();
+  const { totalItems: wishlistItems } = useWishlist();
   const drawerRef  = useRef<HTMLDivElement>(null);
   const closeRef   = useRef<HTMLButtonElement>(null);
 
@@ -314,8 +321,8 @@ const MobileDrawer = memo(function MobileDrawer({
             >
               <p className="text-label px-3 mb-2">Navigation</p>
 
-              {NAV_LINKS.map((item) => (
-                <motion.div key={item.href} variants={reducedItem}>
+              {navLinks.map((item, index) => (
+                <motion.div key={`${item.href}-${index}`} variants={reducedItem}>
                   <NavLink
                     to={item.href}
                     end={item.href === '/'}
@@ -337,6 +344,61 @@ const MobileDrawer = memo(function MobileDrawer({
                   </NavLink>
                 </motion.div>
               ))}
+
+              {isAuthenticated && userRole === 'USER' && (
+                <>
+                  <motion.div variants={reducedItem}>
+                    <NavLink
+                      to={ROUTES.WISHLIST}
+                      onClick={onClose}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center justify-between w-full px-3 py-3',
+                          'rounded-lg text-[0.9375rem] font-medium',
+                          'transition-colors duration-[var(--duration-base)]',
+                          'focus-ring min-h-[44px]',
+                          isActive
+                            ? 'text-[var(--color-brand)] bg-[var(--color-brand-subtle)]'
+                            : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]',
+                        )
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart size={18} />
+                        Wishlist
+                      </div>
+                      {wishlistItems > 0 && (
+                        <span className="bg-brand text-white text-xs px-2 py-0.5 rounded-full">{wishlistItems}</span>
+                      )}
+                    </NavLink>
+                  </motion.div>
+                  <motion.div variants={reducedItem}>
+                    <NavLink
+                      to={ROUTES.CART}
+                      onClick={onClose}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center justify-between w-full px-3 py-3',
+                          'rounded-lg text-[0.9375rem] font-medium',
+                          'transition-colors duration-[var(--duration-base)]',
+                          'focus-ring min-h-[44px]',
+                          isActive
+                            ? 'text-[var(--color-brand)] bg-[var(--color-brand-subtle)]'
+                            : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]',
+                        )
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart size={18} />
+                        Cart
+                      </div>
+                      {cartItems > 0 && (
+                        <span className="bg-brand text-white text-xs px-2 py-0.5 rounded-full">{cartItems}</span>
+                      )}
+                    </NavLink>
+                  </motion.div>
+                </>
+              )}
             </motion.nav>
 
             {/* ── Separator ──────────────────────────────────────── */}
@@ -346,13 +408,15 @@ const MobileDrawer = memo(function MobileDrawer({
             <div className="mt-8 flex flex-col gap-3 px-6">
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to={userRole === 'USER' ? ROUTES.DASHBOARD : ROUTES.ADMIN}
-                    className="btn btn-ghost w-full justify-center"
-                    onClick={onClose}
-                  >
-                    Dashboard
-                  </Link>
+                  {userRole === 'ADMIN' && (
+                    <Link
+                      to={ROUTES.ADMIN}
+                      className="btn btn-ghost w-full justify-center"
+                      onClick={onClose}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => { logout(); onClose(); }}
@@ -493,6 +557,23 @@ export default function Navbar() {
   const hamburgerRef        = useRef<HTMLButtonElement>(null);
   
   const { isAuthenticated, userRole, logout } = useAuth();
+  const { totalItems: cartItems } = useCart();
+  const { totalItems: wishlistItems } = useWishlist();
+
+  const navLinks = useMemo(() => {
+    if (userRole === 'USER') {
+      return [
+        { label: 'Home', href: ROUTES.HOME },
+        { label: 'About', href: ROUTES.ABOUT },
+        { label: 'Contact', href: ROUTES.CONTACT },
+        { label: 'Products', href: ROUTES.PRODUCTS },
+        { label: 'Careers', href: ROUTES.CAREERS },
+        { label: 'Profile', href: ROUTES.PROFILE },
+        { label: 'Orders', href: ROUTES.ORDERS },
+      ];
+    }
+    return NAV_LINKS;
+  }, [userRole]);
 
   // Return focus to hamburger after close
   const closeDrawer = useCallback(() => {
@@ -561,9 +642,9 @@ export default function Navbar() {
             aria-label="Primary navigation"
             className="hidden items-center gap-0.5 md:flex"
           >
-            {NAV_LINKS.map((item) => (
+            {navLinks.map((item, index) => (
               <DesktopNavLink
-                key={item.href}
+                key={`${item.href}-${index}`}
                 href={item.href}
                 label={item.label}
                 end={item.href === '/'}
@@ -573,18 +654,48 @@ export default function Navbar() {
 
           {/* ── Desktop right actions ─────────────────────────────── */}
           <div className="hidden items-center gap-2 md:flex">
+            {isAuthenticated && userRole === 'USER' && (
+              <div className="flex items-center gap-1 mr-2">
+                <Link
+                  to={ROUTES.WISHLIST}
+                  className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
+                  aria-label="Wishlist"
+                >
+                  <Heart size={20} />
+                  {wishlistItems > 0 && (
+                    <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[0.65rem] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {wishlistItems}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to={ROUTES.CART}
+                  className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
+                  aria-label="Cart"
+                >
+                  <ShoppingCart size={20} />
+                  {cartItems > 0 && (
+                    <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-brand text-white text-[0.65rem] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {cartItems}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            )}
             <ThemeToggle />
             {isAuthenticated ? (
               <>
-                <Link
-                  to={userRole === 'USER' ? ROUTES.DASHBOARD : ROUTES.ADMIN}
-                  className={cn(
-                    'btn btn-ghost btn-sm focus-ring',
-                    'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
-                  )}
-                >
-                  Dashboard
-                </Link>
+                {userRole === 'ADMIN' && (
+                  <Link
+                    to={ROUTES.ADMIN}
+                    className={cn(
+                      'btn btn-ghost btn-sm focus-ring',
+                      'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                    )}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={logout}
@@ -635,6 +746,7 @@ export default function Navbar() {
         isAuthenticated={isAuthenticated}
         userRole={userRole}
         logout={logout}
+        navLinks={navLinks}
       />
     </>
   );

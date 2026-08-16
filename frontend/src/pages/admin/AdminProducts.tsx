@@ -49,6 +49,8 @@ export default function AdminProducts() {
       await productService.delete(deletingItem.id);
       setIsDeleteDialogOpen(false);
       loadData();
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete product.');
     } finally {
       setIsSubmitting(false);
     }

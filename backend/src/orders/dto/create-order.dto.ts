@@ -6,6 +6,7 @@ import {
   IsInt,
   Min,
   IsOptional,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -28,4 +29,8 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
+
+  @IsObject()
+  @IsOptional()
+  shippingDetails?: any;
 }

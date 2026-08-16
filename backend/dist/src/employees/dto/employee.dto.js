@@ -19,6 +19,7 @@ class CreateEmployeeDto {
     description;
     priority;
     profilePhoto;
+    skills;
 }
 exports.CreateEmployeeDto = CreateEmployeeDto;
 __decorate([
@@ -56,6 +57,12 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateEmployeeDto.prototype, "profilePhoto", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateEmployeeDto.prototype, "skills", void 0);
 class UpdateEmployeeDto {
     name;
     position;
@@ -64,6 +71,7 @@ class UpdateEmployeeDto {
     description;
     priority;
     profilePhoto;
+    skills;
 }
 exports.UpdateEmployeeDto = UpdateEmployeeDto;
 __decorate([
@@ -101,4 +109,10 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateEmployeeDto.prototype, "profilePhoto", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], UpdateEmployeeDto.prototype, "skills", void 0);
 //# sourceMappingURL=employee.dto.js.map

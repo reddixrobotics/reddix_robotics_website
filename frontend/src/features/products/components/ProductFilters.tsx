@@ -35,7 +35,7 @@ export default function ProductFilters({ filters, setFilters, categories, isMobi
       search: '',
       category: 'All',
       availability: 'All',
-      priceRange: [0, 100000]
+      priceRange: [0, Infinity]
     });
   };
 
@@ -103,11 +103,11 @@ export default function ProductFilters({ filters, setFilters, categories, isMobi
         <h4 className="text-heading-sm mb-3">Price</h4>
         <div className="space-y-2">
           {[
-            { label: 'All Prices', min: 0, max: 100000 },
+            { label: 'All Prices', min: 0, max: Infinity },
             { label: 'Under $1,000', min: 0, max: 1000 },
             { label: '$1,000 - $5,000', min: 1000, max: 5000 },
             { label: '$5,000 - $20,000', min: 5000, max: 20000 },
-            { label: 'Over $20,000', min: 20000, max: 100000 }
+            { label: 'Over $20,000', min: 20000, max: Infinity }
           ].map((range, i) => {
             const isSelected = filters.priceRange[0] === range.min && filters.priceRange[1] === range.max;
             return (

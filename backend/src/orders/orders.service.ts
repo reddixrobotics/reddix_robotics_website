@@ -63,6 +63,7 @@ export class OrdersService {
           remainingAmount,
           status: OrderStatus.ORDER_PLACED,
           paymentStatus: 'PENDING',
+          shippingDetails: dto.shippingDetails || null,
         },
       });
 
@@ -98,6 +99,21 @@ export class OrdersService {
           include: { product: true },
         },
         customer: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Find orders for a specific user
+   */
+  async findByUser(userId: string) {
+    return this.prisma.order.findMany({
+      where: { customerId: userId },
+      include: {
+        items: {
+          include: { product: { include: { images: true } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

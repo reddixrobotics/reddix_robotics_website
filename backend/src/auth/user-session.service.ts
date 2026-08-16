@@ -95,6 +95,7 @@ export class UserSessionService {
     const tokenHash = this.hashToken(token);
     const dbSession = await this.prisma.userSession.findUnique({
       where: { tokenHash },
+      include: { user: true },
     });
 
     if (!dbSession) return null;
@@ -107,7 +108,7 @@ export class UserSessionService {
     const session: UserSessionData = {
       id: dbSession.id,
       userId: dbSession.userId,
-      role: 'USER', // Normal users always have USER role
+      role: dbSession.user.role,
       authStatus: dbSession.authStatus as 'AUTHENTICATED',
       ipAddress: dbSession.ipAddress || undefined,
       userAgent: dbSession.userAgent || undefined,

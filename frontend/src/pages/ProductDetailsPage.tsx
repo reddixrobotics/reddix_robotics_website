@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
-import { Product, getProductById } from '@/data/products';
+import { publicProductService } from '@/services/publicProductService';
+import { Product } from '@/data/products';
 import { Section, Button } from '@/components/ui';
 import { 
   ProductImageGallery, 
@@ -29,8 +30,7 @@ export default function ProductDetailsPage() {
       try {
         if (!id) throw new Error('No ID provided');
         
-        // Mock API call
-        const data = await getProductById(id);
+        const data = await publicProductService.getById(id);
         
         if (isMounted) {
           if (data) {

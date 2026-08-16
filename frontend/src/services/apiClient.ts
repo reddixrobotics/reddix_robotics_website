@@ -56,10 +56,6 @@ apiClient.interceptors.response.use(
     // 401 → clear credentials and redirect to login
     if (status === 401) {
       clearAccessToken();
-      // Only redirect if we are trying to access admin pages
-      if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
-        window.location.href = '/admin/login';
-      }
     }
 
     // Re-throw with a normalised message so consuming code can use error.message

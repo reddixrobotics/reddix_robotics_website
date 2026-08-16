@@ -4,6 +4,7 @@ import {
   IsArray,
   IsEnum,
   IsOptional,
+  IsDateString,
 } from 'class-validator';
 import { CareerStatus } from '@prisma/client';
 
@@ -31,6 +32,35 @@ export class CreateInternshipDto {
   @IsArray()
   @IsString({ each: true })
   requirements: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  skills?: string[];
+
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  applicationLink?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @IsDateString()
+  @IsOptional()
+  deadline?: string;
 
   @IsEnum(CareerStatus)
   @IsOptional()
@@ -62,6 +92,35 @@ export class UpdateInternshipDto {
   @IsString({ each: true })
   @IsOptional()
   requirements?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  skills?: string[];
+
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  applicationLink?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @IsDateString()
+  @IsOptional()
+  deadline?: string;
 
   @IsEnum(CareerStatus)
   @IsOptional()

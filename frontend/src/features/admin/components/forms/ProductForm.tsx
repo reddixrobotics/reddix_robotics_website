@@ -12,7 +12,7 @@ export interface ProductFormData {
   stock: number;
   specifications: string;
   features: string;
-  // images handle simulated
+  images: string[];
 }
 
 interface ProductFormProps {
@@ -22,6 +22,9 @@ interface ProductFormProps {
   isSubmitting: boolean;
 }
 
+import { uploadFile } from '../../services/apiService';
+
+// ... (keep the rest unchanged until the component render)
 export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -31,8 +34,11 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     depositPercentage: 20,
     stock: 0,
     specifications: '',
-    features: ''
+    features: '',
+    images: []
   });
+
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -45,8 +51,23 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     onSubmit(formData);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const url = await uploadFile(file);
+      setFormData(prev => ({ ...prev, images: [url] }));
+    } catch (err: any) {
+      alert('Failed to upload image: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
-    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting}>
+    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting || uploadingImage}>
       <FormRow>
         <FormField label="Product Name">
           <input 
@@ -69,6 +90,9 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
             <option value="Mobile Robots">Mobile Robots</option>
             <option value="Drones">Drones</option>
             <option value="Components">Components</option>
+            <option value="Sensors & Vision">Sensors & Vision</option>
+            <option value="Compute Modules">Compute Modules</option>
+            <option value="Accessories">Accessories</option>
           </select>
         </FormField>
       </FormRow>
@@ -119,11 +143,12 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
         </FormField>
       </FormRow>
 
-      <FormField label="Specifications (JSON or text)">
+      <FormField label="Specifications (Key: Value per line)">
         <textarea 
           className={TextareaClass}
           value={formData.specifications}
           onChange={e => setFormData({ ...formData, specifications: e.target.value })}
+          placeholder="Weight: 10kg&#10;Power: 220V"
         />
       </FormField>
 
@@ -135,8 +160,20 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
         />
       </FormField>
 
-      <FormField label="Product Images">
-        <FileUpload multiple accept="image/*" />
+      <FormField label="Product Image">
+        <div className="flex flex-col gap-2">
+          {formData.images?.[0] && (
+            <img src={formData.images[0]} alt="Preview" className="h-24 w-24 object-cover rounded border border-zinc-700" />
+          )}
+          <input 
+            type="file" 
+            accept="image/*"
+            className={InputClass} 
+            onChange={handleImageUpload}
+            disabled={uploadingImage}
+          />
+          {uploadingImage && <span className="text-sm text-brand">Uploading...</span>}
+        </div>
       </FormField>
     </AdminForm>
   );

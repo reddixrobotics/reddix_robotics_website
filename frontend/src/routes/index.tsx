@@ -7,7 +7,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import apiClient from '@/services/apiClient';
 import { fetchAdminSession } from '@/services/authSession';
-import UserGuard from './UserGuard';
+import RoleGuard from './RoleGuard';
 
 // ─── Page loading fallback ────────────────────────────────────────────────────
 
@@ -45,8 +45,8 @@ function AdminGuard() {
     fetchAdminSession()
       .then((res) => {
         if (!active) return;
-        if (res.data.authenticated && res.data.authStatus) {
-          setAuthStatus(res.data.authStatus);
+        if (res.data.authenticated) {
+          setAuthStatus(res.data.authStatus || 'AUTHENTICATED');
         } else {
           setAuthStatus(null);
         }
@@ -81,6 +81,7 @@ const CareersPage  = lazy(() => import('@/pages/CareersPage'));
 const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
 const ProductDetailsPage = lazy(() => import('@/pages/ProductDetailsPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
+const WishlistPage = lazy(() => import('@/pages/WishlistPage'));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
 const PaymentPage = lazy(() => import('@/pages/PaymentPage'));
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'));
@@ -109,10 +110,14 @@ const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
 const AdminEmployees = lazy(() => import('@/pages/admin/AdminEmployees'));
 const AdminProjects = lazy(() => import('@/pages/admin/AdminProjects'));
+const AdminFeaturedProjects = lazy(() => import('@/pages/admin/AdminFeaturedProjects'));
 const AdminWorkshops = lazy(() => import('@/pages/admin/AdminWorkshops'));
 const AdminJobs = lazy(() => import('@/pages/admin/AdminJobs'));
+const AdminInternships = lazy(() => import('@/pages/admin/AdminInternships'));
+const AdminUpcomingProjects = lazy(() => import('@/pages/admin/AdminUpcomingProjects'));
 const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 const AdminCompany = lazy(() => import('@/pages/admin/AdminCompany'));
+const AdminJourneys = lazy(() => import('@/pages/admin/AdminJourneys'));
 const AdminPlaceholderPage = lazy(() => import('@/pages/admin/AdminPlaceholderPage'));
 
 const DesignSystemPage = lazy(() => import('@/pages/DesignSystemPage'));
@@ -127,43 +132,44 @@ export const router = createBrowserRouter([
     children: [
       { index: true,               element: withSuspense(HomePage) },
       { path: ROUTES.ABOUT,        element: withSuspense(AboutPage) },
-      { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
-      { path: ROUTES.CAREERS_JOB_APPLY, element: withSuspense(JobApplicationPage) },
-      { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: withSuspense(InternshipApplicationPage) },
-      { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: withSuspense(WorkshopRegistrationPage) },
-      { path: ROUTES.CAREERS_GENERAL_APPLY, element: withSuspense(GeneralApplicationPage) },
-      { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
-      { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
-      { path: ROUTES.CART,         element: withSuspense(CartPage) },
-      { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
-      { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
-      { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
-      { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
-      { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
-      { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
       { path: ROUTES.CONTACT,      element: withSuspense(ContactPage) },
       { path: ROUTES.BLOG,         element: withSuspense(BlogPage) },
       { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
       { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
+      { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
+      { path: ROUTES.CAREERS_JOB_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div></RoleGuard> },
+      { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div></RoleGuard> },
+      { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div></RoleGuard> },
+      { path: ROUTES.CAREERS_GENERAL_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div></RoleGuard> },
       { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
-    ],
-  },
-  {
-    path: ROUTES.DASHBOARD,
-    element: <UserGuard />,
-    children: [
+      { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
+      
+      // USER & GUEST restricted routes
       {
-        path: '',
-        element: <DashboardLayout />,
+        element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
         children: [
-          { index: true, element: withSuspense(DashboardOverview) },
-          { path: 'profile', element: withSuspense(DashboardProfile) },
-          { path: 'orders', element: withSuspense(DashboardOrders) },
-          { path: 'payments', element: withSuspense(DashboardPayments) },
-          { path: 'applications', element: withSuspense(DashboardApplications) },
-          { path: 'settings', element: withSuspense(DashboardSettings) },
+          { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
+          { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
+          { path: ROUTES.CART,         element: withSuspense(CartPage) },
+          { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
+          { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
+          { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
+          { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
+          { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
+          { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
         ],
-      }
+      },
+
+      // USER ONLY restricted routes (Replaces the old Dashboard Sidebar layout)
+      {
+        element: <RoleGuard allowedRoles={['USER']} />,
+        children: [
+          { path: ROUTES.WISHLIST, element: withSuspense(WishlistPage) },
+          { path: ROUTES.PROFILE, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardProfile)}</div> },
+          { path: ROUTES.ORDERS,  element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardOrders)}</div> },
+          { path: ROUTES.PAYMENT, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardPayments)}</div> },
+        ],
+      },
     ],
   },
   {
@@ -173,25 +179,24 @@ export const router = createBrowserRouter([
       { index: true, element: withSuspense(AdminOverview) },
       { path: 'products', element: withSuspense(AdminProducts) },
       { path: 'employees', element: withSuspense(AdminEmployees) },
+      { path: 'journeys', element: withSuspense(AdminJourneys) },
       { path: 'projects', element: withSuspense(AdminProjects) },
+      { path: 'featured-projects', element: withSuspense(AdminFeaturedProjects) },
       { path: 'workshops', element: withSuspense(AdminWorkshops) },
       { path: 'jobs', element: withSuspense(AdminJobs) },
+      { path: 'upcoming-projects', element: withSuspense(AdminUpcomingProjects) },
       // Other routes fallback to placeholder for now (categories, internships, etc.)
       { path: 'company', element: withSuspense(AdminCompany) },
       { path: 'categories', element: withSuspense(AdminPlaceholderPage) },
       { path: 'orders', element: withSuspense(AdminPlaceholderPage) },
       { path: 'payments', element: withSuspense(AdminPlaceholderPage) },
-      { path: 'internships', element: withSuspense(AdminPlaceholderPage) },
+      { path: 'internships', element: withSuspense(AdminInternships) },
       { path: 'applications', element: withSuspense(AdminPlaceholderPage) },
       { path: 'contractors', element: withSuspense(AdminPlaceholderPage) },
       { path: 'users', element: withSuspense(AdminPlaceholderPage) },
       { path: 'messages', element: withSuspense(AdminPlaceholderPage) },
       { path: 'settings', element: withSuspense(AdminSettings) },
     ],
-  },
-  {
-    path: ROUTES.NOT_FOUND,
-    element: withSuspense(NotFoundPage),
-  },
+  }
 ]);
 

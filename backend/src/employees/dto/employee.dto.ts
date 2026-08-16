@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, IsUrl } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, IsUrl, IsArray } from 'class-validator';
 
 export class CreateEmployeeDto {
   @IsString()
@@ -28,6 +28,11 @@ export class CreateEmployeeDto {
   @IsString()
   @IsNotEmpty()
   profilePhoto: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  skills?: string[];
 }
 
 export class UpdateEmployeeDto {
@@ -58,4 +63,9 @@ export class UpdateEmployeeDto {
   @IsString()
   @IsOptional()
   profilePhoto?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  skills?: string[];
 }

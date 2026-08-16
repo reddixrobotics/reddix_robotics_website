@@ -4,11 +4,11 @@ export declare class CompanyService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     getInfo(): Promise<{
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         phone: string;
         country: string;
         aboutContent: string;
@@ -20,11 +20,11 @@ export declare class CompanyService {
         socialLinks: import("@prisma/client/runtime/client").JsonValue | null;
     }>;
     updateInfo(dto: UpdateCompanyInfoDto): Promise<{
-        name: string;
         id: string;
-        email: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         phone: string;
         country: string;
         aboutContent: string;

@@ -21,13 +21,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-lg relative z-10">
         
-        {/* Back Link */}
-        <Link 
-          to={ROUTES.HOME}
-          className="inline-flex items-center text-body-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-8 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--bg-primary)] focus:ring-offset-[var(--color-brand)] rounded px-2 py-1"
-        >
-          <ArrowLeft size={16} className="mr-2" /> Back to Home
-        </Link>
+
 
         {/* Card */}
         <div className="bg-[var(--bg-secondary)]/80 backdrop-blur-xl border border-[var(--border-strong)] shadow-2xl rounded-3xl p-8 md:p-12">

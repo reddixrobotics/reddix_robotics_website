@@ -12,83 +12,91 @@ export declare class ProductsService {
         availability?: boolean;
     }): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     findOne(id: string): Promise<{
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     create(dto: CreateProductDto): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }) | null>;
     update(id: string, dto: UpdateProductDto): Promise<({
         images: {
-            url: string;
+            productId: string;
             id: string;
             createdAt: Date;
-            productId: string;
+            url: string;
             isPrimary: boolean;
         }[];
     } & {
-        name: string;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
+        name: string;
         category: string;
         description: string;
         price: number;
+        depositPercentage: number;
+        stock: number;
         features: string[];
         technicalSpecifications: import("@prisma/client/runtime/client").JsonValue | null;
         availability: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }) | null>;
     remove(id: string): Promise<{
         success: boolean;
