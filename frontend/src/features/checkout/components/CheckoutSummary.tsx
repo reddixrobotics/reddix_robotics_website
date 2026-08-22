@@ -7,9 +7,14 @@ interface CheckoutSummaryProps {
 }
 
 export default function CheckoutSummary({ items, subtotal }: CheckoutSummaryProps) {
-  const depositRatio = 0.50; // 50% deposit
-  const requiredDeposit = subtotal * depositRatio;
-  const remainingBalance = subtotal - requiredDeposit;
+  const advanceAmount = items.reduce((total, item) => {
+    const price = item.product.price ?? (item.product as any).basePrice ?? 0;
+    const depositPerc = item.product.depositPercentage ?? 50;
+    return total + (price * (depositPerc / 100) * item.quantity);
+  }, 0);
+  
+  const remainingBalance = subtotal - advanceAmount;
+  const effectivePercentage = subtotal > 0 ? Math.round((advanceAmount / subtotal) * 100) : 0;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -55,12 +60,12 @@ export default function CheckoutSummary({ items, subtotal }: CheckoutSummaryProp
         
         <div className="flex justify-between items-center text-body-md text-[var(--text-secondary)]">
           <span>Deposit Required</span>
-          <span>50%</span>
+          <span>{effectivePercentage}%</span>
         </div>
         
         <div className="flex justify-between items-center text-heading-md text-[var(--color-brand)] pt-2 border-t border-[var(--border-strong)] mt-2">
           <span>Pay Now (Advance)</span>
-          <span>{formatPrice(requiredDeposit)}</span>
+          <span>{formatPrice(advanceAmount)}</span>
         </div>
         
         <div className="flex justify-between items-center text-body-md text-[var(--text-secondary)] pt-2">

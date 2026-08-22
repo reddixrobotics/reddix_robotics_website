@@ -16,7 +16,6 @@ const coreNav = [
 ];
 
 const catalogNav = [
-  { name: 'Featured Projects', href: ROUTES.ADMIN_FEATURED_PROJECTS, icon: Briefcase },
   { name: 'Portfolio Projects', href: ROUTES.ADMIN_PROJECTS, icon: Briefcase },
   { name: 'Products', href: ROUTES.ADMIN_PRODUCTS, icon: Package },
   { name: 'Categories', href: ROUTES.ADMIN_CATEGORIES, icon: Tags },

@@ -28,6 +28,7 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   PROFILE: '/profile',
+  APPLICATIONS: '/profile/applications',
   ORDERS: '/orders',
   PAYMENT: '/payment',
   ADMIN: '/admin',

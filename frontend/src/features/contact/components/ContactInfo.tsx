@@ -17,8 +17,8 @@ export default function ContactInfo() {
             <div>
               <h4 className="text-heading-sm mb-1">Email Us</h4>
               <p className="text-body-md text-[var(--text-secondary)] mb-2">For general inquiries and support.</p>
-              <a href="mailto:contact@reddixrobotics.com" className="text-body-md font-bold text-[var(--color-brand)] hover:underline">
-                contact@reddixrobotics.com
+              <a href="mailto:reddixrobotics@gmail.com" className="text-body-md font-bold text-[var(--color-brand)] hover:underline">
+                reddixrobotics@gmail.com
               </a>
             </div>
           </div>
@@ -30,8 +30,8 @@ export default function ContactInfo() {
             <div>
               <h4 className="text-heading-sm mb-1">Call Us</h4>
               <p className="text-body-md text-[var(--text-secondary)] mb-2">Mon-Fri from 9am to 6pm IST.</p>
-              <a href="tel:+15550000000" className="text-body-md font-bold text-[var(--color-brand)] hover:underline">
-                +1 (555) 000-0000
+              <a href="tel:+917036780248" className="text-body-md font-bold text-[var(--color-brand)] hover:underline">
+                +91 7036780248
               </a>
             </div>
           </div>

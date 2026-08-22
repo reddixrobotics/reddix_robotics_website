@@ -17,6 +17,7 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { UserAuthGuard } from './guards/user-auth.guard';
 import { CurrentSession } from './decorators/current-session.decorator';
 import type { SessionData } from './session.service';
 import { LoginDto } from './dto/login.dto';
@@ -306,5 +307,52 @@ export class AuthController {
       resetPasswordDto.token,
       resetPasswordDto.newPassword,
     );
+  }
+
+  @Get('user/profile')
+  @UseGuards(UserAuthGuard)
+  async getUserProfile(@Req() req: Request) {
+    const userId = (req as any).user.id;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+      }
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
+  }
+
+  @Get('user/applications')
+  @UseGuards(UserAuthGuard)
+  async getUserApplications(@Req() req: Request) {
+    const userId = (req as any).user.id;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const [applications, registrations] = await Promise.all([
+      this.prisma.application.findMany({
+        where: { email: user.email },
+        include: { job: true, internship: true },
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.workshopRegistration.findMany({
+        where: { email: user.email },
+        include: { workshop: true },
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
+
+    return { applications, registrations };
   }
 }

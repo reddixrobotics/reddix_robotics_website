@@ -41,8 +41,9 @@ export const FOOTER_LINKS: Array<{ title: string; links: NavItem[] }> = [
     title: 'Connect',
     links: [
       { label: 'Contact',   href: ROUTES.CONTACT },
-      { label: 'LinkedIn',  href: 'https://linkedin.com', external: true },
-      { label: 'GitHub',    href: 'https://github.com',   external: true },
+      { label: 'LinkedIn',  href: 'https://www.linkedin.com/company/reddix-robotics/', external: true },
+      { label: 'Instagram', href: 'https://www.instagram.com/reddixrobotics?igsi=NW43ZWR3eTZnY2J1&utm_source=qr', external: true },
+      { label: 'YouTube',   href: 'https://youtube.com/@reddix_robotics?si=lhQdRPZjoQBJ-IfJ', external: true },
     ],
   },
 ];
@@ -51,4 +52,5 @@ export const FOOTER_LINKS: Array<{ title: string; links: NavItem[] }> = [
 
 export const BRAND_NAME     = 'Reddix Robotics';
 export const BRAND_TAGLINE  = 'Pioneering Autonomous Intelligence';
-export const BRAND_EMAIL    = 'hello@reddixrobotics.com';
+export const BRAND_EMAIL    = 'reddixrobotics@gmail.com';
+export const BRAND_PHONE    = '7036780248';

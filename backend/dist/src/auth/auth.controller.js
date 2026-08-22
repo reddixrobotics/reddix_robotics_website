@@ -18,6 +18,7 @@ const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const session_service_1 = require("./session.service");
 const admin_auth_guard_1 = require("./guards/admin-auth.guard");
+const user_auth_guard_1 = require("./guards/user-auth.guard");
 const current_session_decorator_1 = require("./decorators/current-session.decorator");
 const login_dto_1 = require("./dto/login.dto");
 const signup_dto_1 = require("./dto/signup.dto");
@@ -189,6 +190,44 @@ let AuthController = class AuthController {
     async resetPassword(resetPasswordDto) {
         return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
     }
+    async getUserProfile(req) {
+        const userId = req.user.id;
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                createdAt: true,
+            }
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('User not found');
+        }
+        return user;
+    }
+    async getUserApplications(req) {
+        const userId = req.user.id;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new common_1.UnauthorizedException('User not found');
+        }
+        const [applications, registrations] = await Promise.all([
+            this.prisma.application.findMany({
+                where: { email: user.email },
+                include: { job: true, internship: true },
+                orderBy: { createdAt: 'desc' }
+            }),
+            this.prisma.workshopRegistration.findMany({
+                where: { email: user.email },
+                include: { workshop: true },
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
+        return { applications, registrations };
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -287,6 +326,22 @@ __decorate([
     __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "resetPassword", null);
+__decorate([
+    (0, common_1.Get)('user/profile'),
+    (0, common_1.UseGuards)(user_auth_guard_1.UserAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getUserProfile", null);
+__decorate([
+    (0, common_1.Get)('user/applications'),
+    (0, common_1.UseGuards)(user_auth_guard_1.UserAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getUserApplications", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('api/auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,

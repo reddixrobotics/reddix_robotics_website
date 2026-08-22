@@ -79,8 +79,8 @@ export class AuthService {
       // Store in Redis (5 minutes TTL)
       await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-      // Send via email
-      await this.mailService.sendEmailOtp(admin.email, otp);
+      // Send via email asynchronously
+      this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
 
       const { token, session } = await this.sessionService.createSession(
         admin.id,
@@ -186,8 +186,8 @@ export class AuthService {
     // Store in Redis (5 minutes TTL)
     await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-    // Send via email
-    await this.mailService.sendEmailOtp(admin.email, otp);
+    // Send via email asynchronously
+    this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
   }
 
   /**
@@ -235,8 +235,8 @@ export class AuthService {
       throw new UnauthorizedException('Failed to update session');
     }
 
-    // Send successful login alert post-2FA verification
-    await this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown');
+    // Send successful login alert post-2FA verification asynchronously
+    this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown').catch(e => console.error('Failed to send login alert email:', e));
 
     return updatedSession;
   }

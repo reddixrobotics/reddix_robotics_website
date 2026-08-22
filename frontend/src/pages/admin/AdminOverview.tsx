@@ -1,21 +1,62 @@
+import { useState, useEffect } from 'react';
 import { adminMockData } from '@/data/adminMockData';
 import { AdminStatCard } from '@/features/admin/components/AdminStatCard';
 import { RevenueChart } from '@/features/admin/components/AdminCharts';
 import { AdminDataTable } from '@/features/admin/components/AdminDataTable';
-import { Users, Package, ShoppingCart, IndianRupee, FileText, BookOpen, MessageSquare, AlertCircle, MapPin } from 'lucide-react';
+import { Users, Package, ShoppingCart, IndianRupee, FileText, BookOpen, MessageSquare, AlertCircle, MapPin, DollarSign } from 'lucide-react';
 import { StatusBadge } from '@/features/dashboard/components/DashboardUI';
 import { Button } from '@/components/ui';
+import { orderService, paymentService } from '@/features/admin/services/apiService';
+import { Link } from 'react-router-dom';
 
 export default function AdminOverview() {
-  const { stats, revenueData, recentActivity, orders } = adminMockData;
+  const { stats, revenueData, recentActivity } = adminMockData;
+  const [realOrders, setRealOrders] = useState<any[]>([]);
+  const [realPayments, setRealPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [ordersRes, paymentsRes] = await Promise.all([
+          orderService.getAll().catch(() => []),
+          paymentService.getAll().catch(() => [])
+        ]);
+        setRealOrders(ordersRes || []);
+        setRealPayments(paymentsRes || []);
+      } catch (err) {
+        console.error('Error fetching dashboard data', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Compute real stats
+  const totalOrders = realOrders.length;
+  const pendingOrders = realOrders.filter(o => ['ORDER_PLACED', 'PROCESSING'].includes(o.status)).length;
+  const completedOrders = realOrders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length;
+  
+  const successfulPayments = realPayments.filter(p => p.status === 'SUCCESS');
+  const totalRevenue = successfulPayments.reduce((sum, p) => sum + p.amount, 0);
 
   const orderColumns = [
-    { header: 'Order ID', accessor: 'id' as const, cell: (item: any) => <span className="text-red-500 font-bold">{item.id}</span> },
-    { header: 'Customer', accessor: 'customer' as const },
-    { header: 'Date', accessor: 'date' as const },
-    { header: 'Amount', accessor: 'amount' as const, cell: (item: any) => `₹${item.amount.toLocaleString()}` },
-    { header: 'Status', accessor: 'status' as const, cell: (item: any) => <StatusBadge status={item.status} /> },
-    { header: 'Action', accessor: 'id' as const, cell: () => <Button variant="outline" size="sm" className="h-7 text-xs px-2">Manage</Button> },
+    { header: 'Order ID', accessor: 'orderNumber' as const, cell: (item: any) => <span className="text-red-500 font-bold">{item.orderNumber}</span> },
+    { header: 'Customer', accessor: 'customer' as const, cell: (item: any) => item.customer?.name || 'Guest' },
+    { header: 'Date', accessor: 'createdAt' as const, cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+    { header: 'Amount', accessor: 'totalAmount' as const, cell: (item: any) => `$${item.totalAmount.toLocaleString()}` },
+    { header: 'Status', accessor: 'status' as const, cell: (item: any) => (
+      <span className="px-2 py-1 rounded text-xs font-semibold bg-zinc-800 text-zinc-300">
+        {item.status?.replace(/_/g, ' ')}
+      </span>
+    ) },
+    { header: 'Action', accessor: 'id' as const, cell: () => (
+      <Link to="/admin/orders">
+        <Button variant="outline" size="sm" className="h-7 text-xs px-2">Manage</Button>
+      </Link>
+    )},
   ];
 
   return (
@@ -34,14 +75,13 @@ export default function AdminOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <AdminStatCard title="Total Users" value={stats.totalUsers.toLocaleString()} icon={Users} />
         <AdminStatCard title="Total Products" value={stats.totalProducts} icon={Package} />
-        <AdminStatCard title="Total Orders" value={stats.totalOrders.toLocaleString()} icon={ShoppingCart} />
-        <AdminStatCard title="Revenue (YTD)" value={stats.revenue} icon={IndianRupee} />
+        <AdminStatCard title="Total Orders" value={isLoading ? '...' : totalOrders.toLocaleString()} icon={ShoppingCart} />
+        <AdminStatCard title="Total Revenue" value={isLoading ? '...' : `$${totalRevenue.toLocaleString()}`} icon={DollarSign} />
         
-        <AdminStatCard title="Pending Orders" value={stats.pendingOrders} icon={AlertCircle} />
+        <AdminStatCard title="Pending Orders" value={isLoading ? '...' : pendingOrders} icon={AlertCircle} />
         <AdminStatCard title="Applications" value={stats.applications} icon={FileText} />
         <AdminStatCard title="Workshops" value={stats.workshops} icon={BookOpen} />
-        <AdminStatCard title="Messages" value={stats.messages} icon={MessageSquare} />
-        <AdminStatCard title="Company Location" value="Silicon Valley, CA" icon={MapPin} />
+        <AdminStatCard title="Completed Orders" value={isLoading ? '...' : completedOrders} icon={Package} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -69,9 +109,8 @@ export default function AdminOverview() {
 
       {/* Data Table Section */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-4">Manage Orders</h3>
-        {/* We pass searchableKey="customer" to enable filtering by customer name */}
-        <AdminDataTable columns={orderColumns} data={orders} searchableKey="customer" itemsPerPage={5} />
+        <h3 className="text-lg font-bold text-white mb-4">Recent Orders</h3>
+        <AdminDataTable columns={orderColumns} data={realOrders} searchableKey="orderNumber" itemsPerPage={5} isLoading={isLoading} />
       </div>
 
     </div>

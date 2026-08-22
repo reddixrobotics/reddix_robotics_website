@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, ShipmentStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -16,10 +16,11 @@ export class OrdersService {
       throw new BadRequestException('Order must contain at least one item');
     }
 
-    const itemRecords: { productId: string; quantity: number; price: number }[] = [];
+    const itemRecords: { productId: string; quantity: number; price: number; depositAmount: number }[] = [];
     let subtotal = 0;
+    let advanceAmount = 0;
 
-    // Retrieve database prices and calculate subtotal
+    // Retrieve database prices and calculate subtotal and deposit
     for (const item of dto.items) {
       const product = await this.prisma.product.findUnique({
         where: { id: item.productId },
@@ -34,19 +35,23 @@ export class OrdersService {
       }
 
       const itemPrice = product.price;
+      const depositPercentage = product.depositPercentage ?? 50; // Fallback to 50 if missing
+      const itemDeposit = itemPrice * (depositPercentage / 100);
+
       subtotal += itemPrice * item.quantity;
+      advanceAmount += itemDeposit * item.quantity;
 
       itemRecords.push({
         productId: item.productId,
         quantity: item.quantity,
         price: itemPrice,
+        depositAmount: itemDeposit,
       });
     }
 
     // Server-side calculated values
     const totalAmount = subtotal;
-    const advanceAmount = totalAmount * 0.5;
-    const remainingAmount = totalAmount * 0.5;
+    const remainingAmount = totalAmount - advanceAmount;
 
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -99,6 +104,7 @@ export class OrdersService {
           include: { product: true },
         },
         customer: true,
+        shipment: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -114,6 +120,7 @@ export class OrdersService {
         items: {
           include: { product: { include: { images: true } } },
         },
+        shipment: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -131,6 +138,7 @@ export class OrdersService {
         },
         customer: true,
         payments: true,
+        shipment: true,
       },
     });
 
@@ -156,6 +164,48 @@ export class OrdersService {
           include: { product: true },
         },
         customer: true,
+        shipment: true,
+      },
+    });
+  }
+
+  /**
+   * Manually create a shipment record for an order
+   */
+  async createShipment(orderId: string, courier: string = 'DELHIVERY') {
+    const order = await this.findOne(orderId);
+    
+    if (order.shipment) {
+      throw new BadRequestException('Shipment already exists for this order');
+    }
+
+    return this.prisma.shipment.create({
+      data: {
+        orderId,
+        courier,
+        status: ShipmentStatus.CREATED,
+      },
+    });
+  }
+
+  /**
+   * Update a manual shipment with tracking info
+   */
+  async updateShipment(orderId: string, data: { awbNumber?: string; trackingUrl?: string; status?: ShipmentStatus }) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { orderId },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found for this order. Create it first.');
+    }
+
+    return this.prisma.shipment.update({
+      where: { orderId },
+      data: {
+        awbNumber: data.awbNumber || undefined,
+        trackingUrl: data.trackingUrl || undefined,
+        status: data.status || undefined,
       },
     });
   }

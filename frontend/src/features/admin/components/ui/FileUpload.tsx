@@ -1,16 +1,24 @@
 import { UploadCloud, X } from 'lucide-react';
 import { useState } from 'react';
+import { ImageCropperModal } from './ImageCropperModal';
 
 interface FileUploadProps {
   label?: string;
   multiple?: boolean;
   accept?: string;
   onChange?: (files: File[]) => void;
+  aspectRatio?: number;
 }
 
-export function FileUpload({ label = 'Upload Files', multiple = false, accept = 'image/*', onChange }: FileUploadProps) {
+export function FileUpload({ label = 'Upload Files', multiple = false, accept = 'image/*', onChange, aspectRatio = 1 }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  
+  // Cropper State
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [currentImageSrc, setCurrentImageSrc] = useState<string>('');
+  const [pendingFileIndex, setPendingFileIndex] = useState<number | null>(null);
+  const [tempFiles, setTempFiles] = useState<File[]>([]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -22,26 +30,66 @@ export function FileUpload({ label = 'Upload Files', multiple = false, accept = 
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const files = Array.from(e.dataTransfer.files);
+  const processFiles = (files: File[]) => {
+    const isImageUpload = accept.includes('image');
+    if (isImageUpload && files.length > 0) {
+      // Setup the cropper for the first image
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCurrentImageSrc(reader.result as string);
+        setTempFiles(files); // Hold all files
+        setPendingFileIndex(0); // Currently cropping the first one
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(files[0]);
+    } else {
       const newFiles = multiple ? [...selectedFiles, ...files] : [files[0]];
       setSelectedFiles(newFiles);
       if (onChange) onChange(newFiles);
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
-      const files = Array.from(e.target.files);
-      const newFiles = multiple ? [...selectedFiles, ...files] : [files[0]];
-      setSelectedFiles(newFiles);
-      if (onChange) onChange(newFiles);
+      processFiles(Array.from(e.target.files));
     }
+    e.target.value = ''; // Reset input
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    if (pendingFileIndex === null) return;
+
+    // Replace the uncropped file with the cropped one
+    const updatedTempFiles = [...tempFiles];
+    updatedTempFiles[pendingFileIndex] = croppedFile;
+
+    // Move to next file if multiple (for now we only crop the first image for simplicity, 
+    // or we can just accept the rest as is to save admin time, but typically single uploads are used)
+    const newFiles = multiple ? [...selectedFiles, ...updatedTempFiles] : [updatedTempFiles[0]];
+    setSelectedFiles(newFiles);
+    if (onChange) onChange(newFiles);
+    
+    setCropperOpen(false);
+    setPendingFileIndex(null);
+    setCurrentImageSrc('');
+    setTempFiles([]);
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setPendingFileIndex(null);
+    setCurrentImageSrc('');
+    setTempFiles([]);
   };
 
   const removeFile = (index: number) => {
@@ -90,6 +138,16 @@ export function FileUpload({ label = 'Upload Files', multiple = false, accept = 
             </div>
           ))}
         </div>
+      )}
+
+      {cropperOpen && (
+        <ImageCropperModal
+          isOpen={cropperOpen}
+          imageSrc={currentImageSrc}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          aspectRatio={aspectRatio}
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/routes/routePaths';
-import { BRAND_NAME, BRAND_TAGLINE } from '@/data';
+import { BRAND_NAME, BRAND_TAGLINE, BRAND_EMAIL, BRAND_PHONE } from '@/data';
 import { cn } from '@/utils';
 import { Mail, MapPin, Phone, Linkedin, Instagram, Youtube } from 'lucide-react';
 
@@ -17,7 +17,7 @@ export default function Footer() {
       <div className="container-content py-12 md:py-16">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           
-          {/* ── Company ───────────────────────────────────── */}
+          {/* ─── Company ───────────────────────────────────────────────────────── */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <span className="flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand)] text-sm font-bold text-white">
@@ -32,7 +32,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* ── Quick Links ───────────────────────────────── */}
+          {/* ─── Quick Links ───────────────────────────────────────────────────── */}
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
               Quick Links
@@ -63,7 +63,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ── Contact ───────────────────────────────────── */}
+          {/* ─── Contact ───────────────────────────────────────────────────────── */}
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
               Contact
@@ -71,37 +71,41 @@ export default function Footer() {
             <ul className="space-y-4">
               <li>
                 <a 
-                  href="mailto:[Email Placeholder]" 
+                  href={`mailto:${BRAND_EMAIL}`} 
                   className="flex items-start gap-3 group text-sm hover:text-[var(--color-brand)] transition-colors duration-200"
                 >
                   <Mail className="w-5 h-5 mt-0.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--color-brand)] transition-colors" />
-                  <span>[Email Placeholder]</span>
+                  <span>{BRAND_EMAIL}</span>
                 </a>
               </li>
               <li>
                 <a 
-                  href="tel:[Phone Placeholder]" 
+                  href={`tel:+91${BRAND_PHONE}`} 
                   className="flex items-start gap-3 group text-sm hover:text-[var(--color-brand)] transition-colors duration-200"
                 >
                   <Phone className="w-5 h-5 mt-0.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--color-brand)] transition-colors" />
-                  <span>[Phone Placeholder]</span>
+                  <span>+91 {BRAND_PHONE}</span>
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm">
                 <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-[var(--text-muted)]" />
-                <span>[Location Placeholder]</span>
+                <span>
+                  5th floor, Type I, APIIC, 6-B,<br />
+                  Prashanth Nagar, IDA Kukatpally,<br />
+                  Hyderabad, Telangana 500072
+                </span>
               </li>
             </ul>
           </div>
 
-          {/* ── Social ────────────────────────────────────── */}
+          {/* ─── Social ────────────────────────────────────────────────────────── */}
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
               Social
             </h3>
             <div className="flex gap-4">
               <a
-                href="[LinkedIn URL Placeholder]"
+                href="https://www.linkedin.com/company/reddix-robotics/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
@@ -110,7 +114,7 @@ export default function Footer() {
                 <Linkedin className="w-6 h-6" />
               </a>
               <a
-                href="[Instagram URL Placeholder]"
+                href="https://www.instagram.com/reddixrobotics?igsi=NW43ZWR3eTZnY2J1&utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -119,7 +123,7 @@ export default function Footer() {
                 <Instagram className="w-6 h-6" />
               </a>
               <a
-                href="[YouTube URL Placeholder]"
+                href="https://youtube.com/@reddix_robotics?si=lhQdRPZjoQBJ-IfJ"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
@@ -131,7 +135,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── Bottom Section (Legal & Copyright) ────────── */}
+        {/* ─── Bottom Section (Legal & Copyright) ────────────────────────────── */}
         <div className="mt-16 pt-8 border-t border-[var(--border-primary)] flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-center md:items-start gap-1">
             <p className="text-sm text-[var(--text-muted)]">

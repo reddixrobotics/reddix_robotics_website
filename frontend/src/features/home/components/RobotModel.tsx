@@ -8,7 +8,7 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
   const group = useRef<THREE.Group>(null);
   
   // Lazy-load the GLTF model (draco compression or optimized load depending on how it's served)
-  const { scene, animations } = useGLTF('/animated_humanoid_robot/scene.gltf');
+  const { scene, animations } = useGLTF('/robotiics_dog/robotiics_dog.gltf');
   const { actions } = useAnimations(animations, group);
   const shouldReduceMotion = useReducedMotion();
 
@@ -23,7 +23,7 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
 
     // 3. Calculate scale factor so the largest dimension maps to a target size
     const maxDim = Math.max(size.x, size.y, size.z);
-    const targetSize = 5;
+    const targetSize = 3.5;
     const scale = maxDim > 0 ? targetSize / maxDim : 1;
 
     // 4. Re-center
@@ -114,4 +114,4 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
 }
 
 // Preload the model so it's ready quickly
-useGLTF.preload('/animated_humanoid_robot/scene.gltf');
+useGLTF.preload('/robotiics_dog/robotiics_dog.gltf');

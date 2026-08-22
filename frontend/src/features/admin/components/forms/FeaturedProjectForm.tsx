@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminForm, FormField, FormRow, InputClass, TextareaClass } from '../ui/AdminForm';
 import { FileUpload } from '../ui/FileUpload';
-import { FeaturedProjectFormData } from '../../services/apiService';
+import { FeaturedProjectFormData, uploadFile } from '../../services/apiService';
 
 interface FeaturedProjectFormProps {
   initialData?: FeaturedProjectFormData | null;
@@ -20,6 +20,8 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
     status: 'PUBLISHED'
   });
 
+  const [isUploading, setIsUploading] = useState(false);
+
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -31,11 +33,29 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.imageUrl) {
+      alert("Please upload an image.");
+      return;
+    }
     onSubmit(formData);
   };
 
+  const handleFileUpload = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+    try {
+      setIsUploading(true);
+      const url = await uploadFile(files[0]);
+      setFormData({ ...formData, imageUrl: url });
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      alert('Failed to upload project image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting}>
+    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting || isUploading}>
       <FormRow>
         <FormField label="Project Title">
           <input required type="text" className={InputClass} value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
@@ -61,8 +81,19 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
         <textarea required className={TextareaClass} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
       </FormField>
 
-      <FormField label="Project Cover Image URL">
-        <input required type="text" className={InputClass} value={formData.imageUrl} onChange={e => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" />
+      <FormField label="Project Cover Image">
+        <FileUpload 
+          accept="image/*" 
+          onChange={handleFileUpload} 
+          aspectRatio={16/9} // Featured projects often use wider layouts
+        />
+        {isUploading && <p className="mt-2 text-sm text-brand animate-pulse">Uploading image...</p>}
+        {formData.imageUrl && !isUploading && (
+          <div className="mt-4">
+            <p className="text-xs text-zinc-400 mb-2">Current Image Preview:</p>
+            <img src={formData.imageUrl} alt="Preview" className="w-full max-w-sm rounded-lg border border-zinc-700 shadow-md object-cover" />
+          </div>
+        )}
       </FormField>
     </AdminForm>
   );

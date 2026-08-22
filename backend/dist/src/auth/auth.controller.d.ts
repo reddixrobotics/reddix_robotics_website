@@ -81,4 +81,86 @@ export declare class AuthController {
     resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{
         message: string;
     }>;
+    getUserProfile(req: Request): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        email: string;
+        role: "USER";
+        phone: string | null;
+    }>;
+    getUserApplications(req: Request): Promise<{
+        applications: ({
+            job: {
+                id: string;
+                description: string;
+                createdAt: Date;
+                updatedAt: Date;
+                type: string;
+                status: import("@prisma/client").$Enums.CareerStatus;
+                title: string;
+                department: string;
+                location: string;
+                experienceLevel: string;
+                salary: string | null;
+                requirements: string[];
+                responsibilities: string[];
+            } | null;
+            internship: {
+                id: string;
+                description: string;
+                createdAt: Date;
+                updatedAt: Date;
+                type: string | null;
+                status: import("@prisma/client").$Enums.CareerStatus;
+                title: string;
+                department: string;
+                location: string | null;
+                requirements: string[];
+                company: string | null;
+                duration: string;
+                stipend: string | null;
+                skills: string[];
+                applicationLink: string | null;
+                imageUrl: string | null;
+                deadline: Date | null;
+            } | null;
+        } & {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string;
+            type: import("@prisma/client").$Enums.ApplicationType;
+            phone: string;
+            jobId: string | null;
+            internshipId: string | null;
+            resumeUrl: string;
+            coverLetter: string | null;
+            status: import("@prisma/client").$Enums.ApplicationStatus;
+        })[];
+        registrations: ({
+            workshop: {
+                id: string;
+                description: string;
+                createdAt: Date;
+                updatedAt: Date;
+                date: Date;
+                status: import("@prisma/client").$Enums.WorkshopStatus;
+                title: string;
+                location: string;
+                duration: string;
+                time: string;
+                capacity: number;
+            };
+        } & {
+            id: string;
+            name: string;
+            createdAt: Date;
+            email: string;
+            phone: string;
+            status: import("@prisma/client").$Enums.RegistrationStatus;
+            workshopId: string;
+        })[];
+    }>;
 }

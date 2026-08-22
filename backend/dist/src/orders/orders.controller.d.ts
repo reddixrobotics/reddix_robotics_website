@@ -3,11 +3,22 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import type { SessionData } from '../auth/session.service';
 import { AuditLogService } from '../audit/audit-log.service';
+import { UpdateShipmentDto } from './dto/update-shipment.dto';
 export declare class OrdersController {
     private readonly ordersService;
     private readonly auditLogService;
     constructor(ordersService: OrdersService, auditLogService: AuditLogService);
     findAll(): Promise<({
+        shipment: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.ShipmentStatus;
+            orderId: string;
+            courier: string;
+            awbNumber: string | null;
+            trackingUrl: string | null;
+        } | null;
         items: ({
             product: {
                 id: string;
@@ -45,9 +56,9 @@ export declare class OrdersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;
@@ -56,6 +67,16 @@ export declare class OrdersController {
         paymentStatus: import("@prisma/client").$Enums.PaymentStatus;
     })[]>;
     findOne(id: string): Promise<{
+        shipment: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.ShipmentStatus;
+            orderId: string;
+            courier: string;
+            awbNumber: string | null;
+            trackingUrl: string | null;
+        } | null;
         items: ({
             product: {
                 id: string;
@@ -96,16 +117,19 @@ export declare class OrdersController {
             status: string;
             orderId: string;
             amount: number;
-            transactionId: string;
+            currency: string;
+            transactionId: string | null;
+            razorpayOrderId: string | null;
+            razorpayPaymentId: string | null;
             paymentMethod: string;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;
@@ -151,9 +175,9 @@ export declare class OrdersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;
@@ -162,6 +186,16 @@ export declare class OrdersController {
         paymentStatus: import("@prisma/client").$Enums.PaymentStatus;
     }>;
     updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        shipment: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.ShipmentStatus;
+            orderId: string;
+            courier: string;
+            awbNumber: string | null;
+            trackingUrl: string | null;
+        } | null;
         items: ({
             product: {
                 id: string;
@@ -199,14 +233,36 @@ export declare class OrdersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;
         advanceAmount: number;
         remainingAmount: number;
         paymentStatus: import("@prisma/client").$Enums.PaymentStatus;
+    }>;
+    createShipment(id: string, body: {
+        courier?: string;
+    }, session: SessionData, ip: string, userAgent: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import("@prisma/client").$Enums.ShipmentStatus;
+        orderId: string;
+        courier: string;
+        awbNumber: string | null;
+        trackingUrl: string | null;
+    }>;
+    updateShipment(id: string, body: UpdateShipmentDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import("@prisma/client").$Enums.ShipmentStatus;
+        orderId: string;
+        courier: string;
+        awbNumber: string | null;
+        trackingUrl: string | null;
     }>;
 }

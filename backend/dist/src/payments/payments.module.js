@@ -10,6 +10,7 @@ exports.PaymentsModule = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
 const payments_controller_1 = require("./payments.controller");
+const admin_payments_controller_1 = require("./admin-payments.controller");
 const auth_module_1 = require("../auth/auth.module");
 let PaymentsModule = class PaymentsModule {
 };
@@ -18,7 +19,7 @@ exports.PaymentsModule = PaymentsModule = __decorate([
     (0, common_1.Module)({
         imports: [auth_module_1.AuthModule],
         providers: [payments_service_1.PaymentsService],
-        controllers: [payments_controller_1.PaymentsController],
+        controllers: [payments_controller_1.PaymentsController, admin_payments_controller_1.AdminPaymentsController],
         exports: [payments_service_1.PaymentsService],
     })
 ], PaymentsModule);

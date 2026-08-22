@@ -59,6 +59,7 @@ export const dashboardData = {
     email: 'alex.mercer@example.com',
     company: 'TechCorp Industries',
     role: 'Procurement Manager',
-    phone: '+91 98765 43210'
+    phone: '+91 98765 43210',
+    location: 'Bangalore, India'
   }
 };

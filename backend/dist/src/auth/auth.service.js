@@ -95,7 +95,7 @@ let AuthService = class AuthService {
             }
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             await this.redis.set(`email_otp:${admin.id}`, otp, 300);
-            await this.mailService.sendEmailOtp(admin.email, otp);
+            this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
             const { token, session } = await this.sessionService.createSession(admin.id, admin.role, 'PENDING_EMAIL_OTP', ipAddress, userAgent);
             return {
                 requireEmailOtp: true,
@@ -154,7 +154,7 @@ let AuthService = class AuthService {
         }
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         await this.redis.set(`email_otp:${admin.id}`, otp, 300);
-        await this.mailService.sendEmailOtp(admin.email, otp);
+        this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
     }
     async verify2fa(token, totpCode, ipAddress, userAgent) {
         const session = await this.sessionService.verifySession(token);
@@ -182,7 +182,7 @@ let AuthService = class AuthService {
         if (!updatedSession) {
             throw new common_1.UnauthorizedException('Failed to update session');
         }
-        await this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown');
+        this.mailService.sendLoginAlert(admin.email, ipAddress || 'Unknown', userAgent || 'Unknown').catch(e => console.error('Failed to send login alert email:', e));
         return updatedSession;
     }
     async logout(token) {

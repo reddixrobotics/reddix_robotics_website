@@ -342,6 +342,7 @@ export const jobService = {
       location: j.location,
       employmentType: j.type,
       experience: j.experienceLevel,
+      salary: j.salary || '',
       skills: Array.isArray(j.requirements) ? j.requirements.join(', ') : '',
       description: j.description,
     }));
@@ -358,6 +359,7 @@ export const jobService = {
       location: j.location,
       employmentType: j.type,
       experience: j.experienceLevel,
+      salary: j.salary || '',
       skills: Array.isArray(j.requirements) ? j.requirements.join(', ') : '',
       description: j.description,
     };
@@ -370,6 +372,7 @@ export const jobService = {
       location: item.location,
       type: item.employmentType,
       experienceLevel: item.experience,
+      salary: item.salary,
       requirements: item.skills.split(',').map(s => s.trim()).filter(Boolean),
       responsibilities: [],
       description: item.description,
@@ -386,6 +389,7 @@ export const jobService = {
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.employmentType !== undefined) payload.type = updates.employmentType;
     if (updates.experience !== undefined) payload.experienceLevel = updates.experience;
+    if (updates.salary !== undefined) payload.salary = updates.salary;
     if (updates.skills !== undefined) {
       payload.requirements = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
     }
@@ -512,7 +516,7 @@ export const featuredProjectService = {
 
   update: async (id: string, payload: Partial<FeaturedProjectFormData>): Promise<FeaturedProjectFormData> => {
     try {
-      const res = await apiClient.patch<any>(`/api/admin/featured-projects/${id}`, payload);
+      const res = await apiClient.put<any>(`/api/admin/featured-projects/${id}`, payload);
       return res.data;
     } catch (error) {
       console.error('Failed to update featured project', error);
@@ -625,5 +629,99 @@ export const internshipService = {
 
   async delete(id: string | number): Promise<void> {
     await apiClient.delete(`/api/admin/careers/internships/${id}`);
+  }
+};
+
+// ─── Applications & Registrations ──────────────────────────────────────────────
+
+export interface ApplicationData {
+  id: string;
+  type: 'JOB' | 'INTERNSHIP' | 'GENERAL';
+  jobId?: string;
+  internshipId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  resumeUrl: string;
+  coverLetter?: string;
+  status: string;
+  createdAt: string;
+  job?: { title: string };
+  internship?: { title: string };
+}
+
+export interface WorkshopRegistrationData {
+  id: string;
+  workshopId: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  createdAt: string;
+  workshop?: { title: string };
+}
+
+export const applicationService = {
+  async getAllApplications(): Promise<ApplicationData[]> {
+    const res = await apiClient.get<ApplicationData[]>('/api/admin/careers/applications');
+    return res.data;
+  },
+
+  async updateApplicationStatus(id: string, status: string): Promise<ApplicationData> {
+    const res = await apiClient.patch<ApplicationData>(`/api/admin/careers/applications/${id}/status`, { status });
+    return res.data;
+  },
+
+  async getAllWorkshopRegistrations(): Promise<WorkshopRegistrationData[]> {
+    const res = await apiClient.get<WorkshopRegistrationData[]>('/api/admin/workshops/registrations');
+    return res.data;
+  },
+
+  async updateWorkshopRegistrationStatus(id: string, status: string): Promise<WorkshopRegistrationData> {
+    const res = await apiClient.patch<WorkshopRegistrationData>(`/api/admin/workshops/registrations/${id}/status`, { status });
+    return res.data;
+  }
+};
+
+// ─── Orders Service ────────────────────────────────────────────────────────────
+
+export const orderService = {
+  async getAll(): Promise<any[]> {
+    const res = await apiClient.get<any[]>('/api/admin/orders');
+    return res.data;
+  },
+
+  async getById(id: string): Promise<any> {
+    const res = await apiClient.get<any>(`/api/admin/orders/${id}`);
+    return res.data;
+  },
+
+  async updateStatus(id: string, status: string): Promise<any> {
+    const res = await apiClient.patch<any>(`/api/admin/orders/${id}/status`, { status });
+    return res.data;
+  },
+
+  createShipment: async (id: string, data: any) => {
+    const response = await apiClient.post(`/api/admin/orders/${id}/shipment`, data);
+    return response.data;
+  },
+
+  updateShipment: async (id: string, data: any) => {
+    const response = await apiClient.patch(`/api/admin/orders/${id}/shipment`, data);
+    return response.data;
+  }
+};
+
+// ─── Payments Service ──────────────────────────────────────────────────────────
+
+export const paymentService = {
+  async getAll(): Promise<any[]> {
+    const res = await apiClient.get<any[]>('/api/admin/payments');
+    return res.data;
+  },
+
+  async getById(id: string): Promise<any> {
+    const res = await apiClient.get<any>(`/api/admin/payments/${id}`);
+    return res.data;
   }
 };

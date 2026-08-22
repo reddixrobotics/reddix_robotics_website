@@ -30,7 +30,8 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    return <Navigate to={`${ROUTES.LOGIN}?redirect=${redirectUrl}`} replace />;
   }
 
   // If authenticated but role doesn't match
@@ -38,10 +39,8 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
     // Redirect to their respective home
     if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
       return <Navigate to={ROUTES.ADMIN} replace />;
-    } else if (userRole === 'STUDENT') {
-      return <Navigate to={ROUTES.STUDENT_HOME} replace />;
     } else {
-      return <Navigate to={ROUTES.DASHBOARD} replace />;
+      return <Navigate to={ROUTES.PROFILE} replace />;
     }
   }
 

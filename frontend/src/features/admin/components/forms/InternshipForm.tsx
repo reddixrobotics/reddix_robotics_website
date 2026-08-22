@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { uploadFile } from '../../services/apiService';
+import { AdminForm, FormField, FormRow, InputClass, TextareaClass, FormSection } from '../ui/AdminForm';
+import { TagInput } from '../ui/TagInput';
 
 export interface InternshipFormData {
   id?: string;
@@ -26,7 +27,7 @@ interface InternshipFormProps {
   isSubmitting?: boolean;
 }
 
-export function InternshipForm({ initialData, onSubmit, onCancel, isSubmitting }: InternshipFormProps) {
+export function InternshipForm({ initialData, onSubmit, onCancel, isSubmitting = false }: InternshipFormProps) {
   const [formData, setFormData] = useState<InternshipFormData>({
     title: '',
     company: '',
@@ -38,154 +39,102 @@ export function InternshipForm({ initialData, onSubmit, onCancel, isSubmitting }
     stipend: '',
     skills: '',
     requirements: '',
-    applicationLink: '',
     imageUrl: '',
     deadline: '',
     status: 'PUBLISHED',
   });
-  
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      if (initialData.imageUrl) {
-        setImagePreview(initialData.imageUrl);
-      }
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let finalImageUrl = formData.imageUrl;
-
-    if (imageFile) {
-      setIsUploading(true);
-      try {
-        finalImageUrl = await uploadFile(imageFile);
-      } catch (err) {
-        console.error('Failed to upload image', err);
-        alert('Failed to upload image. Please try again.');
-        setIsUploading(false);
-        return;
-      }
-      setIsUploading(false);
-    }
-
-    onSubmit({ ...formData, imageUrl: finalImageUrl });
+    onSubmit({ ...formData });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-white">
-      <div>
-        <label className="block text-sm font-medium mb-1">Internship Title *</label>
-        <input required type="text" name="title" value={formData.title} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Company</label>
-          <input type="text" name="company" value={formData.company} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Department *</label>
-          <input required type="text" name="department" value={formData.department} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Location</label>
-          <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Duration *</label>
-          <input required type="text" name="duration" value={formData.duration} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-      </div>
+    <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting}>
+      <FormSection title="Basic Information" description="Primary details for this internship opportunity.">
+        <FormRow>
+          <FormField label="Internship Title *">
+            <input required type="text" placeholder="e.g. Summer Software Engineering Intern" className={InputClass} value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+          </FormField>
+          <FormField label="Company">
+            <input type="text" placeholder="Optional" className={InputClass} value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField label="Department *">
+            <input required type="text" placeholder="e.g. Engineering" className={InputClass} value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} />
+          </FormField>
+          <FormField label="Location">
+            <input type="text" placeholder="e.g. Remote, San Francisco" className={InputClass} value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
+          </FormField>
+        </FormRow>
+      </FormSection>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Internship Type</label>
-          <input type="text" name="type" placeholder="e.g. Summer Internship" value={formData.type} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Stipend</label>
-          <input type="text" name="stipend" value={formData.stipend} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        </div>
-      </div>
+      <FormSection title="Internship Attributes" description="Duration, type, and compensation.">
+        <FormRow>
+          <FormField label="Duration *">
+            <input required type="text" placeholder="e.g. 12 Weeks, 3 Months" className={InputClass} value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} />
+          </FormField>
+          <FormField label="Internship Type">
+            <input type="text" placeholder="e.g. Summer Internship" className={InputClass} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField label="Stipend / Compensation">
+            <input type="text" placeholder="e.g. $5000/month, Unpaid, etc." className={InputClass} value={formData.stipend} onChange={e => setFormData({ ...formData, stipend: e.target.value })} />
+          </FormField>
+        </FormRow>
+      </FormSection>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Description *</label>
-        <textarea required name="description" value={formData.description} onChange={handleChange} rows={3} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
+      <FormSection title="Skills & Requirements" description="What are you looking for in a candidate?">
+        <FormRow>
+          <FormField label="Preferred Skills">
+            <TagInput 
+              value={formData.skills || ''} 
+              onChange={val => setFormData({ ...formData, skills: val })} 
+              placeholder="e.g. React, Python, Git (Press Enter)" 
+            />
+          </FormField>
+          <FormField label="Hard Requirements">
+            <TagInput 
+              value={formData.requirements || ''} 
+              onChange={val => setFormData({ ...formData, requirements: val })} 
+              placeholder="e.g. Enrolled in CS Degree (Press Enter)" 
+            />
+          </FormField>
+        </FormRow>
+      </FormSection>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Skills (comma separated)</label>
-        <input type="text" name="skills" value={formData.skills} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Requirements (comma separated)</label>
-        <input type="text" name="requirements" value={formData.requirements} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Application Link</label>
-        <input type="url" name="applicationLink" value={formData.applicationLink} onChange={handleChange} placeholder="https://..." className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Deadline</label>
-        <input type="date" name="deadline" value={formData.deadline} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Status</label>
-        <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2">
-          <option value="DRAFT">Draft (Unpublished)</option>
-          <option value="PUBLISHED">Published</option>
-          <option value="ARCHIVED">Archived</option>
-        </select>
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Image</label>
-        <input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleImageChange} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" />
-        {imagePreview && (
-          <div className="mt-2 relative w-32 h-32 rounded overflow-hidden">
-            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white">
-          Cancel
-        </button>
-        <button type="submit" disabled={isSubmitting || isUploading} className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded flex items-center gap-2">
-          {isSubmitting || isUploading ? 'Saving...' : 'Save'}
-        </button>
-      </div>
-    </form>
+      <FormSection title="Description & Status" description="The detailed description and publishing settings.">
+        <FormField label="Full Description *">
+          <textarea 
+            required 
+            placeholder="About the internship... What the intern will learn... Expectations..."
+            className={`${TextareaClass} min-h-[150px] leading-relaxed`} 
+            value={formData.description} 
+            onChange={e => setFormData({ ...formData, description: e.target.value })} 
+          />
+        </FormField>
+        
+        <FormRow>
+          <FormField label="Deadline">
+            <input type="date" className={InputClass} value={formData.deadline} onChange={e => setFormData({ ...formData, deadline: e.target.value })} />
+          </FormField>
+          <FormField label="Status">
+            <select className={InputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
+              <option value="DRAFT">Draft (Unpublished)</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+          </FormField>
+        </FormRow>
+      </FormSection>
+    </AdminForm>
   );
 }

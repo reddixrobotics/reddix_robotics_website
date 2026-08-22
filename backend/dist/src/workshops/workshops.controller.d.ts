@@ -83,59 +83,6 @@ export declare class AdminWorkshopsController {
         time: string;
         capacity: number;
     }[]>;
-    findOneWorkshop(id: string): Promise<{
-        registrations: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            email: string;
-            phone: string;
-            status: import("@prisma/client").$Enums.RegistrationStatus;
-            workshopId: string;
-        }[];
-    } & {
-        id: string;
-        description: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        status: import("@prisma/client").$Enums.WorkshopStatus;
-        title: string;
-        location: string;
-        duration: string;
-        time: string;
-        capacity: number;
-    }>;
-    createWorkshop(createWorkshopDto: CreateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        id: string;
-        description: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        status: import("@prisma/client").$Enums.WorkshopStatus;
-        title: string;
-        location: string;
-        duration: string;
-        time: string;
-        capacity: number;
-    }>;
-    updateWorkshop(id: string, updateWorkshopDto: UpdateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
-        id: string;
-        description: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        status: import("@prisma/client").$Enums.WorkshopStatus;
-        title: string;
-        location: string;
-        duration: string;
-        time: string;
-        capacity: number;
-    }>;
-    removeWorkshop(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
-        success: boolean;
-        message: string;
-    }>;
     findAllRegistrations(): Promise<({
         workshop: {
             id: string;
@@ -204,5 +151,58 @@ export declare class AdminWorkshopsController {
         phone: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
         workshopId: string;
+    }>;
+    findOneWorkshop(id: string): Promise<{
+        registrations: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            email: string;
+            phone: string;
+            status: import("@prisma/client").$Enums.RegistrationStatus;
+            workshopId: string;
+        }[];
+    } & {
+        id: string;
+        description: string;
+        createdAt: Date;
+        updatedAt: Date;
+        date: Date;
+        status: import("@prisma/client").$Enums.WorkshopStatus;
+        title: string;
+        location: string;
+        duration: string;
+        time: string;
+        capacity: number;
+    }>;
+    createWorkshop(createWorkshopDto: CreateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        id: string;
+        description: string;
+        createdAt: Date;
+        updatedAt: Date;
+        date: Date;
+        status: import("@prisma/client").$Enums.WorkshopStatus;
+        title: string;
+        location: string;
+        duration: string;
+        time: string;
+        capacity: number;
+    }>;
+    updateWorkshop(id: string, updateWorkshopDto: UpdateWorkshopDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        id: string;
+        description: string;
+        createdAt: Date;
+        updatedAt: Date;
+        date: Date;
+        status: import("@prisma/client").$Enums.WorkshopStatus;
+        title: string;
+        location: string;
+        duration: string;
+        time: string;
+        capacity: number;
+    }>;
+    removeWorkshop(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

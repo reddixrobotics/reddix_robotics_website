@@ -24,6 +24,7 @@ let OrdersService = class OrdersService {
         }
         const itemRecords = [];
         let subtotal = 0;
+        let advanceAmount = 0;
         for (const item of dto.items) {
             const product = await this.prisma.product.findUnique({
                 where: { id: item.productId },
@@ -35,16 +36,19 @@ let OrdersService = class OrdersService {
                 throw new common_1.BadRequestException(`Product ${product.name} is currently unavailable`);
             }
             const itemPrice = product.price;
+            const depositPercentage = product.depositPercentage ?? 50;
+            const itemDeposit = itemPrice * (depositPercentage / 100);
             subtotal += itemPrice * item.quantity;
+            advanceAmount += itemDeposit * item.quantity;
             itemRecords.push({
                 productId: item.productId,
                 quantity: item.quantity,
                 price: itemPrice,
+                depositAmount: itemDeposit,
             });
         }
         const totalAmount = subtotal;
-        const advanceAmount = totalAmount * 0.5;
-        const remainingAmount = totalAmount * 0.5;
+        const remainingAmount = totalAmount - advanceAmount;
         const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
         return this.prisma.$transaction(async (tx) => {
             const order = await tx.order.create({
@@ -86,6 +90,7 @@ let OrdersService = class OrdersService {
                     include: { product: true },
                 },
                 customer: true,
+                shipment: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -97,6 +102,7 @@ let OrdersService = class OrdersService {
                 items: {
                     include: { product: { include: { images: true } } },
                 },
+                shipment: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -110,6 +116,7 @@ let OrdersService = class OrdersService {
                 },
                 customer: true,
                 payments: true,
+                shipment: true,
             },
         });
         if (!order) {
@@ -127,6 +134,36 @@ let OrdersService = class OrdersService {
                     include: { product: true },
                 },
                 customer: true,
+                shipment: true,
+            },
+        });
+    }
+    async createShipment(orderId, courier = 'DELHIVERY') {
+        const order = await this.findOne(orderId);
+        if (order.shipment) {
+            throw new common_1.BadRequestException('Shipment already exists for this order');
+        }
+        return this.prisma.shipment.create({
+            data: {
+                orderId,
+                courier,
+                status: client_1.ShipmentStatus.CREATED,
+            },
+        });
+    }
+    async updateShipment(orderId, data) {
+        const shipment = await this.prisma.shipment.findUnique({
+            where: { orderId },
+        });
+        if (!shipment) {
+            throw new common_1.NotFoundException('Shipment not found for this order. Create it first.');
+        }
+        return this.prisma.shipment.update({
+            where: { orderId },
+            data: {
+                awbNumber: data.awbNumber || undefined,
+                trackingUrl: data.trackingUrl || undefined,
+                status: data.status || undefined,
             },
         });
     }

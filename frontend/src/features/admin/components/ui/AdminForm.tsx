@@ -42,4 +42,18 @@ export function FormField({ label, children }: { label: string; children: ReactN
 }
 
 export const InputClass = "w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500 transition-colors";
-export const TextareaClass = "w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500 transition-colors min-h-[100px] resize-y custom-scrollbar";
+export const TextareaClass = "w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500 transition-colors min-h-[120px] resize-y custom-scrollbar";
+
+export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-5 md:p-6 space-y-5">
+      <div className="mb-2">
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        {description && <p className="text-sm text-zinc-400 mt-1">{description}</p>}
+      </div>
+      <div className="space-y-5">
+        {children}
+      </div>
+    </div>
+  );
+}

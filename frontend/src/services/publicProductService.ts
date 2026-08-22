@@ -16,6 +16,7 @@ export const mapApiProductToFrontend = (apiProduct: any): Product => {
     images: apiProduct.images?.map((i: any) => i.url) || [],
     features: apiProduct.features || [],
     specifications: apiProduct.technicalSpecifications || {},
+    depositPercentage: apiProduct.depositPercentage,
   };
 };
 

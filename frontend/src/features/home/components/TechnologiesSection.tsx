@@ -2,10 +2,12 @@ import { motion } from 'framer-motion';
 import { Section, SectionHeading, Badge } from '@/components/ui';
 
 const technologies = [
-  "ROS 2", "C++20", "Python 3.12", "TensorFlow", "PyTorch",
-  "NVIDIA Isaac", "CUDA", "OpenCV", "Simulink", "Gazebo",
-  "React", "TypeScript", "Node.js", "Docker", "Kubernetes",
-  "WebRTC", "WebSockets", "GraphQL", "gRPC", "PostgreSQL"
+  "ROS 1", "ROS 2", "Gazebo", "RViz", "MoveIt", "SLAM", 
+  "Navigation", "TF / TF2", "C / C++", "Python", "JavaScript / TypeScript", 
+  "OpenCV", "YOLO", "Deep Learning", "Sensor Fusion", 
+  "ESP32", "Raspberry Pi", "Arduino", "Microcontrollers", 
+  "PyBullet", "Digital Prototyping", "Linux / Ubuntu", 
+  "Docker", "Git", "Cloud APIs"
 ];
 
 export default function TechnologiesSection() {
@@ -24,7 +26,7 @@ export default function TechnologiesSection() {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.4, delay: i * 0.05 }}
+            transition={{ duration: 0.4, delay: i * 0.03 }}
           >
             <Badge variant="neutral" size="lg" className="text-body-md py-2 px-4 border border-[var(--border-strong)] shadow-sm">
               {tech}

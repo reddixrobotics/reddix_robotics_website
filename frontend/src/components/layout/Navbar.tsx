@@ -26,7 +26,7 @@ import {
   AnimatePresence,
   useReducedMotion,
 } from 'framer-motion';
-import { Menu, X, LogIn, UserPlus, Heart, ShoppingCart } from 'lucide-react';
+import { Menu, X, LogIn, UserPlus, Heart, ShoppingCart, User } from 'lucide-react';
 import { useScrolled, useTheme } from '@/hooks';
 import { NAV_LINKS, AUTH_LINKS, BRAND_NAME } from '@/data';
 import { ROUTES } from '@/routes/routePaths';
@@ -568,8 +568,8 @@ export default function Navbar() {
         { label: 'Contact', href: ROUTES.CONTACT },
         { label: 'Products', href: ROUTES.PRODUCTS },
         { label: 'Careers', href: ROUTES.CAREERS },
-        { label: 'Profile', href: ROUTES.PROFILE },
         { label: 'Orders', href: ROUTES.ORDERS },
+        { label: 'Applications', href: ROUTES.APPLICATIONS },
       ];
     }
     return NAV_LINKS;
@@ -657,6 +657,13 @@ export default function Navbar() {
             {isAuthenticated && userRole === 'USER' && (
               <div className="flex items-center gap-1 mr-2">
                 <Link
+                  to={ROUTES.PROFILE}
+                  className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
+                  aria-label="Profile"
+                >
+                  <User size={20} />
+                </Link>
+                <Link
                   to={ROUTES.WISHLIST}
                   className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
                   aria-label="Wishlist"
@@ -727,6 +734,15 @@ export default function Navbar() {
 
           {/* ── Mobile controls ───────────────────────────────────── */}
           <div className="flex items-center gap-1 md:hidden">
+            {isAuthenticated && userRole === 'USER' && (
+              <Link
+                to={ROUTES.PROFILE}
+                className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
+                aria-label="Profile"
+              >
+                <User size={20} />
+              </Link>
+            )}
             <ThemeToggle />
             <HamburgerButton
               ref={hamburgerRef}

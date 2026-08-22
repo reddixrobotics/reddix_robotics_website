@@ -59,7 +59,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   const requireAuth = () => {
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${redirectUrl}`;
       return false;
     }
     return true;

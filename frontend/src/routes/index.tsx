@@ -5,8 +5,6 @@ import { ROUTES } from './routePaths';
 import RootLayout from '@/layouts/RootLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import AdminLayout from '@/layouts/AdminLayout';
-import apiClient from '@/services/apiClient';
-import { fetchAdminSession } from '@/services/authSession';
 import RoleGuard from './RoleGuard';
 
 // ─── Page loading fallback ────────────────────────────────────────────────────
@@ -32,45 +30,6 @@ function withSuspense(Component: React.ComponentType) {
       <Component />
     </Suspense>
   );
-}
-
-// ─── Admin Guard ─────────────────────────────────────────────────────────────
-
-function AdminGuard() {
-  const [loading, setLoading] = useState(true);
-  const [authStatus, setAuthStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetchAdminSession()
-      .then((res) => {
-        if (!active) return;
-        if (res.data.authenticated) {
-          setAuthStatus(res.data.authStatus || 'AUTHENTICATED');
-        } else {
-          setAuthStatus(null);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!active) return;
-        setAuthStatus(null);
-        setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (loading) {
-    return <PageLoader />;
-  }
-
-  if (authStatus !== 'AUTHENTICATED') {
-    return <Navigate to={ROUTES.LOGIN} replace />;
-  }
-
-  return <AdminLayout />;
 }
 
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
@@ -118,6 +77,9 @@ const AdminUpcomingProjects = lazy(() => import('@/pages/admin/AdminUpcomingProj
 const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 const AdminCompany = lazy(() => import('@/pages/admin/AdminCompany'));
 const AdminJourneys = lazy(() => import('@/pages/admin/AdminJourneys'));
+const AdminApplications = lazy(() => import('@/pages/admin/AdminApplications'));
+const AdminOrders = lazy(() => import('@/pages/admin/AdminOrders'));
+const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'));
 const AdminPlaceholderPage = lazy(() => import('@/pages/admin/AdminPlaceholderPage'));
 
 const DesignSystemPage = lazy(() => import('@/pages/DesignSystemPage'));
@@ -137,26 +99,32 @@ export const router = createBrowserRouter([
       { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
       { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
       { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
-      { path: ROUTES.CAREERS_JOB_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div></RoleGuard> },
-      { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div></RoleGuard> },
-      { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div></RoleGuard> },
-      { path: ROUTES.CAREERS_GENERAL_APPLY, element: <RoleGuard allowedRoles={['USER']}><div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div></RoleGuard> },
       { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
       { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
-      
-      // USER & GUEST restricted routes
+      // Publicly viewable routes (GUEST allowed)
       {
-        element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
+        element: <RoleGuard allowedRoles={['USER', 'GUEST', 'ADMIN', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
         children: [
           { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
+          { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
+          { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
+          { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
+        ],
+      },
+
+      // Protected routes (Login required)
+      {
+        element: <RoleGuard allowedRoles={['USER', 'ADMIN', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
+        children: [
           { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
           { path: ROUTES.CART,         element: withSuspense(CartPage) },
           { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
           { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
           { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
-          { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
-          { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
-          { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
+          { path: ROUTES.CAREERS_JOB_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div> },
+          { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
+          { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
+          { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
         ],
       },
 
@@ -166,6 +134,7 @@ export const router = createBrowserRouter([
         children: [
           { path: ROUTES.WISHLIST, element: withSuspense(WishlistPage) },
           { path: ROUTES.PROFILE, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardProfile)}</div> },
+          { path: ROUTES.APPLICATIONS, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardApplications)}</div> },
           { path: ROUTES.ORDERS,  element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardOrders)}</div> },
           { path: ROUTES.PAYMENT, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardPayments)}</div> },
         ],
@@ -174,9 +143,13 @@ export const router = createBrowserRouter([
   },
   {
     path: ROUTES.ADMIN,
-    element: <AdminGuard />,
+    element: <RoleGuard allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
     children: [
+      {
+        element: <AdminLayout />,
+        children: [
       { index: true, element: withSuspense(AdminOverview) },
+      { path: 'dashboard', element: withSuspense(AdminOverview) },
       { path: 'products', element: withSuspense(AdminProducts) },
       { path: 'employees', element: withSuspense(AdminEmployees) },
       { path: 'journeys', element: withSuspense(AdminJourneys) },
@@ -188,15 +161,18 @@ export const router = createBrowserRouter([
       // Other routes fallback to placeholder for now (categories, internships, etc.)
       { path: 'company', element: withSuspense(AdminCompany) },
       { path: 'categories', element: withSuspense(AdminPlaceholderPage) },
-      { path: 'orders', element: withSuspense(AdminPlaceholderPage) },
-      { path: 'payments', element: withSuspense(AdminPlaceholderPage) },
+      { path: 'orders', element: withSuspense(AdminOrders) },
+      { path: 'payments', element: withSuspense(AdminPayments) },
       { path: 'internships', element: withSuspense(AdminInternships) },
-      { path: 'applications', element: withSuspense(AdminPlaceholderPage) },
+      { path: 'applications', element: withSuspense(AdminApplications) },
       { path: 'contractors', element: withSuspense(AdminPlaceholderPage) },
       { path: 'users', element: withSuspense(AdminPlaceholderPage) },
       { path: 'messages', element: withSuspense(AdminPlaceholderPage) },
       { path: 'settings', element: withSuspense(AdminSettings) },
+      { path: '*', element: withSuspense(AdminPlaceholderPage) },
     ],
+      }
+    ]
   }
 ]);
 

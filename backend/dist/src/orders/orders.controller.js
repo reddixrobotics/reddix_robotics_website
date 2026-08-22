@@ -23,6 +23,7 @@ const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const client_1 = require("@prisma/client");
 const current_session_decorator_1 = require("../auth/decorators/current-session.decorator");
 const audit_log_service_1 = require("../audit/audit-log.service");
+const update_shipment_dto_1 = require("./dto/update-shipment.dto");
 let OrdersController = class OrdersController {
     ordersService;
     auditLogService;
@@ -48,6 +49,16 @@ let OrdersController = class OrdersController {
         const order = await this.ordersService.updateStatus(id, updateOrderStatusDto.status);
         await this.auditLogService.logAction(session.adminId, 'UPDATE_ORDER_STATUS', 'Order', id, ip, userAgent);
         return order;
+    }
+    async createShipment(id, body, session, ip, userAgent) {
+        const shipment = await this.ordersService.createShipment(id, body.courier);
+        await this.auditLogService.logAction(session.adminId, 'CREATE_SHIPMENT', 'Shipment', shipment.id, ip, userAgent);
+        return shipment;
+    }
+    async updateShipment(id, body, session, ip, userAgent) {
+        const shipment = await this.ordersService.updateShipment(id, body);
+        await this.auditLogService.logAction(session.adminId, 'UPDATE_SHIPMENT', 'Shipment', shipment.id, ip, userAgent);
+        return shipment;
     }
 };
 exports.OrdersController = OrdersController;
@@ -88,6 +99,30 @@ __decorate([
     __metadata("design:paramtypes", [String, update_order_status_dto_1.UpdateOrderStatusDto, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], OrdersController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Post)(':id/shipment'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.ORDER_MANAGER),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_session_decorator_1.CurrentSession)()),
+    __param(3, (0, common_1.Ip)()),
+    __param(4, (0, common_1.Headers)('user-agent')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object, String, String]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "createShipment", null);
+__decorate([
+    (0, common_1.Patch)(':id/shipment'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.ORDER_MANAGER),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_session_decorator_1.CurrentSession)()),
+    __param(3, (0, common_1.Ip)()),
+    __param(4, (0, common_1.Headers)('user-agent')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_shipment_dto_1.UpdateShipmentDto, Object, String, String]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "updateShipment", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, common_1.Controller)('api/admin/orders'),
     (0, common_1.UseGuards)(admin_auth_guard_1.AdminAuthGuard, roles_guard_1.RolesGuard),

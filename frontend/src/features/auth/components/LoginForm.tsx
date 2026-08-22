@@ -43,6 +43,19 @@ export default function LoginForm() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [searchParams] = useSearchParams();
 
+  const handleSuccessRedirect = (role: string) => {
+    const redirect = searchParams.get('redirect');
+    if (redirect && redirect.startsWith('/')) {
+      window.location.href = redirect;
+      return;
+    }
+    if (role === 'USER') {
+      window.location.href = ROUTES.PROFILE;
+    } else {
+      window.location.href = ROUTES.ADMIN;
+    }
+  };
+
   useEffect(() => {
     const stepParam = searchParams.get('step');
     if (stepParam === '2fa') {
@@ -61,11 +74,7 @@ export default function LoginForm() {
               setStep('setup_mfa');
             }
           } else if (res.data.session.authStatus === 'AUTHENTICATED') {
-            if (res.data.role === 'USER') {
-              window.location.href = ROUTES.PROFILE;
-            } else {
-              window.location.href = ROUTES.ADMIN;
-            }
+            handleSuccessRedirect(res.data.role);
           }
         }
       })
@@ -93,11 +102,7 @@ export default function LoginForm() {
           setStep('email_otp');
         } else {
           setStatus('success');
-          if (res.data.role === 'USER') {
-            window.location.href = ROUTES.PROFILE;
-          } else {
-            window.location.href = ROUTES.ADMIN;
-          }
+          handleSuccessRedirect(res.data.role);
         }
       })
       .catch((err) => {
@@ -124,11 +129,7 @@ export default function LoginForm() {
     apiClient.post('/api/auth/verify-2fa', { token: mfaCode })
       .then((res) => {
         setStatus('success');
-        if (res.data.session.role === 'USER') {
-          window.location.href = ROUTES.PROFILE;
-        } else {
-          window.location.href = ROUTES.ADMIN;
-        }
+        handleSuccessRedirect(res.data.session.role);
       })
       .catch((err) => {
         const msg = err.message || '';
@@ -162,11 +163,7 @@ export default function LoginForm() {
             setStep('setup_mfa');
           }
         } else if (res.data.session.authStatus === 'AUTHENTICATED') {
-          if (res.data.session.role === 'USER') {
-            window.location.href = ROUTES.PROFILE;
-          } else {
-            window.location.href = ROUTES.ADMIN;
-          }
+          handleSuccessRedirect(res.data.session.role);
         }
       })
       .catch((err) => {
@@ -411,6 +408,11 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleCredentialsSubmit} className="space-y-6">
+      {searchParams.get('redirect') && (
+        <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm font-medium text-center">
+          Please login to continue.
+        </div>
+      )}
       <div>
         <InputField 
           label="Email Address"

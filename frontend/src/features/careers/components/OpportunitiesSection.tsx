@@ -13,9 +13,17 @@ export default function OpportunitiesSection() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [internships, setInternships] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [appliedIds, setAppliedIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const saved = localStorage.getItem('applied_opportunities');
+    if (saved) {
+      try {
+        setAppliedIds(JSON.parse(saved));
+      } catch (e) {}
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -95,6 +103,7 @@ export default function OpportunitiesSection() {
                           <div className="flex flex-wrap items-center gap-6 mb-6 text-body-sm text-[var(--text-tertiary)]">
                             <div className="flex items-center gap-2"><MapPin size={16} /> {job.location}</div>
                             <div className="flex items-center gap-2"><Briefcase size={16} /> {job.experience} Experience</div>
+                            {job.salary && <div className="flex items-center gap-2"><Briefcase size={16} /> {job.salary}</div>}
                           </div>
                           
                           <div className="flex flex-wrap gap-2">
@@ -104,7 +113,14 @@ export default function OpportunitiesSection() {
                           </div>
                         </div>
                         <div className="md:w-32 flex-shrink-0 flex md:flex-col justify-end md:justify-start pt-2">
-                          <Button className="w-full" onClick={() => navigate(`/careers/jobs/${job.id}/apply`)}>Apply Now</Button>
+                          <Button 
+                            className="w-full" 
+                            variant={appliedIds.includes(job.id) ? "outline" : "primary"}
+                            disabled={appliedIds.includes(job.id)}
+                            onClick={() => navigate(`/careers/jobs/${job.id}/apply`)}
+                          >
+                            {appliedIds.includes(job.id) ? "Applied" : "Apply Now"}
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -161,15 +177,13 @@ export default function OpportunitiesSection() {
                         <div className="md:w-32 flex-shrink-0 flex md:flex-col justify-end md:justify-start pt-2">
                           <Button 
                             className="w-full" 
+                            variant={appliedIds.includes(internship.id) ? "outline" : "primary"}
+                            disabled={appliedIds.includes(internship.id)}
                             onClick={() => {
-                              if (internship.applicationLink) {
-                                window.open(internship.applicationLink, '_blank', 'noopener,noreferrer');
-                              } else {
-                                navigate(`/careers/internships/${internship.id}/apply`);
-                              }
+                              navigate(`/careers/internships/${internship.id}/apply`);
                             }}
                           >
-                            Apply Now
+                            {appliedIds.includes(internship.id) ? "Applied" : "Apply Now"}
                           </Button>
                         </div>
                       </div>
@@ -202,8 +216,13 @@ export default function OpportunitiesSection() {
                         <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
                       </div>
                       
-                      <Button variant="outline" className="w-full justify-center" onClick={() => navigate(`/careers/workshops/${workshop.id}/register`)}>
-                        Register <ArrowRight size={16} className="ml-2" />
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-center" 
+                        disabled={appliedIds.includes(workshop.id)}
+                        onClick={() => navigate(`/careers/workshops/${workshop.id}/register`)}
+                      >
+                        {appliedIds.includes(workshop.id) ? "Applied" : <>Register <ArrowRight size={16} className="ml-2" /></>}
                       </Button>
                     </div>
                   </Card>

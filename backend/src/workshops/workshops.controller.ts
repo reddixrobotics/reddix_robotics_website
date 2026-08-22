@@ -59,6 +59,41 @@ export class AdminWorkshopsController {
     return this.workshopsService.findAllWorkshops(true);
   }
 
+  // --- Registrations ---
+  @Get('registrations')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
+  async findAllRegistrations() {
+    return this.workshopsService.findAllRegistrations();
+  }
+
+  @Get('registrations/:id')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
+  async findOneRegistration(@Param('id') id: string) {
+    return this.workshopsService.findOneRegistration(id);
+  }
+
+  @Patch('registrations/:id/status')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
+  @HttpCode(HttpStatus.OK)
+  async updateRegistrationStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateRegistrationStatusDto,
+    @CurrentSession() session: SessionData,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    const registration = await this.workshopsService.updateRegistrationStatus(id, updateStatusDto.status);
+    await this.auditLogService.logAction(
+      session.adminId,
+      'UPDATE_REGISTRATION_STATUS',
+      'WorkshopRegistration',
+      id,
+      ip,
+      userAgent,
+    );
+    return registration;
+  }
+
   @Get(':id')
   async findOneWorkshop(@Param('id') id: string) {
     return this.workshopsService.findOneWorkshop(id);
@@ -123,40 +158,5 @@ export class AdminWorkshopsController {
       userAgent,
     );
     return result;
-  }
-
-  // --- Registrations ---
-  @Get('registrations')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
-  async findAllRegistrations() {
-    return this.workshopsService.findAllRegistrations();
-  }
-
-  @Get('registrations/:id')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
-  async findOneRegistration(@Param('id') id: string) {
-    return this.workshopsService.findOneRegistration(id);
-  }
-
-  @Patch('registrations/:id/status')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.CONTENT_MANAGER)
-  @HttpCode(HttpStatus.OK)
-  async updateRegistrationStatus(
-    @Param('id') id: string,
-    @Body() updateStatusDto: UpdateRegistrationStatusDto,
-    @CurrentSession() session: SessionData,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
-  ) {
-    const registration = await this.workshopsService.updateRegistrationStatus(id, updateStatusDto.status);
-    await this.auditLogService.logAction(
-      session.adminId,
-      'UPDATE_REGISTRATION_STATUS',
-      'WorkshopRegistration',
-      id,
-      ip,
-      userAgent,
-    );
-    return registration;
   }
 }

@@ -15,61 +15,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
 const payments_service_1 = require("./payments.service");
-const create_payment_dto_1 = require("./dto/create-payment.dto");
-const admin_auth_guard_1 = require("../auth/guards/admin-auth.guard");
-const roles_guard_1 = require("../auth/guards/roles.guard");
-const roles_decorator_1 = require("../auth/decorators/roles.decorator");
-const client_1 = require("@prisma/client");
-const current_session_decorator_1 = require("../auth/decorators/current-session.decorator");
-const audit_log_service_1 = require("../audit/audit-log.service");
+const user_auth_guard_1 = require("../auth/guards/user-auth.guard");
 let PaymentsController = class PaymentsController {
     paymentsService;
-    auditLogService;
-    constructor(paymentsService, auditLogService) {
+    constructor(paymentsService) {
         this.paymentsService = paymentsService;
-        this.auditLogService = auditLogService;
     }
-    async findAll() {
-        return this.paymentsService.findAll();
+    async createOrder(req, orderId) {
+        return this.paymentsService.createRazorpayOrder(orderId, req.user.id);
     }
-    async findOne(id) {
-        return this.paymentsService.findOne(id);
-    }
-    async create(createPaymentDto, session, ip, userAgent) {
-        const payment = await this.paymentsService.create(createPaymentDto);
-        await this.auditLogService.logAction(session.adminId, 'RECORD_PAYMENT', 'Payment', payment.id, ip, userAgent);
-        return payment;
+    async verifyPayment(razorpayOrderId, razorpayPaymentId, signature) {
+        return this.paymentsService.verifyPayment(razorpayOrderId, razorpayPaymentId, signature);
     }
 };
 exports.PaymentsController = PaymentsController;
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Post)('create-order'),
+    (0, common_1.UseGuards)(user_auth_guard_1.UserAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)('orderId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
-], PaymentsController.prototype, "findAll", null);
+], PaymentsController.prototype, "createOrder", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Post)('verify'),
+    (0, common_1.UseGuards)(user_auth_guard_1.UserAuthGuard),
+    __param(0, (0, common_1.Body)('razorpay_order_id')),
+    __param(1, (0, common_1.Body)('razorpay_payment_id')),
+    __param(2, (0, common_1.Body)('razorpay_signature')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
-], PaymentsController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.ORDER_MANAGER),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, current_session_decorator_1.CurrentSession)()),
-    __param(2, (0, common_1.Ip)()),
-    __param(3, (0, common_1.Headers)('user-agent')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_payment_dto_1.CreatePaymentDto, Object, String, String]),
-    __metadata("design:returntype", Promise)
-], PaymentsController.prototype, "create", null);
+], PaymentsController.prototype, "verifyPayment", null);
 exports.PaymentsController = PaymentsController = __decorate([
-    (0, common_1.Controller)('api/admin/payments'),
-    (0, common_1.UseGuards)(admin_auth_guard_1.AdminAuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [payments_service_1.PaymentsService,
-        audit_log_service_1.AuditLogService])
+    (0, common_1.Controller)('api/payments'),
+    __metadata("design:paramtypes", [payments_service_1.PaymentsService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

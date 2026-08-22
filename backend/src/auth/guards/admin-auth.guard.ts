@@ -3,9 +3,11 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SessionService } from '../session.service';
+import { UserSessionService } from '../user-session.service';
 import { Request } from 'express';
 import { IS_ALLOW_PENDING_2FA_KEY } from '../decorators/allow-pending-2fa.decorator';
 
@@ -13,18 +15,30 @@ import { IS_ALLOW_PENDING_2FA_KEY } from '../decorators/allow-pending-2fa.decora
 export class AdminAuthGuard implements CanActivate {
   constructor(
     private readonly sessionService: SessionService,
+    private readonly userSessionService: UserSessionService,
     private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const token = request.cookies['admin_session'];
+    const adminToken = request.cookies['admin_session'];
+    const userToken = request.cookies['user_session'];
 
-    if (!token) {
+    if (!adminToken && !userToken) {
       throw new UnauthorizedException('Authentication session missing');
     }
 
-    const session = await this.sessionService.verifySession(token);
+    // If user is authenticated but doesn't have an admin session
+    if (userToken && !adminToken) {
+      const userSession = await this.userSessionService.verifySession(userToken);
+      if (userSession) {
+        throw new ForbiddenException('You do not have permission to access the admin area');
+      } else {
+        throw new UnauthorizedException('Invalid or expired session');
+      }
+    }
+
+    const session = await this.sessionService.verifySession(adminToken);
     if (!session) {
       throw new UnauthorizedException('Invalid or expired session');
     }
@@ -45,7 +59,7 @@ export class AdminAuthGuard implements CanActivate {
 
     // Attach session to request for downstream use in controllers
     request['session'] = session;
-    request['sessionToken'] = token; // Store token if needed to invalidate current session
+    request['sessionToken'] = adminToken; // Store token if needed to invalidate current session
 
     return true;
   }

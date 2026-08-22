@@ -111,6 +111,18 @@ export class CareersService {
       }
     }
 
+    const existingApplication = await this.prisma.application.findFirst({
+      where: {
+        email: dto.email,
+        jobId: dto.type === 'JOB' ? dto.jobId : null,
+        internshipId: dto.type === 'INTERNSHIP' ? dto.internshipId : null,
+      }
+    });
+
+    if (existingApplication) {
+      throw new BadRequestException(`You have already applied for this ${dto.type.toLowerCase()} using this email address.`);
+    }
+
     return this.prisma.application.create({
       data: {
         type: dto.type,

@@ -1,58 +1,33 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Ip,
-  Headers,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { AdminRole } from '@prisma/client';
-import { CurrentSession } from '../auth/decorators/current-session.decorator';
-import type { SessionData } from '../auth/session.service';
-import { AuditLogService } from '../audit/audit-log.service';
+import { UserAuthGuard } from '../auth/guards/user-auth.guard';
+import { Request } from 'express';
 
-@Controller('api/admin/payments')
-@UseGuards(AdminAuthGuard, RolesGuard)
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+@Controller('api/payments')
 export class PaymentsController {
-  constructor(
-    private readonly paymentsService: PaymentsService,
-    private readonly auditLogService: AuditLogService,
-  ) {}
+  constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Get()
-  async findAll() {
-    return this.paymentsService.findAll();
+  @Post('create-order')
+  @UseGuards(UserAuthGuard)
+  async createOrder(@Req() req: RequestWithUser, @Body('orderId') orderId: string) {
+    return this.paymentsService.createRazorpayOrder(orderId, req.user.id);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.paymentsService.findOne(id);
-  }
-
-  @Post()
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.ORDER_MANAGER)
-  async create(
-    @Body() createPaymentDto: CreatePaymentDto,
-    @CurrentSession() session: SessionData,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
+  @Post('verify')
+  @UseGuards(UserAuthGuard)
+  async verifyPayment(
+    @Body('razorpay_order_id') razorpayOrderId: string,
+    @Body('razorpay_payment_id') razorpayPaymentId: string,
+    @Body('razorpay_signature') signature: string,
   ) {
-    const payment = await this.paymentsService.create(createPaymentDto);
-    await this.auditLogService.logAction(
-      session.adminId,
-      'RECORD_PAYMENT',
-      'Payment',
-      payment.id,
-      ip,
-      userAgent,
-    );
-    return payment;
+    return this.paymentsService.verifyPayment(razorpayOrderId, razorpayPaymentId, signature);
   }
 }

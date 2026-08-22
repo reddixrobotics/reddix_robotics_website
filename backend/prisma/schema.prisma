@@ -218,9 +218,38 @@ model Order {
 
   items           OrderItem[]
   payments        Payment[]
+  shipment        Shipment?
 
   @@index([customerId])
   @@index([orderNumber])
+}
+
+model Shipment {
+  id                 String         @id @default(uuid())
+  orderId            String         @unique
+  order              Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courier            String         @default("DELHIVERY")
+  awbNumber          String?        @unique
+  trackingUrl        String?
+  status             ShipmentStatus @default(CREATED)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([awbNumber])
+}
+
+enum ShipmentStatus {
+  CREATED
+  READY_TO_SHIP
+  PICKUP_REQUESTED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DELIVERY_FAILED
+  RTO
+  CANCELLED
 }
 
 model OrderItem {
@@ -238,18 +267,22 @@ model OrderItem {
 }
 
 model Payment {
-  id            String      @id @default(uuid())
-  orderId       String
-  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount        Float
-  transactionId String      @unique
-  status        String      // SUCCESS, FAILED, PENDING
-  type          PaymentType
-  paymentMethod String
-  createdAt     DateTime    @default(now())
+  id                String      @id @default(uuid())
+  orderId           String
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount            Float
+  currency          String      @default("USD")
+  transactionId     String?     @unique
+  razorpayOrderId   String?     @unique
+  razorpayPaymentId String?     @unique
+  status            String      // SUCCESS, FAILED, PENDING
+  type              PaymentType
+  paymentMethod     String
+  createdAt         DateTime    @default(now())
 
   @@index([orderId])
   @@index([transactionId])
+  @@index([razorpayOrderId])
 }
 
 model Job {
@@ -260,6 +293,7 @@ model Job {
   location        String
   type            String
   experienceLevel String
+  salary          String?
   requirements    String[]
   responsibilities String[]
   status          CareerStatus  @default(DRAFT)

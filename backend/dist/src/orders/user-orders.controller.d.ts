@@ -12,6 +12,16 @@ export declare class UserOrdersController {
     private readonly ordersService;
     constructor(ordersService: OrdersService);
     getMyOrders(req: RequestWithUser): Promise<({
+        shipment: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.ShipmentStatus;
+            orderId: string;
+            courier: string;
+            awbNumber: string | null;
+            trackingUrl: string | null;
+        } | null;
         items: ({
             product: {
                 images: {
@@ -47,9 +57,9 @@ export declare class UserOrdersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;
@@ -95,9 +105,9 @@ export declare class UserOrdersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        status: import("@prisma/client").$Enums.OrderStatus;
         customerId: string | null;
         shippingDetails: import("@prisma/client/runtime/client").JsonValue | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         orderNumber: string;
         subtotal: number;
         totalAmount: number;

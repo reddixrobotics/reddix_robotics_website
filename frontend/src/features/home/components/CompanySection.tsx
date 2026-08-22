@@ -12,16 +12,16 @@ export default function CompanySection() {
           transition={{ duration: 0.6 }}
         >
           <SectionHeading 
-            eyebrow="Our Company" 
-            title="Pioneering the Autonomous Revolution" 
+            eyebrow="OUR COMPANY" 
+            title="Engineering the Intelligent Future" 
             align="left"
           />
           <div className="text-body-lg text-[var(--text-secondary)] space-y-6">
             <p>
-              At Reddix Robotics, we believe that intelligent automation is the key to solving humanity's most complex challenges. Founded in 2026, we have rapidly grown into a global leader in autonomous systems.
+              At Reddix Robotics, we make advanced automation accessible and transformative. As an R&D partner, we combine AI, computer vision, and embedded systems to solve real-world industrial challenges.
             </p>
             <p>
-              Our mission is to seamlessly integrate robotic technologies into industrial, commercial, and everyday environments—enhancing safety, efficiency, and human potential.
+              Our mission is to bridge the gap between simulation and reality. By integrating autonomous technologies into daily operations, we enhance efficiency, safety, and human potential.
             </p>
           </div>
         </motion.div>

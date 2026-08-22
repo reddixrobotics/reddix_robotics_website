@@ -25,7 +25,8 @@ export default function UserGuard() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    return <Navigate to={`${ROUTES.LOGIN}?redirect=${redirectUrl}`} replace />;
   }
 
   return <Outlet />;

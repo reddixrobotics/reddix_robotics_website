@@ -13,21 +13,34 @@ exports.AdminAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const session_service_1 = require("../session.service");
+const user_session_service_1 = require("../user-session.service");
 const allow_pending_2fa_decorator_1 = require("../decorators/allow-pending-2fa.decorator");
 let AdminAuthGuard = class AdminAuthGuard {
     sessionService;
+    userSessionService;
     reflector;
-    constructor(sessionService, reflector) {
+    constructor(sessionService, userSessionService, reflector) {
         this.sessionService = sessionService;
+        this.userSessionService = userSessionService;
         this.reflector = reflector;
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
-        const token = request.cookies['admin_session'];
-        if (!token) {
+        const adminToken = request.cookies['admin_session'];
+        const userToken = request.cookies['user_session'];
+        if (!adminToken && !userToken) {
             throw new common_1.UnauthorizedException('Authentication session missing');
         }
-        const session = await this.sessionService.verifySession(token);
+        if (userToken && !adminToken) {
+            const userSession = await this.userSessionService.verifySession(userToken);
+            if (userSession) {
+                throw new common_1.ForbiddenException('You do not have permission to access the admin area');
+            }
+            else {
+                throw new common_1.UnauthorizedException('Invalid or expired session');
+            }
+        }
+        const session = await this.sessionService.verifySession(adminToken);
         if (!session) {
             throw new common_1.UnauthorizedException('Invalid or expired session');
         }
@@ -39,7 +52,7 @@ let AdminAuthGuard = class AdminAuthGuard {
             throw new common_1.UnauthorizedException('Two-factor authentication required');
         }
         request['session'] = session;
-        request['sessionToken'] = token;
+        request['sessionToken'] = adminToken;
         return true;
     }
 };
@@ -47,6 +60,7 @@ exports.AdminAuthGuard = AdminAuthGuard;
 exports.AdminAuthGuard = AdminAuthGuard = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [session_service_1.SessionService,
+        user_session_service_1.UserSessionService,
         core_1.Reflector])
 ], AdminAuthGuard);
 //# sourceMappingURL=admin-auth.guard.js.map

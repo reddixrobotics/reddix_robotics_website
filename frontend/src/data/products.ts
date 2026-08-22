@@ -14,6 +14,7 @@ export interface Product {
   images: string[];
   features: string[];
   specifications: Record<string, string>;
+  depositPercentage?: number;
 }
 
 export const categories = [

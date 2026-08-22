@@ -29,11 +29,28 @@ export default function PaymentPage() {
     }
   }, [items.length, navigate]);
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const existingScript = document.getElementById('razorpay-checkout-js');
+      if (existingScript) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-js';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePayment = async () => {
     setIsLoading(true);
     setPaymentError(null);
     
     try {
+      // 1. Create the order
       const payload = {
         items: items.map(item => ({
           productId: item.product.id,
@@ -44,14 +61,67 @@ export default function PaymentPage() {
 
       const res = await apiClient.post('/api/orders', payload);
       const createdOrder = res.data;
-      
-      clearCart();
-      navigate(`/order-success/${createdOrder.id}`, { replace: true });
+
+      // 2. Initialize Razorpay
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        throw new Error('Razorpay SDK failed to load. Are you online?');
+      }
+
+      // 3. Create payment order on backend
+      const { data: paymentOrder } = await apiClient.post('/api/payments/create-order', {
+        orderId: createdOrder.id
+      });
+
+      // 4. Open Razorpay Checkout
+      const options = {
+        key: paymentOrder.keyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: 'Reddix Robotics',
+        description: 'Advance Deposit',
+        order_id: paymentOrder.orderId,
+        handler: async (response: any) => {
+          try {
+            // 5. Verify Signature on backend
+            await apiClient.post('/api/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            clearCart();
+            navigate(`/order-success/${createdOrder.id}`, { replace: true });
+          } catch (verifyError) {
+            console.error('Payment verification failed:', verifyError);
+            setPaymentError('Payment verification failed. If money was deducted, contact support.');
+          }
+        },
+        prefill: {
+          name: customerInfo?.name || '',
+          email: customerInfo?.email || '',
+          contact: customerInfo?.phone || '',
+        },
+        theme: {
+          color: '#e11d48', // var(--color-brand) roughly
+        },
+        modal: {
+          ondismiss: () => {
+            setIsLoading(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Payment failed', response.error);
+        setPaymentError(response.error.description);
+      });
+      rzp.open();
     } catch (e: any) {
-      console.error('Failed to place order:', e);
-      setPaymentError(e.response?.data?.message || 'Failed to process payment. Please try again.');
-    } finally {
+      console.error('Failed to process payment:', e);
       setIsLoading(false);
+      setPaymentError(e.response?.data?.message || e.message || 'Failed to process payment. Please try again.');
     }
   };
 
@@ -120,7 +190,7 @@ export default function PaymentPage() {
                   onClick={handlePayment} 
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Processing Payment...' : `Pay Required Deposit: ${(subtotal * 0.50).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`}
+                  {isLoading ? 'Processing Payment...' : `Pay Required Deposit: ${items.reduce((total, item) => total + ((item.product.price ?? (item.product as any).basePrice ?? 0) * ((item.product.depositPercentage ?? 50) / 100) * item.quantity), 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`}
                 </Button>
               </div>
             </div>

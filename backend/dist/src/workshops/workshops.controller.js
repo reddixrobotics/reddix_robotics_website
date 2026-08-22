@@ -73,6 +73,17 @@ let AdminWorkshopsController = class AdminWorkshopsController {
     async findAllWorkshops() {
         return this.workshopsService.findAllWorkshops(true);
     }
+    async findAllRegistrations() {
+        return this.workshopsService.findAllRegistrations();
+    }
+    async findOneRegistration(id) {
+        return this.workshopsService.findOneRegistration(id);
+    }
+    async updateRegistrationStatus(id, updateStatusDto, session, ip, userAgent) {
+        const registration = await this.workshopsService.updateRegistrationStatus(id, updateStatusDto.status);
+        await this.auditLogService.logAction(session.adminId, 'UPDATE_REGISTRATION_STATUS', 'WorkshopRegistration', id, ip, userAgent);
+        return registration;
+    }
     async findOneWorkshop(id) {
         return this.workshopsService.findOneWorkshop(id);
     }
@@ -91,17 +102,6 @@ let AdminWorkshopsController = class AdminWorkshopsController {
         await this.auditLogService.logAction(session.adminId, 'DELETE_WORKSHOP', 'Workshop', id, ip, userAgent);
         return result;
     }
-    async findAllRegistrations() {
-        return this.workshopsService.findAllRegistrations();
-    }
-    async findOneRegistration(id) {
-        return this.workshopsService.findOneRegistration(id);
-    }
-    async updateRegistrationStatus(id, updateStatusDto, session, ip, userAgent) {
-        const registration = await this.workshopsService.updateRegistrationStatus(id, updateStatusDto.status);
-        await this.auditLogService.logAction(session.adminId, 'UPDATE_REGISTRATION_STATUS', 'WorkshopRegistration', id, ip, userAgent);
-        return registration;
-    }
 };
 exports.AdminWorkshopsController = AdminWorkshopsController;
 __decorate([
@@ -110,6 +110,34 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AdminWorkshopsController.prototype, "findAllWorkshops", null);
+__decorate([
+    (0, common_1.Get)('registrations'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminWorkshopsController.prototype, "findAllRegistrations", null);
+__decorate([
+    (0, common_1.Get)('registrations/:id'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminWorkshopsController.prototype, "findOneRegistration", null);
+__decorate([
+    (0, common_1.Patch)('registrations/:id/status'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_session_decorator_1.CurrentSession)()),
+    __param(3, (0, common_1.Ip)()),
+    __param(4, (0, common_1.Headers)('user-agent')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, registration_dto_1.UpdateRegistrationStatusDto, Object, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminWorkshopsController.prototype, "updateRegistrationStatus", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
@@ -151,34 +179,6 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminWorkshopsController.prototype, "removeWorkshop", null);
-__decorate([
-    (0, common_1.Get)('registrations'),
-    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], AdminWorkshopsController.prototype, "findAllRegistrations", null);
-__decorate([
-    (0, common_1.Get)('registrations/:id'),
-    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], AdminWorkshopsController.prototype, "findOneRegistration", null);
-__decorate([
-    (0, common_1.Patch)('registrations/:id/status'),
-    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN, client_1.AdminRole.CONTENT_MANAGER),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_session_decorator_1.CurrentSession)()),
-    __param(3, (0, common_1.Ip)()),
-    __param(4, (0, common_1.Headers)('user-agent')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, registration_dto_1.UpdateRegistrationStatusDto, Object, String, String]),
-    __metadata("design:returntype", Promise)
-], AdminWorkshopsController.prototype, "updateRegistrationStatus", null);
 exports.AdminWorkshopsController = AdminWorkshopsController = __decorate([
     (0, common_1.Controller)('api/admin/workshops'),
     (0, common_1.UseGuards)(admin_auth_guard_1.AdminAuthGuard, roles_guard_1.RolesGuard),

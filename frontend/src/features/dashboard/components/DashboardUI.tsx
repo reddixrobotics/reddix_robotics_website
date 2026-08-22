@@ -87,7 +87,7 @@ export function StatusBadge({ status }: { status: string }) {
   const s = status.toLowerCase();
   if (s.includes('delivered') || s.includes('success')) colorClass = 'bg-green-500/10 text-green-500';
   else if (s.includes('processing') || s.includes('review') || s.includes('scheduled')) colorClass = 'bg-yellow-500/10 text-yellow-500';
-  else if (s.includes('upcoming') || s.includes('pending')) colorClass = 'bg-blue-500/10 text-blue-500';
+  else if (s.includes('upcoming') || s.includes('pending') || s.includes('applied')) colorClass = 'bg-blue-500/10 text-blue-500';
   else if (s.includes('failed') || s.includes('cancelled')) colorClass = 'bg-red-500/10 text-red-500';
 
   return (

@@ -2,15 +2,22 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@/routes/routePaths';
+import { CartItem } from '@/context/CartContext';
 
 interface OrderSummaryProps {
+  items: CartItem[];
   subtotal: number;
 }
 
-export default function OrderSummary({ subtotal }: OrderSummaryProps) {
-  const depositRatio = 0.50; // 50% deposit
-  const requiredDeposit = subtotal * depositRatio;
-  const remainingBalance = subtotal - requiredDeposit;
+export default function OrderSummary({ items, subtotal }: OrderSummaryProps) {
+  const advanceAmount = items.reduce((total, item) => {
+    const price = item.product.price ?? (item.product as any).basePrice ?? 0;
+    const depositPerc = item.product.depositPercentage ?? 50;
+    return total + (price * (depositPerc / 100) * item.quantity);
+  }, 0);
+  
+  const remainingBalance = subtotal - advanceAmount;
+  const effectivePercentage = subtotal > 0 ? Math.round((advanceAmount / subtotal) * 100) : 0;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -31,8 +38,8 @@ export default function OrderSummary({ subtotal }: OrderSummaryProps) {
         </div>
         
         <div className="flex justify-between items-center text-body-md text-[var(--color-brand)] font-medium">
-          <span>Advance Payment (50%)</span>
-          <span>{formatPrice(requiredDeposit)}</span>
+          <span>Deposit Required ({effectivePercentage}%)</span>
+          <span>{formatPrice(advanceAmount)}</span>
         </div>
         
         <div className="flex justify-between items-center text-body-md text-[var(--text-secondary)]">

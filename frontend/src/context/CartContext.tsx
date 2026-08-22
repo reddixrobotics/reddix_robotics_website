@@ -50,23 +50,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isReady && isAuthenticated && userRole === 'USER') {
-      fetchCart();
+      fetchCart().then(() => {
+        const pending = sessionStorage.getItem('pendingCartAction');
+        if (pending) {
+          try {
+            sessionStorage.removeItem('pendingCartAction');
+            const action = JSON.parse(pending);
+            // Since we only have productId, we need to fetch the product or just hit the API
+            // The API for cart requires productId and quantity
+            apiClient.post('/api/cart', { productId: action.productId, quantity: action.quantity })
+              .then(() => fetchCart())
+              .catch(e => console.error('Failed to add pending cart item', e));
+          } catch (e) {
+            console.error('Failed to parse pending cart action', e);
+          }
+        }
+      });
     } else if (isReady && (!isAuthenticated || userRole !== 'USER')) {
       setItems([]);
       setIsLoading(false);
     }
   }, [isAuthenticated, isReady, userRole]);
 
-  const requireAuth = () => {
+  const requireAuth = (product?: Product, quantity?: number) => {
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      if (product && quantity) {
+        sessionStorage.setItem('pendingCartAction', JSON.stringify({ productId: product.id, quantity }));
+      }
+      const redirectUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${redirectUrl}`;
       return false;
     }
     return true;
   };
 
   const addToCart = async (product: Product, quantity: number) => {
-    if (!requireAuth()) return;
+    if (!requireAuth(product, quantity)) return;
     try {
       // Optimistic UI update
       setItems(prevItems => {
@@ -136,7 +155,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const price = item.product.price ?? (item.product as any).basePrice ?? 0;
     return total + (price * item.quantity);
   }, 0);
-  const advanceAmount = subtotal * 0.5;
+  const advanceAmount = items.reduce((total, item) => {
+    const price = item.product.price ?? (item.product as any).basePrice ?? 0;
+    const depositPerc = item.product.depositPercentage ?? 50; // Fallback to 50% if backend misses it
+    return total + (price * (depositPerc / 100) * item.quantity);
+  }, 0);
   const remainingAmount = subtotal - advanceAmount;
 
   return (

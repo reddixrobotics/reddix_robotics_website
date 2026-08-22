@@ -75,6 +75,17 @@ export class WorkshopsService {
       throw new BadRequestException('Workshop is fully booked');
     }
 
+    const existingRegistration = await this.prisma.workshopRegistration.findFirst({
+      where: {
+        workshopId: dto.workshopId,
+        email: dto.email,
+      }
+    });
+
+    if (existingRegistration) {
+      throw new BadRequestException('You have already registered for this workshop with this email address.');
+    }
+
     return this.prisma.workshopRegistration.create({
       data: {
         workshopId: dto.workshopId,

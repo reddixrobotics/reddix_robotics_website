@@ -83,7 +83,7 @@ export default function CartPage() {
                 {/* Order Summary */}
                 <div className="lg:w-1/3">
                   <div className="sticky top-32">
-                    <OrderSummary subtotal={subtotal} />
+                    <OrderSummary items={items} subtotal={subtotal} />
                   </div>
                 </div>
               </motion.div>
