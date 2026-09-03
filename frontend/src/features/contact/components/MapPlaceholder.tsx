@@ -2,7 +2,7 @@ import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui';
 
 export default function MapPlaceholder() {
-  const address = "Reddix Robotics, 5th floor, Type I, APIIC, 6-B, Prashanth Nagar, IDA Kukatpally, Kukatpally, Hyderabad, Telangana 500072";
+  const address = "reddix robotics ,5th floor, Type I, APIIC, 6-B, Prashanth Nagar, IDA Kukatpally, Hyderabad, Telangana 500072";
   const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
 

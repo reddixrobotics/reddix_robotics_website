@@ -74,15 +74,15 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
   }, [filteredData, currentPage, itemsPerPage]);
 
   return (
-    <div className="bg-[#111] border border-zinc-800 rounded-xl overflow-hidden flex flex-col">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col">
       
       {/* Toolbar */}
       {(actualSearchKey || filters) && (
-        <div className="p-4 border-b border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#111]">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface">
           {actualSearchKey ? (
             <div className="relative w-full sm:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={14} className="text-zinc-500" />
+                <Search size={14} className="text-content-tertiary" />
               </div>
               <input
                 type="text"
@@ -92,7 +92,7 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
                   setSearchTerm(e.target.value);
                   setCurrentPage(1); // reset to page 1 on search
                 }}
-                className="w-full bg-[#0a0a0a] border border-zinc-800 text-zinc-300 text-sm rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-surface border border-border text-content-secondary text-sm rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-red-500 transition-colors"
               />
             </div>
           ) : <div />}
@@ -107,7 +107,7 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
                     setFilterValues(prev => ({ ...prev, [f.key as string]: e.target.value }));
                     setCurrentPage(1);
                   }}
-                  className="bg-[#0a0a0a] border border-zinc-800 text-zinc-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-red-500 transition-colors min-w-[120px]"
+                  className="bg-surface border border-border text-content-secondary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-red-500 transition-colors min-w-[120px]"
                 >
                   <option value="">All {f.label}</option>
                   {f.options.map(opt => (
@@ -124,26 +124,26 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
-            <tr className="bg-zinc-900/50 border-b border-zinc-800">
+            <tr className="bg-surface-card border-b border-border">
               {columns.map((col, idx) => (
-                <th key={idx} className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                <th key={idx} className="p-4 text-xs font-bold text-content-tertiary uppercase tracking-wider">
                   {col.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800">
+          <tbody className="divide-y divide-border">
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="p-8 text-center text-zinc-500 text-sm">
+                <td colSpan={columns.length} className="p-8 text-center text-content-tertiary text-sm">
                   No records found.
                 </td>
               </tr>
             ) : (
               paginatedData.map((item, idx) => (
-                <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
+                <tr key={idx} className="hover:bg-surface-secondary transition-colors">
                   {columns.map((col, colIdx) => (
-                    <td key={colIdx} className="p-4 text-sm text-zinc-300 whitespace-nowrap">
+                    <td key={colIdx} className="p-4 text-sm text-content-secondary whitespace-nowrap">
                       {col.cell ? col.cell(item) : (item[col.accessor] as ReactNode)}
                     </td>
                   ))}
@@ -156,15 +156,15 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="p-4 border-t border-zinc-800 flex items-center justify-between bg-[#111]">
-          <span className="text-xs text-zinc-500">
+        <div className="p-4 border-t border-border flex items-center justify-between bg-surface">
+          <span className="text-xs text-content-tertiary">
             Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1 rounded bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded bg-surface-tertiary text-content-secondary hover:text-content disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
             </button>
@@ -172,7 +172,7 @@ export function AdminDataTable<T>({ columns, data, searchableKey, searchKey, sea
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1 rounded bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded bg-surface-tertiary text-content-secondary hover:text-content disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} />
             </button>

@@ -9,3 +9,6 @@ export declare class CreateContactMessageDto {
 export declare class UpdateContactMessageStatusDto {
     status: MessageStatus;
 }
+export declare class ReplyContactMessageDto {
+    message: string;
+}

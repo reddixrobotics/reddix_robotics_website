@@ -21,6 +21,8 @@ class CreateWorkshopDto {
     location;
     capacity;
     status;
+    posterUrl;
+    externalUrl;
 }
 exports.CreateWorkshopDto = CreateWorkshopDto;
 __decorate([
@@ -62,6 +64,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateWorkshopDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateWorkshopDto.prototype, "posterUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateWorkshopDto.prototype, "externalUrl", void 0);
 class UpdateWorkshopDto {
     title;
     description;
@@ -71,6 +83,8 @@ class UpdateWorkshopDto {
     location;
     capacity;
     status;
+    posterUrl;
+    externalUrl;
 }
 exports.UpdateWorkshopDto = UpdateWorkshopDto;
 __decorate([
@@ -114,4 +128,14 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateWorkshopDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateWorkshopDto.prototype, "posterUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateWorkshopDto.prototype, "externalUrl", void 0);
 //# sourceMappingURL=workshop.dto.js.map

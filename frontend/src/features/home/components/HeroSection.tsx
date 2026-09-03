@@ -7,14 +7,9 @@ export default function HeroSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-[var(--bg-primary)]">
-      {/* 3D Background / Right side */}
-      <div className="absolute inset-0 z-0 lg:left-1/2 lg:w-1/2">
-        <Hero3D />
-      </div>
-
+    <section className="relative min-h-[90vh] flex flex-col lg:flex-row lg:items-center overflow-hidden bg-[var(--bg-primary)] pt-[calc(var(--header-height)+2rem)] lg:pt-0">
       {/* Content */}
-      <div className="container-content relative z-10 w-full pt-32 pb-16 lg:py-32">
+      <div className="container-content relative z-10 w-full pt-4 pb-8 lg:py-32">
         <div className="max-w-2xl">
           <p className="text-eyebrow mb-4 tracking-widest text-[var(--color-brand)]">REDDIX ROBOTICS</p>
           <h1 className="text-display-lg mb-6 leading-tight">
@@ -32,6 +27,11 @@ export default function HeroSection() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* 3D Background / Right side */}
+      <div className="relative w-full h-[45vh] min-h-[300px] z-0 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 lg:h-full lg:min-h-0">
+        <Hero3D />
       </div>
       
       {/* Removed bottom fade for a cleaner layout */}

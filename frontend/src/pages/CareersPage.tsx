@@ -5,7 +5,8 @@ import {
   TrainingSection,
   NewProjectsSection,
   CompanyCultureSection,
-  ApplicationCtaSection
+  ApplicationCtaSection,
+  WorkshopsSection
 } from '@/features/careers';
 
 export default function CareersPage() {
@@ -15,6 +16,7 @@ export default function CareersPage() {
       <WhyJoinUsSection />
       <OpportunitiesSection />
       <TrainingSection />
+      <WorkshopsSection />
       <NewProjectsSection />
       <CompanyCultureSection />
       <ApplicationCtaSection />

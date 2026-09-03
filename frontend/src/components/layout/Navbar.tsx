@@ -284,33 +284,9 @@ const MobileDrawer = memo(function MobileDrawer({
               'border-l border-[var(--border-primary)]',
               'shadow-xl',
               'overflow-y-auto overflow-x-hidden',
+              'pt-[var(--header-height,72px)]', // Spacer for the fixed main header
             )}
           >
-            {/* ── Drawer header ──────────────────────────────────── */}
-            <div
-              className={cn(
-                'flex items-center justify-between',
-                'px-5 py-4',
-                'border-b border-[var(--border-subtle)]',
-                'sticky top-0 z-10 bg-[var(--surface-card)]',
-              )}
-            >
-              <NavLogo onClick={onClose} />
-
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={onClose}
-                aria-label="Close navigation menu"
-                className={cn(
-                  'btn btn-ghost btn-icon btn-md focus-ring',
-                  'ml-2 shrink-0',
-                )}
-              >
-                <X size={22} aria-hidden="true" />
-              </button>
-            </div>
-
             {/* ── Nav links ──────────────────────────────────────── */}
             <motion.nav
               aria-label="Mobile navigation"

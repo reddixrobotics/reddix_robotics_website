@@ -26,6 +26,8 @@ import { FeaturedProjectsModule } from './featured-projects/featured-projects.mo
 import { UploadsController } from './uploads/uploads.controller';
 import { JourneysModule } from './journeys/journeys.module';
 import { UpcomingProjectsModule } from './upcoming-projects/upcoming-projects.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { WorkshopMediaModule } from './workshop-media/workshop-media.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { UpcomingProjectsModule } from './upcoming-projects/upcoming-projects.mo
     WishlistModule,
     JourneysModule,
     UpcomingProjectsModule,
+    DashboardModule,
+    WorkshopMediaModule,
   ],
   controllers: [AppController, UploadsController],
   providers: [

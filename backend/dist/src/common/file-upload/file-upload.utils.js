@@ -10,6 +10,9 @@ exports.ALLOWED_MIMES = [
     'image/png',
     'image/webp',
     'application/pdf',
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
 ];
 exports.secureMulterOptions = {
     storage: (0, multer_1.diskStorage)({
@@ -23,7 +26,7 @@ exports.secureMulterOptions = {
         filename: (req, file, cb) => {
             const safeSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = (0, path_1.extname)(file.originalname).toLowerCase();
-            if (!['.jpg', '.jpeg', '.png', '.webp', '.pdf'].includes(ext)) {
+            if (!['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.mp4', '.webm', '.ogg'].includes(ext)) {
                 return cb(new common_1.BadRequestException('Invalid file extension'), '');
             }
             cb(null, `${file.fieldname}-${safeSuffix}${ext}`);
@@ -31,12 +34,12 @@ exports.secureMulterOptions = {
     }),
     fileFilter: (req, file, cb) => {
         if (!exports.ALLOWED_MIMES.includes(file.mimetype)) {
-            return cb(new common_1.BadRequestException('MIME type not allowed. Supported formats: JPEG, PNG, WEBP, and PDF.'), false);
+            return cb(new common_1.BadRequestException('MIME type not allowed. Supported formats: JPEG, PNG, WEBP, PDF, and Video.'), false);
         }
         cb(null, true);
     },
     limits: {
-        fileSize: 10 * 1024 * 1024,
+        fileSize: 50 * 1024 * 1024,
     },
 };
 //# sourceMappingURL=file-upload.utils.js.map

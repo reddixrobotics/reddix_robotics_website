@@ -12,6 +12,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Marquee animations ─────────────────────────────────────── */
+@keyframes marquee-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-marquee-left {
+  animation: marquee-left 35s linear infinite;
+}
+.animate-marquee-right {
+  animation: marquee-right 40s linear infinite;
+}
+
+
 /* ============================================================
    §1  DESIGN TOKENS
    ============================================================ */
@@ -20,12 +37,12 @@
 :root {
   color-scheme: light;
 
-  /* Brand — Tomato Red */
-  --color-brand:        #E8372A;
-  --color-brand-hover:  #C42D22;
-  --color-brand-active: #A0231A;
-  --color-brand-subtle: #FFF0EF;
-  --color-brand-muted:  #FDDBD8;
+  /* Brand — Dark Red (Logo Match) */
+  --color-brand:        #7C1014;
+  --color-brand-hover:  #630D10;
+  --color-brand-active: #4A0A0C;
+  --color-brand-subtle: #F2E7E7;
+  --color-brand-muted:  #E5CFCF;
 
   /* Backgrounds */
   --bg-primary:   #FFFFFF;
@@ -48,7 +65,7 @@
   --text-tertiary:  #6A6A67;
   --text-muted:     #9A9A97;
   --text-inverse:   #FFFFFF;
-  --text-brand:     #C42D22;
+  --text-brand:     #7C1014;
   --text-on-brand:  #FFFFFF;
 
   /* Status — accessible on white */
@@ -67,7 +84,7 @@
   --shadow-md:    0 2px 4px rgba(15, 15, 14, 0.05);
   --shadow-lg:    0 4px 6px rgba(15, 15, 14, 0.05);
   --shadow-xl:    0 8px 12px rgba(15, 15, 14, 0.05);
-  --shadow-brand: 0 4px 14px rgba(232, 55, 42, 0.15);
+  --shadow-brand: 0 4px 14px rgba(124, 16, 20, 0.15);
 
   /* Spacing scale */
   --space-1:   0.25rem;
@@ -107,12 +124,12 @@
 .dark {
   color-scheme: dark;
 
-  /* Brand — slightly lighter for dark bg contrast (WCAG AA) */
-  --color-brand:        #FF5247;
-  --color-brand-hover:  #E8372A;
-  --color-brand-active: #C42D22;
-  --color-brand-subtle: #271310;
-  --color-brand-muted:  #3D1C18;
+  /* Brand — Dark Red (Logo Match) */
+  --color-brand:        #7C1014;
+  --color-brand-hover:  #630D10;
+  --color-brand-active: #4A0A0C;
+  --color-brand-subtle: #2A0A0C;
+  --color-brand-muted:  #3D1012;
 
   /* Backgrounds */
   --bg-primary:   #0D0D0C;
@@ -135,7 +152,7 @@
   --text-tertiary:  #9A9A97;
   --text-muted:     #6A6A67;
   --text-inverse:   #0F0F0E;
-  --text-brand:     #FF7A6E;
+  --text-brand:     #7C1014;
   --text-on-brand:  #FFFFFF;
 
   /* Status — accessible on dark bg */

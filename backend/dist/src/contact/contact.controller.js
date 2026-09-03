@@ -61,6 +61,11 @@ let AdminContactController = class AdminContactController {
         await this.auditLogService.logAction(session.adminId, 'UPDATE_CONTACT_MESSAGE_STATUS', 'ContactMessage', id, ip, userAgent);
         return message;
     }
+    async replyToMessage(id, replyDto, session, ip, userAgent) {
+        const result = await this.contactService.replyToMessage(id, replyDto.message);
+        await this.auditLogService.logAction(session.adminId, 'REPLY_CONTACT_MESSAGE', 'ContactMessage', id, ip, userAgent);
+        return result;
+    }
     async remove(id, session, ip, userAgent) {
         const result = await this.contactService.remove(id);
         await this.auditLogService.logAction(session.adminId, 'DELETE_CONTACT_MESSAGE', 'ContactMessage', id, ip, userAgent);
@@ -94,6 +99,19 @@ __decorate([
     __metadata("design:paramtypes", [String, contact_dto_1.UpdateContactMessageStatusDto, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminContactController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Post)(':id/reply'),
+    (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_session_decorator_1.CurrentSession)()),
+    __param(3, (0, common_1.Ip)()),
+    __param(4, (0, common_1.Headers)('user-agent')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, contact_dto_1.ReplyContactMessageDto, Object, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminContactController.prototype, "replyToMessage", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)(client_1.AdminRole.SUPER_ADMIN, client_1.AdminRole.ADMIN),

@@ -1,12 +1,14 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/routePaths';
 import { 
   LayoutDashboard, Building, Users, Map, Briefcase, Package, Tags, 
   ShoppingCart, CreditCard, GraduationCap, School, BookOpen, 
-  FileText, HardHat, UserCircle, MessageSquare, Settings, LogOut 
+  FileText, HardHat, UserCircle, MessageSquare, Settings, LogOut, Video
 } from 'lucide-react';
 import apiClient from '@/services/apiClient';
 import { useAuth } from '@/context/AuthContext';
+import { dashboardService } from '@/features/admin/services/apiService';
 
 const coreNav = [
   { name: 'Dashboard', href: ROUTES.ADMIN, icon: LayoutDashboard },
@@ -18,7 +20,6 @@ const coreNav = [
 const catalogNav = [
   { name: 'Portfolio Projects', href: ROUTES.ADMIN_PROJECTS, icon: Briefcase },
   { name: 'Products', href: ROUTES.ADMIN_PRODUCTS, icon: Package },
-  { name: 'Categories', href: ROUTES.ADMIN_CATEGORIES, icon: Tags },
 ];
 
 const operationsNav = [
@@ -30,8 +31,8 @@ const hrNav = [
   { name: 'Jobs', href: ROUTES.ADMIN_JOBS, icon: GraduationCap },
   { name: 'Internships', href: ROUTES.ADMIN_INTERNSHIPS, icon: School },
   { name: 'Workshops', href: ROUTES.ADMIN_WORKSHOPS, icon: BookOpen },
+  { name: 'Workshop Media', href: ROUTES.ADMIN_WORKSHOP_MEDIA, icon: Video },
   { name: 'Applications', href: ROUTES.ADMIN_APPLICATIONS, icon: FileText },
-  { name: 'Contractors', href: ROUTES.ADMIN_CONTRACTORS, icon: HardHat },
 ];
 
 const systemNav = [
@@ -49,6 +50,23 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
   const navigate = useNavigate();
 
   const { logout } = useAuth();
+  
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const stats = await dashboardService.getStats();
+        setUnreadCount(stats.messages || 0);
+      } catch (err) {
+        console.error("Failed to fetch unread messages", err);
+      }
+    };
+    fetchUnread();
+    
+    const interval = setInterval(fetchUnread, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,7 +92,12 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
                 size={20} 
                 className={`mr-3 ${isActive ? 'text-[var(--color-brand)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
               />
-              <span className="font-medium text-sm">{item.name}</span>
+              <span className="font-medium text-sm flex-1">{item.name}</span>
+              {item.name === 'Messages' && unreadCount > 0 && (
+                <span className="bg-[var(--color-brand)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-2">
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           </li>
         );

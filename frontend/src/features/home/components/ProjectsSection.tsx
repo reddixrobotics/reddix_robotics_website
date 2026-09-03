@@ -34,7 +34,7 @@ export default function ProjectsSection() {
   }, []);
 
   return (
-    <Section className="bg-[var(--bg-secondary)]">
+    <Section className="bg-[var(--bg-primary)]">
       <SectionHeading 
         eyebrow="Case Studies" 
         title="Featured Projects" 
@@ -57,7 +57,7 @@ export default function ProjectsSection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <Card className="h-full flex flex-col overflow-hidden p-0 border-0 shadow-lg bg-[var(--bg-primary)]">
+              <Card className="h-full flex flex-col overflow-hidden p-0 border border-[var(--border-primary)] shadow-md bg-[var(--surface-card)] hover:border-[var(--color-brand)] transition-colors">
                 <div className="h-48 bg-[var(--bg-tertiary)] flex items-center justify-center relative overflow-hidden">
                   {project.imageUrl ? (
                     <img 

@@ -20,12 +20,7 @@ export default function Footer() {
           {/* ─── Company ───────────────────────────────────────────────────────── */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-4">
-              <span className="flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand)] text-sm font-bold text-white">
-                R
-              </span>
-              <span className="font-display text-lg font-bold text-[var(--text-primary)] tracking-tight">
-                {BRAND_NAME}
-              </span>
+              <img src="/logo.png" alt={BRAND_NAME} className="h-12 w-auto" />
             </div>
             <p className="text-sm leading-relaxed text-[var(--text-muted)] max-w-xs">
               Building innovative robotic systems, automation solutions and intelligent technologies for the future. {BRAND_TAGLINE}
@@ -90,7 +85,7 @@ export default function Footer() {
               <li className="flex items-start gap-3 text-sm">
                 <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-[var(--text-muted)]" />
                 <span>
-                  5th floor, Type I, APIIC, 6-B,<br />
+                  Reddix Robotics ,5th floor, Type I, APIIC, 6-B,<br />
                   Prashanth Nagar, IDA Kukatpally,<br />
                   Hyderabad, Telangana 500072
                 </span>
@@ -141,22 +136,31 @@ export default function Footer() {
             <p className="text-sm text-[var(--text-muted)]">
               © {year} {BRAND_NAME}. All rights reserved.
             </p>
-            <p className="text-xs text-[var(--text-muted)] opacity-70">
-              3D Model based on "Animated humanoid robot" by pinguinoconpulgares (CC-BY-4.0).
-            </p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-4 flex-wrap justify-center">
             <Link 
-              to="/privacy-policy" 
+              to={ROUTES.PRIVACY_POLICY} 
               className="text-sm text-[var(--text-muted)] hover:text-[var(--color-brand)] transition-colors duration-200"
             >
               Privacy Policy
             </Link>
             <Link 
-              to="/terms-conditions" 
+              to={ROUTES.TERMS_CONDITIONS} 
               className="text-sm text-[var(--text-muted)] hover:text-[var(--color-brand)] transition-colors duration-200"
             >
               Terms & Conditions
+            </Link>
+            <Link 
+              to={ROUTES.SHIPPING_POLICY} 
+              className="text-sm text-[var(--text-muted)] hover:text-[var(--color-brand)] transition-colors duration-200"
+            >
+              Shipping Policy
+            </Link>
+            <Link 
+              to={ROUTES.CANCELLATION_REFUND} 
+              className="text-sm text-[var(--text-muted)] hover:text-[var(--color-brand)] transition-colors duration-200"
+            >
+              Cancellation & Refund
             </Link>
           </div>
         </div>

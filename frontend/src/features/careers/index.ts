@@ -5,3 +5,4 @@ export { default as TrainingSection } from './components/TrainingSection';
 export { default as NewProjectsSection } from './components/NewProjectsSection';
 export { default as CompanyCultureSection } from './components/CompanyCultureSection';
 export { default as ApplicationCtaSection } from './components/ApplicationCtaSection';
+export * from './components/WorkshopsSection';

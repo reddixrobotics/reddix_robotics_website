@@ -62,7 +62,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 
         <div className={cn(iconLeft ?? iconRight ? 'input-group' : '')}>
           {iconLeft && (
-            <span className="input-icon-left" aria-hidden="true">
+            <span className="input-icon-left">
               {iconLeft}
             </span>
           )}
@@ -89,7 +89,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           />
 
           {iconRight && (
-            <span className="input-icon-right" aria-hidden="true">
+            <span className="input-icon-right">
               {iconRight}
             </span>
           )}

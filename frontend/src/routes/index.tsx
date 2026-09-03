@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ROUTES } from './routePaths';
 import RootLayout from '@/layouts/RootLayout';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import RoleGuard from './RoleGuard';
 
@@ -51,18 +49,22 @@ const ContactPage  = lazy(() => import('@/pages/ContactPage'));
 const BlogPage     = lazy(() => import('@/pages/BlogPage'));
 const LoginPage    = lazy(() => import('@/pages/LoginPage'));
 const SignupPage   = lazy(() => import('@/pages/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const JobApplicationPage = lazy(() => import('@/pages/JobApplicationPage'));
 const InternshipApplicationPage = lazy(() => import('@/pages/InternshipApplicationPage'));
 const WorkshopRegistrationPage = lazy(() => import('@/pages/WorkshopRegistrationPage'));
 const GeneralApplicationPage = lazy(() => import('@/pages/GeneralApplicationPage'));
 
+// Workshop Pages
+const Ros2ImmersionPage = lazy(() => import('@/pages/workshops/Ros2ImmersionPage'));
+const Ros2ApplicationPage = lazy(() => import('@/pages/workshops/Ros2ApplicationPage'));
+const Ros2SuccessPage = lazy(() => import('@/pages/workshops/Ros2SuccessPage'));
+
 // Dashboard Pages
-const DashboardOverview = lazy(() => import('@/pages/dashboard/DashboardOverview'));
 const DashboardProfile = lazy(() => import('@/pages/dashboard/DashboardProfile'));
 const DashboardOrders = lazy(() => import('@/pages/dashboard/DashboardOrders'));
 const DashboardPayments = lazy(() => import('@/pages/dashboard/DashboardPayments'));
 const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardApplications'));
-const DashboardSettings = lazy(() => import('@/pages/dashboard/DashboardSettings'));
 
 // Admin Pages
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
@@ -71,6 +73,7 @@ const AdminEmployees = lazy(() => import('@/pages/admin/AdminEmployees'));
 const AdminProjects = lazy(() => import('@/pages/admin/AdminProjects'));
 const AdminFeaturedProjects = lazy(() => import('@/pages/admin/AdminFeaturedProjects'));
 const AdminWorkshops = lazy(() => import('@/pages/admin/AdminWorkshops'));
+const AdminWorkshopMedia = lazy(() => import('@/pages/admin/AdminWorkshopMedia'));
 const AdminJobs = lazy(() => import('@/pages/admin/AdminJobs'));
 const AdminInternships = lazy(() => import('@/pages/admin/AdminInternships'));
 const AdminUpcomingProjects = lazy(() => import('@/pages/admin/AdminUpcomingProjects'));
@@ -80,10 +83,17 @@ const AdminJourneys = lazy(() => import('@/pages/admin/AdminJourneys'));
 const AdminApplications = lazy(() => import('@/pages/admin/AdminApplications'));
 const AdminOrders = lazy(() => import('@/pages/admin/AdminOrders'));
 const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'));
+const AdminMessages = lazy(() => import('@/pages/admin/AdminMessages'));
 const AdminPlaceholderPage = lazy(() => import('@/pages/admin/AdminPlaceholderPage'));
 
 const DesignSystemPage = lazy(() => import('@/pages/DesignSystemPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+
+// Policy Pages
+const PrivacyPolicyPage = lazy(() => import('@/pages/policies/PrivacyPolicyPage'));
+const TermsConditionsPage = lazy(() => import('@/pages/policies/TermsConditionsPage'));
+const ShippingPolicyPage = lazy(() => import('@/pages/policies/ShippingPolicyPage'));
+const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationRefundPage'));
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -98,7 +108,12 @@ export const router = createBrowserRouter([
       { path: ROUTES.BLOG,         element: withSuspense(BlogPage) },
       { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
       { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
+      { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
       { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
+      { path: ROUTES.PRIVACY_POLICY, element: withSuspense(PrivacyPolicyPage) },
+      { path: ROUTES.TERMS_CONDITIONS, element: withSuspense(TermsConditionsPage) },
+      { path: ROUTES.SHIPPING_POLICY, element: withSuspense(ShippingPolicyPage) },
+      { path: ROUTES.CANCELLATION_REFUND, element: withSuspense(CancellationRefundPage) },
       { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
       { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
       // Publicly viewable routes (GUEST allowed)
@@ -109,6 +124,10 @@ export const router = createBrowserRouter([
           { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
           { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
           { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
+          { path: ROUTES.CAREERS_JOB_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div> },
+          { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
+          { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
+          { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
         ],
       },
 
@@ -121,10 +140,6 @@ export const router = createBrowserRouter([
           { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
           { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
           { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
-          { path: ROUTES.CAREERS_JOB_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div> },
-          { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
-          { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
-          { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
         ],
       },
 
@@ -156,23 +171,25 @@ export const router = createBrowserRouter([
       { path: 'projects', element: withSuspense(AdminProjects) },
       { path: 'featured-projects', element: withSuspense(AdminFeaturedProjects) },
       { path: 'workshops', element: withSuspense(AdminWorkshops) },
+      { path: 'workshop-media', element: withSuspense(AdminWorkshopMedia) },
       { path: 'jobs', element: withSuspense(AdminJobs) },
       { path: 'upcoming-projects', element: withSuspense(AdminUpcomingProjects) },
-      // Other routes fallback to placeholder for now (categories, internships, etc.)
+      // Other routes fallback to placeholder for now (internships, etc.)
       { path: 'company', element: withSuspense(AdminCompany) },
-      { path: 'categories', element: withSuspense(AdminPlaceholderPage) },
       { path: 'orders', element: withSuspense(AdminOrders) },
       { path: 'payments', element: withSuspense(AdminPayments) },
       { path: 'internships', element: withSuspense(AdminInternships) },
       { path: 'applications', element: withSuspense(AdminApplications) },
-      { path: 'contractors', element: withSuspense(AdminPlaceholderPage) },
       { path: 'users', element: withSuspense(AdminPlaceholderPage) },
-      { path: 'messages', element: withSuspense(AdminPlaceholderPage) },
+      { path: 'messages', element: withSuspense(AdminMessages) },
       { path: 'settings', element: withSuspense(AdminSettings) },
       { path: '*', element: withSuspense(AdminPlaceholderPage) },
     ],
       }
     ]
-  }
+  },
+  { path: ROUTES.WORKSHOP_ROS2_IMMERSION, element: withSuspense(Ros2ImmersionPage) },
+  { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
+  { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
 

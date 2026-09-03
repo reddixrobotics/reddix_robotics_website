@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateContactMessageStatusDto = exports.CreateContactMessageDto = void 0;
+exports.ReplyContactMessageDto = exports.UpdateContactMessageStatusDto = exports.CreateContactMessageDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class CreateContactMessageDto {
@@ -53,4 +53,13 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], UpdateContactMessageStatusDto.prototype, "status", void 0);
+class ReplyContactMessageDto {
+    message;
+}
+exports.ReplyContactMessageDto = ReplyContactMessageDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], ReplyContactMessageDto.prototype, "message", void 0);
 //# sourceMappingURL=contact.dto.js.map

@@ -1,5 +1,5 @@
 import { ContactService } from './contact.service';
-import { CreateContactMessageDto, UpdateContactMessageStatusDto } from './dto/contact.dto';
+import { CreateContactMessageDto, UpdateContactMessageStatusDto, ReplyContactMessageDto } from './dto/contact.dto';
 import type { SessionData } from '../auth/session.service';
 import { AuditLogService } from '../audit/audit-log.service';
 export declare class PublicContactController {
@@ -53,6 +53,20 @@ export declare class AdminContactController {
         phone: string | null;
         message: string;
         status: import("@prisma/client").$Enums.MessageStatus;
+    }>;
+    replyToMessage(id: string, replyDto: ReplyContactMessageDto, session: SessionData, ip: string, userAgent: string): Promise<{
+        success: boolean;
+        message: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            subject: string;
+            email: string;
+            phone: string | null;
+            message: string;
+            status: import("@prisma/client").$Enums.MessageStatus;
+        };
     }>;
     remove(id: string, session: SessionData, ip: string, userAgent: string): Promise<{
         success: boolean;

@@ -432,9 +432,9 @@ export default function LoginForm() {
           <label htmlFor="password" className="text-body-sm font-medium text-[var(--text-primary)]">
             Password
           </label>
-          <a href="/admin/forgot-password" className="text-xs text-[var(--text-secondary)] hover:text-white transition-colors">
+          <Link to={ROUTES.FORGOT_PASSWORD} className="text-xs text-[var(--text-secondary)] hover:text-white transition-colors">
             Forgot Password?
-          </a>
+          </Link>
         </div>
         <InputField 
           type={showPassword ? "text" : "password"}

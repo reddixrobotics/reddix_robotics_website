@@ -101,10 +101,10 @@ export function FileUpload({ label = 'Upload Files', multiple = false, accept = 
 
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-zinc-400 mb-1">{label}</label>}
+      {label && <label className="block text-sm font-medium text-content-secondary mb-1">{label}</label>}
       <div
         className={`relative w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-colors ${
-          dragActive ? 'border-red-500 bg-red-500/5' : 'border-zinc-700 bg-zinc-900/50 hover:border-zinc-500'
+          dragActive ? 'border-red-500 bg-red-500/5' : 'border-border-strong bg-surface-card hover:border-zinc-500'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -118,20 +118,20 @@ export function FileUpload({ label = 'Upload Files', multiple = false, accept = 
           onChange={handleChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <UploadCloud size={32} className="text-zinc-500 mb-3" />
-        <p className="text-sm text-zinc-300 font-medium">Drag and drop files here</p>
-        <p className="text-xs text-zinc-500 mt-1">or click to browse</p>
+        <UploadCloud size={32} className="text-content-tertiary mb-3" />
+        <p className="text-sm text-content-secondary font-medium">Drag and drop files here</p>
+        <p className="text-xs text-content-tertiary mt-1">or click to browse</p>
       </div>
 
       {selectedFiles.length > 0 && (
         <div className="mt-4 space-y-2">
           {selectedFiles.map((file, idx) => (
-            <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-zinc-800/50 border border-zinc-700">
-              <span className="text-sm text-zinc-300 truncate max-w-[200px]">{file.name}</span>
+            <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border-strong">
+              <span className="text-sm text-content-secondary truncate max-w-[200px]">{file.name}</span>
               <button
                 type="button"
                 onClick={() => removeFile(idx)}
-                className="text-zinc-400 hover:text-red-500 p-1"
+                className="text-content-secondary hover:text-red-500 p-1"
               >
                 <X size={14} />
               </button>

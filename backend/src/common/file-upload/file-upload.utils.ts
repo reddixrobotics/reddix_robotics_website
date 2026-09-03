@@ -8,6 +8,9 @@ export const ALLOWED_MIMES = [
   'image/png',
   'image/webp',
   'application/pdf',
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
 ];
 
 /**
@@ -29,7 +32,7 @@ export const secureMulterOptions = {
       const ext = extname(file.originalname).toLowerCase();
       
       // Strict whitelist check for extensions
-      if (!['.jpg', '.jpeg', '.png', '.webp', '.pdf'].includes(ext)) {
+      if (!['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.mp4', '.webm', '.ogg'].includes(ext)) {
         return cb(new BadRequestException('Invalid file extension'), '');
       }
 
@@ -40,7 +43,7 @@ export const secureMulterOptions = {
     if (!ALLOWED_MIMES.includes(file.mimetype)) {
       return cb(
         new BadRequestException(
-          'MIME type not allowed. Supported formats: JPEG, PNG, WEBP, and PDF.',
+          'MIME type not allowed. Supported formats: JPEG, PNG, WEBP, PDF, and Video.',
         ),
         false,
       );
@@ -48,6 +51,6 @@ export const secureMulterOptions = {
     cb(null, true);
   },
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB global ceiling
+    fileSize: 50 * 1024 * 1024, // 50MB global ceiling
   },
 };

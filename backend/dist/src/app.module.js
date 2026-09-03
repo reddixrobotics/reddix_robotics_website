@@ -35,6 +35,8 @@ const featured_projects_module_1 = require("./featured-projects/featured-project
 const uploads_controller_1 = require("./uploads/uploads.controller");
 const journeys_module_1 = require("./journeys/journeys.module");
 const upcoming_projects_module_1 = require("./upcoming-projects/upcoming-projects.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
+const workshop_media_module_1 = require("./workshop-media/workshop-media.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -70,6 +72,8 @@ exports.AppModule = AppModule = __decorate([
             wishlist_module_1.WishlistModule,
             journeys_module_1.JourneysModule,
             upcoming_projects_module_1.UpcomingProjectsModule,
+            dashboard_module_1.DashboardModule,
+            workshop_media_module_1.WorkshopMediaModule,
         ],
         controllers: [app_controller_1.AppController, uploads_controller_1.UploadsController],
         providers: [

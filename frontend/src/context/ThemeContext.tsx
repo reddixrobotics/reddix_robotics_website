@@ -20,8 +20,7 @@ export interface ThemeContextValue {
 const STORAGE_KEY = 'reddix_theme';
 
 function getSystemPreference(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 function readStoredTheme(): Theme | null {
@@ -65,17 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(theme);
   }, [theme]);
 
-  // React to OS-level preference changes (only when no explicit preference stored)
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => {
-      if (!readStoredTheme()) {
-        setThemeState(e.matches ? 'dark' : 'light');
-      }
-    };
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, []);
+  // Removed OS-level preference listener since default is explicitly light
 
   const setTheme = useCallback((next: Theme) => {
     try {

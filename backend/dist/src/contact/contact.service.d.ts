@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { CreateContactMessageDto } from './dto/contact.dto';
 import { MessageStatus } from '@prisma/client';
 export declare class ContactService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly mailService;
+    constructor(prisma: PrismaService, mailService: MailService);
     create(dto: CreateContactMessageDto): Promise<{
         id: string;
         name: string;
@@ -51,5 +53,19 @@ export declare class ContactService {
     remove(id: string): Promise<{
         success: boolean;
         message: string;
+    }>;
+    replyToMessage(id: string, replyMessage: string): Promise<{
+        success: boolean;
+        message: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            subject: string;
+            email: string;
+            phone: string | null;
+            message: string;
+            status: import("@prisma/client").$Enums.MessageStatus;
+        };
     }>;
 }

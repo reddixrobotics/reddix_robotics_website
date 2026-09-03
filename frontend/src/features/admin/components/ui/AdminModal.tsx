@@ -20,19 +20,19 @@ export function AdminModal({ isOpen, onClose, title, children, maxWidth = 'max-w
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-surface-overlay backdrop-blur-md backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`relative w-full ${maxWidth} max-h-[90vh] bg-[#111] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col`}
+            className={`relative w-full ${maxWidth} max-h-[90vh] bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col`}
           >
-            <div className="flex items-center justify-between p-4 md:p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-white">{title}</h2>
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-border">
+              <h2 className="text-xl font-bold text-content">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-2 text-zinc-400 hover:text-white bg-zinc-900 rounded-lg transition-colors"
+                className="p-2 text-content-secondary hover:text-content bg-surface-card rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

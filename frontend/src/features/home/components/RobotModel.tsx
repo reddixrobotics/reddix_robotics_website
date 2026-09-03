@@ -4,11 +4,12 @@ import { useGLTF, useAnimations, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { useReducedMotion } from 'framer-motion';
 
+
 export default function RobotModel(props: JSX.IntrinsicElements['group']) {
   const group = useRef<THREE.Group>(null);
   
   // Lazy-load the GLTF model (draco compression or optimized load depending on how it's served)
-  const { scene, animations } = useGLTF('/robotiics_dog/robotiics_dog.gltf');
+  const { scene, animations } = useGLTF('/final_dog/final_dog.gltf');
   const { actions } = useAnimations(animations, group);
   const shouldReduceMotion = useReducedMotion();
 
@@ -33,17 +34,19 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
     };
   }, [scene]);
 
-  // Optimize materials
+  // Optimize materials and fix flickering
   useEffect(() => {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        // Optimize shadows and render order
+        // Optimize shadows
         child.castShadow = true;
         child.receiveShadow = true;
-        // If material exists, we can tweak it for performance/look
+        
+        // Prevent flickering/blinking when animated parts move outside original bounds
+        child.frustumCulled = false;
+        
         if (child.material) {
           child.material.envMapIntensity = 0.8;
-          child.material.needsUpdate = true;
         }
       }
     });
@@ -114,4 +117,4 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
 }
 
 // Preload the model so it's ready quickly
-useGLTF.preload('/robotiics_dog/robotiics_dog.gltf');
+useGLTF.preload('/final_dog/final_dog.gltf');

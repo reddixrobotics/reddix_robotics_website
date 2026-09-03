@@ -27,9 +27,9 @@ export function ConfirmDeleteDialog({
         <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
           <AlertTriangle size={32} className="text-red-500" />
         </div>
-        <p className="text-zinc-300 mb-2">{message}</p>
+        <p className="text-content-secondary mb-2">{message}</p>
         {itemName && (
-          <p className="font-bold text-white mb-6">Item: "{itemName}"</p>
+          <p className="font-bold text-content mb-6">Item: "{itemName}"</p>
         )}
         <div className="flex w-full gap-3 mt-4">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={isDeleting}>

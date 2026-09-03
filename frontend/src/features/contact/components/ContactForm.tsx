@@ -4,6 +4,8 @@ import { Loader2, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useSearchParams } from 'react-router-dom';
 
+import { contactMessageService } from '@/features/admin/services/apiService';
+
 export default function ContactForm() {
   const [status, setStatus] = useState<'initial' | 'submitting' | 'success' | 'error'>('initial');
   const [errorMessage, setErrorMessage] = useState('');
@@ -16,21 +18,33 @@ export default function ContactForm() {
     }
   }, [searchParams]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('submitting');
     setErrorMessage('');
 
-    // Simulate API request to NestJS backend
-    setTimeout(() => {
-      // Simulate 90% success rate
-      if (Math.random() > 0.1) {
-        setStatus('success');
-      } else {
-        setStatus('error');
-        setErrorMessage('There was a problem submitting your message. Please try again later.');
-      }
-    }, 2000);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const phone = (formData.get('phone') as string) || '';
+    const company = (formData.get('company') as string) || '';
+    const formSubject = formData.get('subject') as string;
+    let message = formData.get('message') as string;
+
+    if (company) {
+      message = `Company: ${company}\n\n${message}`;
+    }
+
+    try {
+      await contactMessageService.create({ name, email, phone, subject: formSubject, message });
+      setStatus('success');
+    } catch (error: any) {
+      console.error("Failed to submit message:", error);
+      setStatus('error');
+      setErrorMessage(error.response?.data?.message || 'There was a problem submitting your message. Please try again later.');
+    }
   };
 
   const handleReset = () => {

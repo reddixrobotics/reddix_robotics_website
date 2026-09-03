@@ -13,7 +13,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ContactService } from './contact.service';
-import { CreateContactMessageDto, UpdateContactMessageStatusDto } from './dto/contact.dto';
+import { CreateContactMessageDto, UpdateContactMessageStatusDto, ReplyContactMessageDto } from './dto/contact.dto';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -72,6 +72,28 @@ export class AdminContactController {
       userAgent,
     );
     return message;
+  }
+
+  @Post(':id/reply')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async replyToMessage(
+    @Param('id') id: string,
+    @Body() replyDto: ReplyContactMessageDto,
+    @CurrentSession() session: SessionData,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    const result = await this.contactService.replyToMessage(id, replyDto.message);
+    await this.auditLogService.logAction(
+      session.adminId,
+      'REPLY_CONTACT_MESSAGE',
+      'ContactMessage',
+      id,
+      ip,
+      userAgent,
+    );
+    return result;
   }
 
   @Delete(':id')

@@ -2,7 +2,7 @@ import {
   HeroSection,
   CompanySection,
   CapabilitiesSection,
-  TechnologiesSection,
+  ProjectsSection,
   ProductsSection,
   CareersPreviewSection,
   WorkshopsSection,
@@ -32,7 +32,7 @@ export default function HomePage() {
       <PartnersSection />
       <CompanySection />
       <CapabilitiesSection />
-      <TechnologiesSection />
+      <ProjectsSection />
       <ProductsSection />
       <CareersPreviewSection />
       <WorkshopsSection />

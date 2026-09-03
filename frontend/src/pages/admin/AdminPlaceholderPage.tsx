@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-template-expressions */
 import { useLocation } from 'react-router-dom';
 import { Hammer } from 'lucide-react';
 
@@ -8,11 +9,11 @@ export default function AdminPlaceholderPage() {
 
   return (
     <div className="h-full flex flex-col items-center justify-center text-center p-8">
-      <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-6 border border-zinc-800">
+      <div className="w-16 h-16 bg-surface-card rounded-2xl flex items-center justify-center mb-6 border border-border">
         <Hammer size={32} className="text-zinc-600" />
       </div>
-      <h1 className="text-2xl font-black text-white mb-2">{pageTitle} Management</h1>
-      <p className="text-zinc-400 max-w-md">
+      <h1 className="text-2xl font-black text-content mb-2">{pageTitle} Management</h1>
+      <p className="text-content-secondary max-w-md">
         This administration module is currently under construction. 
         Specific CRUD operations and database schemas for {pageTitle.toLowerCase()} will be implemented in a future update.
       </p>

@@ -20,6 +20,61 @@ export const uploadFile = async (file: File): Promise<string> => {
   return res.data.url;
 }
 
+// ─── Dashboard Service ─────────────────────────────────────────────────────────
+
+export const dashboardService = {
+  async getStats(): Promise<any> {
+    const res = await apiClient.get<any>('/api/admin/dashboard');
+    return res.data;
+  }
+};
+
+
+
+// ─── Contact Message Service ───────────────────────────────────────────────────
+
+export interface ContactMessageData {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  status: 'NEW' | 'READ' | 'RESPONDED' | 'ARCHIVED';
+  createdAt: string;
+}
+
+export const contactMessageService = {
+  async create(data: Omit<ContactMessageData, 'id' | 'status' | 'createdAt'>): Promise<ContactMessageData> {
+    const res = await apiClient.post<ContactMessageData>('/api/contact', data);
+    return res.data;
+  },
+
+  async getAll(): Promise<ContactMessageData[]> {
+    const res = await apiClient.get<ContactMessageData[]>('/api/admin/contact');
+    return res.data;
+  },
+
+  async getById(id: string): Promise<ContactMessageData> {
+    const res = await apiClient.get<ContactMessageData>(`/api/admin/contact/${id}`);
+    return res.data;
+  },
+
+  async updateStatus(id: string, status: string): Promise<ContactMessageData> {
+    const res = await apiClient.patch<ContactMessageData>(`/api/admin/contact/${id}/status`, { status });
+    return res.data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/api/admin/contact/${id}`);
+  },
+
+  async reply(id: string, message: string): Promise<any> {
+    const res = await apiClient.post(`/api/admin/contact/${id}/reply`, { message });
+    return res.data;
+  }
+};
+
 // ─── Products Service ──────────────────────────────────────────────────────────
 
 export const productService = {
@@ -282,6 +337,8 @@ export const workshopService = {
       date: w.date ? new Date(w.date).toISOString().split('T')[0] : '',
       duration: w.duration,
       location: w.location,
+      posterUrl: w.posterUrl,
+      externalUrl: w.externalUrl,
     }));
   },
 
@@ -296,6 +353,8 @@ export const workshopService = {
       date: w.date ? new Date(w.date).toISOString().split('T')[0] : '',
       duration: w.duration,
       location: w.location,
+      posterUrl: w.posterUrl,
+      externalUrl: w.externalUrl,
     };
   },
 
@@ -307,6 +366,8 @@ export const workshopService = {
       time: '10:00 AM',
       duration: item.duration,
       location: item.location,
+      posterUrl: item.posterUrl,
+      externalUrl: item.externalUrl,
       capacity: 50,
       status: 'PUBLISHED'
     };
@@ -321,6 +382,8 @@ export const workshopService = {
     if (updates.date !== undefined) payload.date = new Date(updates.date).toISOString();
     if (updates.duration !== undefined) payload.duration = updates.duration;
     if (updates.location !== undefined) payload.location = updates.location;
+    if (updates.posterUrl !== undefined) payload.posterUrl = updates.posterUrl;
+    if (updates.externalUrl !== undefined) payload.externalUrl = updates.externalUrl;
     const res = await apiClient.patch<any>(`/api/admin/workshops/${id}`, payload);
     return res.data;
   },

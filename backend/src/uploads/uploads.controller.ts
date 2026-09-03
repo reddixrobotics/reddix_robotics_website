@@ -24,6 +24,7 @@ export class UploadsController {
       // Upload the locally saved file to Cloudinary
       const result = await cloudinary.uploader.upload(file.path, {
         folder: 'raddix_website',
+        resource_type: 'auto',
       });
 
       // Remove the local file since it is now in Cloudinary

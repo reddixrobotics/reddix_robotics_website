@@ -27,3 +27,9 @@ export class UpdateContactMessageStatusDto {
   @IsNotEmpty()
   status: MessageStatus;
 }
+
+export class ReplyContactMessageDto {
+  @IsString()
+  @IsNotEmpty()
+  message: string;
+}

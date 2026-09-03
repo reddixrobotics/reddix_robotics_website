@@ -43,8 +43,8 @@ export default function ContactInfo() {
             <div>
               <h4 className="text-heading-sm mb-1">Headquarters</h4>
               <p className="text-body-md text-[var(--text-secondary)]">
-                Reddix Robotics, 5th floor, Type I, APIIC, 6-B,<br />
-                Prashanth Nagar, IDA Kukatpally, Kukatpally,<br />
+                Reddix Robotics ,5th floor, Type I, APIIC, 6-B,<br />
+                Prashanth Nagar, IDA Kukatpally,<br />
                 Hyderabad, Telangana 500072
               </p>
             </div>

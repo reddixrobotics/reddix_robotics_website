@@ -43,14 +43,14 @@ export function TagInput({ value, onChange, placeholder = "Type and press Enter"
   };
 
   return (
-    <div className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 flex flex-wrap gap-2 items-center focus-within:border-red-500 transition-colors">
+    <div className="w-full bg-surface-card border border-border rounded-lg p-2 flex flex-wrap gap-2 items-center focus-within:border-red-500 transition-colors">
       {tags.map((tag, index) => (
-        <div key={index} className="flex items-center gap-1 bg-zinc-800 text-sm px-2 py-1 rounded-md text-zinc-200">
+        <div key={index} className="flex items-center gap-1 bg-surface-tertiary text-sm px-2 py-1 rounded-md text-content">
           <span>{tag}</span>
           <button
             type="button"
             onClick={() => removeTag(index)}
-            className="text-zinc-400 hover:text-white focus:outline-none flex items-center justify-center"
+            className="text-content-secondary hover:text-content focus:outline-none flex items-center justify-center"
           >
             <X size={14} />
           </button>
@@ -58,7 +58,7 @@ export function TagInput({ value, onChange, placeholder = "Type and press Enter"
       ))}
       <input
         type="text"
-        className="flex-1 bg-transparent border-none text-white focus:outline-none min-w-[120px] px-1 text-sm py-1"
+        className="flex-1 bg-transparent border-none text-content focus:outline-none min-w-[120px] px-1 text-sm py-1"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}

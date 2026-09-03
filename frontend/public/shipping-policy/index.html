@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shipping Policy | Reddix Robotics">
+    <title>Shipping Policy | Reddix Robotics</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#e11d48',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #171717;
+            --text-primary: #ffffff;
+            --text-secondary: #a3a3a3;
+            --text-muted: #737373;
+            --border-primary: #262626;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .brand-text {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <header class="border-b border-[#262626] bg-[#0a0a0a] py-4 px-6 md:px-12 flex items-center">
+        <a href="/" class="flex items-center gap-2">
+            <img src="/logo.png" alt="Reddix Robotics" class="h-10 w-auto" />
+            <span class="brand-text font-bold text-xl tracking-wide">REDDIX ROBOTICS</span>
+        </a>
+    </header>
+    
+    <main class="flex-grow container mx-auto px-6 py-12 max-w-4xl">
+        
+            <h1 class="text-3xl font-bold mb-6 text-[var(--text-primary)]">Shipping Policy</h1>
+            <p class="text-sm text-[var(--text-muted)] mb-8">Last Updated: September 2026</p>
+            
+            <div class="space-y-8 text-[var(--text-secondary)]">
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">1. General Information</h2>
+                    <p>Reddix Robotics currently offers shipping for our physical robotics products <strong>within India only</strong>. At this time, we do not support international shipping.</p>
+                    <p class="mt-2">Please note that our Workshops are digital or service-based registrations and do not require physical shipping.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">2. Order Processing</h2>
+                    <p>All orders for physical products are processed only after successful payment verification. You will receive an order confirmation email once your order has been successfully placed.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">3. Shipping Information</h2>
+                    <p>Customers are responsible for providing correct and complete shipping information. Reddix Robotics is not responsible for delayed or lost shipments due to incorrect address details provided by the customer.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">4. Delivery Timelines & Delays</h2>
+                    <p>We strive to dispatch orders promptly. Delivery timelines depend on the destination and the courier service. Delays may occasionally occur due to courier/logistics issues, adverse weather conditions, or other unforeseen circumstances outside of our control.</p>
+                </section>
+                
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">5. Package Inspection & Damaged Products</h2>
+                    <p>Customers should inspect the package carefully upon receipt. If the product or package arrives damaged:</p>
+                    <ul class="list-disc pl-6 space-y-1 mt-2">
+                        <li>Please contact Reddix Robotics immediately.</li>
+                        <li>Provide your order details and clear evidence (photographs/video) of the damaged package and product.</li>
+                        <li>Damaged products may be eligible for replacement after our team verifies the claim. (Please refer to our Cancellation & Refund Policy for more details).</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-semibold mb-3 text-[var(--text-primary)]">6. Contact Us</h2>
+                    <p>For any questions regarding your shipment, please contact us:</p>
+                    <p class="mt-2">Email: reddixrobotics@gmail.com</p>
+                    <p>Phone: +91 7036780248</p>
+                </section>
+            </div>
+        
+    </main>
+    
+    <footer class="border-t border-[#262626] bg-[#171717] py-8 text-center text-[#737373] text-sm mt-auto">
+        <p>&copy; 2026 Reddix Robotics. All rights reserved.</p>
+        <div class="mt-4 space-x-4">
+            <a href="/privacy-policy" class="hover:text-[#e11d48]">Privacy Policy</a>
+            <a href="/terms-conditions" class="hover:text-[#e11d48]">Terms & Conditions</a>
+            <a href="/shipping-policy" class="hover:text-[#e11d48]">Shipping Policy</a>
+            <a href="/cancellation-refund" class="hover:text-[#e11d48]">Cancellation & Refund</a>
+            <a href="/contact" class="hover:text-[#e11d48]">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -90,8 +90,8 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
         {isUploading && <p className="mt-2 text-sm text-brand animate-pulse">Uploading image...</p>}
         {formData.imageUrl && !isUploading && (
           <div className="mt-4">
-            <p className="text-xs text-zinc-400 mb-2">Current Image Preview:</p>
-            <img src={formData.imageUrl} alt="Preview" className="w-full max-w-sm rounded-lg border border-zinc-700 shadow-md object-cover" />
+            <p className="text-xs text-content-secondary mb-2">Current Image Preview:</p>
+            <img src={formData.imageUrl} alt="Preview" className="w-full max-w-sm rounded-lg border border-border-strong shadow-md object-cover" />
           </div>
         )}
       </FormField>

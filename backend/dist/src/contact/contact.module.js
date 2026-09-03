@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const contact_service_1 = require("./contact.service");
 const contact_controller_1 = require("./contact.controller");
 const auth_module_1 = require("../auth/auth.module");
+const mail_module_1 = require("../mail/mail.module");
 let ContactModule = class ContactModule {
 };
 exports.ContactModule = ContactModule;
 exports.ContactModule = ContactModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule],
+        imports: [auth_module_1.AuthModule, mail_module_1.MailModule],
         providers: [contact_service_1.ContactService],
         controllers: [contact_controller_1.PublicContactController, contact_controller_1.AdminContactController],
         exports: [contact_service_1.ContactService],

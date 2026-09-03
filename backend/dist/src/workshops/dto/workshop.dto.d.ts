@@ -8,6 +8,8 @@ export declare class CreateWorkshopDto {
     location: string;
     capacity: number;
     status?: WorkshopStatus;
+    posterUrl?: string;
+    externalUrl?: string;
 }
 export declare class UpdateWorkshopDto {
     title?: string;
@@ -18,4 +20,6 @@ export declare class UpdateWorkshopDto {
     location?: string;
     capacity?: number;
     status?: WorkshopStatus;
+    posterUrl?: string;
+    externalUrl?: string;
 }

@@ -12,10 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const mail_service_1 = require("../mail/mail.service");
+const client_1 = require("@prisma/client");
 let ContactService = class ContactService {
     prisma;
-    constructor(prisma) {
+    mailService;
+    constructor(prisma, mailService) {
         this.prisma = prisma;
+        this.mailService = mailService;
     }
     async create(dto) {
         return this.prisma.contactMessage.create({
@@ -50,10 +54,20 @@ let ContactService = class ContactService {
         });
         return { success: true, message: `Contact message ${id} deleted successfully.` };
     }
+    async replyToMessage(id, replyMessage) {
+        const message = await this.findOne(id);
+        await this.mailService.sendMail(message.email, `Re: ${message.subject}`, replyMessage);
+        const updated = await this.prisma.contactMessage.update({
+            where: { id },
+            data: { status: client_1.MessageStatus.RESPONDED },
+        });
+        return { success: true, message: updated };
+    }
 };
 exports.ContactService = ContactService;
 exports.ContactService = ContactService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        mail_service_1.MailService])
 ], ContactService);
 //# sourceMappingURL=contact.service.js.map

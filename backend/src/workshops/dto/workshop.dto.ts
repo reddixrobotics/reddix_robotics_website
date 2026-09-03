@@ -40,6 +40,14 @@ export class CreateWorkshopDto {
   @IsEnum(WorkshopStatus)
   @IsOptional()
   status?: WorkshopStatus;
+
+  @IsString()
+  @IsOptional()
+  posterUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  externalUrl?: string;
 }
 
 export class UpdateWorkshopDto {
@@ -75,4 +83,12 @@ export class UpdateWorkshopDto {
   @IsEnum(WorkshopStatus)
   @IsOptional()
   status?: WorkshopStatus;
+
+  @IsString()
+  @IsOptional()
+  posterUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  externalUrl?: string;
 }

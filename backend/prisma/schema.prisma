@@ -358,6 +358,8 @@ model Workshop {
   duration     String
   location     String
   capacity     Int
+  posterUrl    String?
+  externalUrl  String?
   status       WorkshopStatus         @default(DRAFT)
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
@@ -527,4 +529,27 @@ model UpcomingProject {
   status      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model WorkshopMedia {
+  sectionKey   String   @id
+  title        String
+  mediaUrl     String?
+  posterUrl    String?
+  mediaType    String   @default("video")
+  altText      String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+model WorkshopProgramStep {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  command      String
+  mediaKey     String   @unique
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

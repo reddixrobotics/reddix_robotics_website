@@ -31,6 +31,7 @@ let UploadsController = class UploadsController {
         try {
             const result = await cloudinary_1.v2.uploader.upload(file.path, {
                 folder: 'raddix_website',
+                resource_type: 'auto',
             });
             await (0, promises_1.unlink)(file.path).catch(console.error);
             return {

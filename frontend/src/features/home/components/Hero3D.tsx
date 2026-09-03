@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerformanceMonitor, Html, useProgress } from '@react-three/drei';
+import { OrbitControls, Html, useProgress } from '@react-three/drei';
 import Hero3DFallback from './Hero3DFallback';
 import { useReducedMotion } from 'framer-motion';
 
@@ -43,7 +43,6 @@ const isWebGLSupported = () => {
 };
 
 export default function Hero3D() {
-  const [dpr, setDpr] = useState(1.5);
   const [isSupported, setIsSupported] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -56,8 +55,8 @@ export default function Hero3D() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // If WebGL fails, or if it's a mobile device with prefers-reduced-motion, show the fallback
-  if (!isSupported || (isMobile && shouldReduceMotion)) {
+  // If WebGL fails, show the fallback
+  if (!isSupported) {
     return <Hero3DFallback />;
   }
 
@@ -65,14 +64,11 @@ export default function Hero3D() {
     <div className="w-full h-full relative">
       <Canvas 
         camera={{ position: [0, 0, 8], fov: 45 }} 
-        dpr={dpr} 
+        dpr={[1, 1.5]} 
         className="w-full h-full opacity-80 lg:opacity-100"
         shadows
         gl={{ antialias: false, powerPreference: "high-performance" }}
       >
-        {/* Drop DPR if frame rate struggles */}
-        <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
-        
         <ErrorBoundary fallback={<Html center><Hero3DFallback /></Html>}>
           <Suspense fallback={<HeroLoader />}>
             

@@ -64,20 +64,20 @@ export function ImageCropperModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#0b0f19] text-white">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-[#0b0f19] text-content">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 bg-[#0b0f19] border-b border-white/10 z-10">
         <div className="flex items-center gap-4">
           <button 
             onClick={onClose} 
-            className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors text-content/80 hover:text-content"
           >
             <X size={24} />
           </button>
-          <span className="font-medium text-[15px] text-white/90">Drag the image to adjust</span>
+          <span className="font-medium text-[15px] text-content/90">Drag the image to adjust</span>
         </div>
         <div>
-          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/10 rounded-full cursor-pointer transition-colors text-sm font-medium text-white/80 hover:text-white">
+          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/10 rounded-full cursor-pointer transition-colors text-sm font-medium text-content/80 hover:text-content">
             <UploadIcon size={16} />
             <span>Upload</span>
             <input 
@@ -109,10 +109,10 @@ export function ImageCropperModal({
         />
 
         {/* Floating Zoom Controls (Right) */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-black/50 backdrop-blur-md rounded-full p-1.5 border border-white/10 z-20 shadow-xl">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-surface-overlay backdrop-blur-sm backdrop-blur-md rounded-full p-1.5 border border-white/10 z-20 shadow-xl">
           <button 
             onClick={() => setZoom(Math.min(3, zoom + 0.1))} 
-            className="p-2.5 hover:bg-white/20 rounded-full transition-colors text-white"
+            className="p-2.5 hover:bg-white/20 rounded-full transition-colors text-content"
             title="Zoom In"
           >
             <Plus size={20} />
@@ -120,7 +120,7 @@ export function ImageCropperModal({
           <div className="w-full h-[1px] bg-white/20 my-0.5" />
           <button 
             onClick={() => setZoom(Math.max(0.2, zoom - 0.1))} 
-            className="p-2.5 hover:bg-white/20 rounded-full transition-colors text-white"
+            className="p-2.5 hover:bg-white/20 rounded-full transition-colors text-content"
             title="Zoom Out"
           >
             <Minus size={20} />
@@ -131,7 +131,7 @@ export function ImageCropperModal({
         <button 
           onClick={handleSave} 
           disabled={isProcessing}
-          className="absolute bottom-8 right-8 w-16 h-16 bg-[#25D366] hover:bg-[#1ebe5d] rounded-full flex items-center justify-center text-white shadow-2xl z-20 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute bottom-8 right-8 w-16 h-16 bg-[#25D366] hover:bg-[#1ebe5d] rounded-full flex items-center justify-center text-content shadow-2xl z-20 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Crop & Save"
         >
           {isProcessing ? (

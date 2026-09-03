@@ -26,7 +26,7 @@ let EmployeesService = class EmployeesService {
         return this.prisma.employee.findMany({
             orderBy: [
                 { priority: 'desc' },
-                { name: 'asc' },
+                { createdAt: 'asc' },
             ],
         });
     }

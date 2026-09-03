@@ -194,7 +194,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
         <FormField label="Product Image">
           <div className="flex flex-col gap-2">
             {formData.images?.[0] && (
-              <img src={formData.images[0]} alt="Preview" className="h-32 w-32 object-cover rounded border border-zinc-700 shadow-md" />
+              <img src={formData.images[0]} alt="Preview" className="h-32 w-32 object-cover rounded border border-border-strong shadow-md" />
             )}
             <input 
               type="file" 

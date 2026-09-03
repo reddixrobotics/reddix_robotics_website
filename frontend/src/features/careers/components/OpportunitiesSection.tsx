@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Section, SectionHeading, Card, Button, Badge } from '@/components/ui';
 import { MapPin, Briefcase, Clock, Calendar, ArrowRight } from 'lucide-react';
-import { workshops } from '../data/mockData';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '@/services/apiClient';
+import { ROUTES } from '@/routes/routePaths';
 
 type Tab = 'jobs' | 'internships' | 'workshops';
 
@@ -12,6 +12,7 @@ export default function OpportunitiesSection() {
   const [activeTab, setActiveTab] = useState<Tab>('jobs');
   const [jobs, setJobs] = useState<any[]>([]);
   const [internships, setInternships] = useState<any[]>([]);
+  const [workshops, setWorkshops] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [appliedIds, setAppliedIds] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -27,12 +28,36 @@ export default function OpportunitiesSection() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [jobsRes, internshipsRes] = await Promise.all([
-          apiClient.get('/api/careers/jobs'),
-          apiClient.get('/api/careers/internships')
+        const [jobsRes, internshipsRes, workshopsRes] = await Promise.all([
+          apiClient.get('/api/careers/jobs').catch(() => ({ data: [] })),
+          apiClient.get('/api/careers/internships').catch(() => ({ data: [] })),
+          apiClient.get('/api/workshops').catch(() => ({ data: [] }))
         ]);
-        setJobs(jobsRes.data);
-        setInternships(internshipsRes.data);
+        
+        setJobs(jobsRes.data?.length ? jobsRes.data : []);
+        setInternships(internshipsRes.data?.length ? internshipsRes.data : []);
+        
+        // Provide a default mock workshop if none exist so users can preview the flow
+        setWorkshops(workshopsRes.data?.length ? workshopsRes.data : [
+          {
+            id: 'ros2-mentorship',
+            title: '30 DAYS ROS 2 MENTORSHIP',
+            description: 'Build Autonomous Robots. Solve Real-World Problems. Build Your Career. Hands-On Learning with ROS 2, Expert Mentorship & 1:1 Guidance, Industry Projects & Portfolio, Placement Support & Career Guidance.',
+            date: '2026-09-15T00:00:00.000Z',
+            duration: '30 Days',
+            location: 'Remote / Virtual',
+            imageUrl: '/ros2_mentorship.jpg'
+          },
+          {
+            id: 'ros2-industry-immersion',
+            title: 'ROS 2 Industry Immersion',
+            description: '30 Days. One Robot. Full ROS 2 Engineering Stack. Join our intensive 30-day engineering workshop designed to take you from a Linux terminal to deploying an autonomous robot using the real Reddix Robotics engineering stack.',
+            date: '2026-10-01T00:00:00.000Z',
+            duration: '30 Days',
+            location: 'Remote / Virtual',
+            imageUrl: '/robot2.jpeg'
+          }
+        ]);
       } catch (err) {
         console.error('Failed to load career opportunities:', err);
       } finally {
@@ -205,24 +230,29 @@ export default function OpportunitiesSection() {
                 {workshops.map((workshop) => (
                   <Card key={workshop.id} className="p-0 overflow-hidden border-[var(--border-strong)] flex flex-col">
                     <div className="h-48 w-full">
-                      <img src={workshop.imageUrl} alt={workshop.title} className="w-full h-full object-cover" />
+                      <img src={workshop.posterUrl || workshop.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800'} alt={workshop.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-heading-md mb-3">{workshop.title}</h3>
                       <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
                       
                       <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
-                        <div className="flex items-center gap-2"><Calendar size={16} /> {workshop.date} ({workshop.duration})</div>
+                        <div className="flex items-center gap-2"><Calendar size={16} /> {new Date(workshop.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})} ({workshop.duration})</div>
                         <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
                       </div>
                       
                       <Button 
                         variant="outline" 
                         className="w-full justify-center" 
-                        disabled={appliedIds.includes(workshop.id)}
-                        onClick={() => navigate(`/careers/workshops/${workshop.id}/register`)}
+                        onClick={() => {
+                          if (workshop.externalUrl) {
+                            window.open(workshop.externalUrl, '_blank');
+                          } else {
+                            navigate(ROUTES.WORKSHOP_ROS2_IMMERSION);
+                          }
+                        }}
                       >
-                        {appliedIds.includes(workshop.id) ? "Applied" : <>Register <ArrowRight size={16} className="ml-2" /></>}
+                        View Workshop <ArrowRight size={16} className="ml-2" />
                       </Button>
                     </div>
                   </Card>
