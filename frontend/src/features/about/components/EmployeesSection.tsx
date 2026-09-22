@@ -23,7 +23,7 @@ export default function EmployeesSection() {
     const fetchEmployees = async () => {
       try {
         const res = await apiClient.get('/api/employees');
-        let backendUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3000') : '';
+        let backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
         
         const mapped = res.data.map((e: any) => {
           let photo = e.profilePhoto;
