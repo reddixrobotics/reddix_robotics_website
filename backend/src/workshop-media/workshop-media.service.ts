@@ -43,7 +43,13 @@ export class WorkshopMediaService {
   }
 
   async remove(sectionKey: string) {
-    await this.findByKey(sectionKey);
+    // If the record doesn't exist yet there's nothing to remove — treat as success.
+    const existing = await this.prisma.workshopMedia.findUnique({
+      where: { sectionKey },
+    });
+    if (!existing) {
+      return { sectionKey, cleared: false, message: 'No media record found — nothing to remove.' };
+    }
     return this.prisma.workshopMedia.update({
       where: { sectionKey },
       data: { mediaUrl: null, posterUrl: null, isActive: false },

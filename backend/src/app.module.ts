@@ -23,11 +23,12 @@ import { ContactModule } from './contact/contact.module';
 import { CartModule } from './cart/cart.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { FeaturedProjectsModule } from './featured-projects/featured-projects.module';
-import { UploadsController } from './uploads/uploads.controller';
+import { UploadsModule } from './uploads/uploads.module';
 import { JourneysModule } from './journeys/journeys.module';
 import { UpcomingProjectsModule } from './upcoming-projects/upcoming-projects.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { WorkshopMediaModule } from './workshop-media/workshop-media.module';
+import { AdminsModule } from './admins/admins.module';
 
 @Module({
   imports: [
@@ -64,8 +65,10 @@ import { WorkshopMediaModule } from './workshop-media/workshop-media.module';
     UpcomingProjectsModule,
     DashboardModule,
     WorkshopMediaModule,
+    UploadsModule,
+    AdminsModule,
   ],
-  controllers: [AppController, UploadsController],
+  controllers: [AppController],
   providers: [
     AppService,
     // Apply ThrottlerGuard globally to all routes

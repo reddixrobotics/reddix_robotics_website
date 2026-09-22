@@ -49,7 +49,7 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
   
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
@@ -76,6 +76,11 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
   const renderLinks = (items: any[]) => (
     <ul className="space-y-0.5">
       {items.map(item => {
+        // Only show Users to SUPER_ADMIN
+        if (item.name === 'Users' && userRole !== 'SUPER_ADMIN') {
+          return null;
+        }
+
         const isActive = location.pathname === item.href;
         return (
           <li key={item.name}>

@@ -24,7 +24,7 @@ export const ALLOWED_MIMES = [
 export const secureMulterOptions = {
   storage: diskStorage({
     destination: (req, file, cb) => {
-      const uploadDir = join(process.cwd(), 'uploads');
+      const uploadDir = join(__dirname, '../../../uploads');
       if (!existsSync(uploadDir)) {
         mkdirSync(uploadDir, { recursive: true });
       }

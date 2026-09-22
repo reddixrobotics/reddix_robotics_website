@@ -1,48 +1,79 @@
-import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Controller, Post, UseInterceptors, UploadedFile,
+  BadRequestException, InternalServerErrorException, UseGuards,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { secureMulterOptions } from '../common/file-upload/file-upload.utils';
-import { v2 as cloudinary } from 'cloudinary';
-import { unlink } from 'fs/promises';
+import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { memoryStorage } from 'multer';
 
-// Cloudinary configuration (credentials loaded from environment variables)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// ─── Multer: store in RAM, no temp files on disk ──────────────────────────────
+const ALLOWED_MIMES = [
+  'image/jpeg', 'image/png', 'image/webp',
+  'application/pdf',
+  'video/mp4', 'video/webm', 'video/ogg',
+  'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+];
 
+const ALLOWED_EXTS = [
+  '.jpg', '.jpeg', '.png', '.webp', '.pdf',
+  '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv',
+];
+
+const memoryMulterOptions = {
+  storage: memoryStorage(),
+  fileFilter: (_req: any, file: any, cb: any) => {
+    if (!ALLOWED_MIMES.includes(file.mimetype)) {
+      return cb(new BadRequestException('MIME type not allowed. Supported: JPEG, PNG, WEBP, PDF, Video.'), false);
+    }
+    const ext = require('path').extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTS.includes(ext)) {
+      return cb(new BadRequestException('Invalid file extension.'), false);
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 150 * 1024 * 1024 }, // 150 MB
+};
+
+// ─── Controller ───────────────────────────────────────────────────────────────
 @Controller('api/upload')
 export class UploadsController {
   @Post()
-  @UseInterceptors(FileInterceptor('file', secureMulterOptions))
+  @UseGuards(AdminAuthGuard)
+  @UseInterceptors(FileInterceptor('file', memoryMulterOptions))
   async uploadFile(@UploadedFile() file: any) {
-    if (!file) {
+    if (!file || !file.buffer) {
       throw new BadRequestException('No file uploaded');
     }
 
-    try {
-      // Upload the locally saved file to Cloudinary
-      const result = await cloudinary.uploader.upload(file.path, {
-        folder: 'raddix_website',
-        resource_type: 'auto',
-      });
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
-      // Remove the local file since it is now in Cloudinary
-      await unlink(file.path).catch(console.error);
+    try {
+      // Pipe the in-memory buffer directly to Cloudinary — no disk I/O, no ENOENT.
+      const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'raddix_website', resource_type: 'auto' },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result!);
+          },
+        );
+        stream.end(file.buffer);
+      });
 
       return {
         url: result.secure_url,
         originalname: file.originalname,
-        filename: file.filename,
         size: file.size,
       };
     } catch (error) {
       console.error('Cloudinary Upload Error:', error);
-      
-      // Cleanup local file if Cloudinary upload fails
-      await unlink(file.path).catch(console.error);
-
-      throw new InternalServerErrorException('Failed to upload image to Cloudinary');
+      throw new InternalServerErrorException('Failed to upload file to Cloudinary');
     }
   }
 }
+

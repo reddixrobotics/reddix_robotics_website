@@ -6,7 +6,6 @@ import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import helmet from 'helmet';
-import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -15,10 +14,6 @@ async function bootstrap() {
   app.use(helmet({
     crossOriginResourcePolicy: false, // Required so frontend can fetch images from /uploads/
   }));
-
-  // Increase body size limit for large file uploads (videos up to 150MB)
-  app.use(express.json({ limit: '200mb' }));
-  app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({
@@ -36,7 +31,7 @@ async function bootstrap() {
   });
 
   // Serve static uploads
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
 

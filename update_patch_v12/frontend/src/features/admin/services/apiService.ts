@@ -11,14 +11,12 @@ import { InternshipFormData } from '../components/forms/InternshipForm';
 export const uploadFile = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
-
-  // Setting Content-Type to undefined removes the axios instance-level default
-  // ('application/json') for this request only, so the browser auto-generates:
-  // "multipart/form-data; boundary=----WebKitFormBoundaryXXXX"
-  // Without the boundary, multer cannot parse the file parts and returns 400.
+  
   const res = await apiClient.post<any>('/api/upload', formData, {
-    headers: { 'Content-Type': undefined },
-    timeout: 300000,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 300000, // 5 minutes for large files like videos
   });
   return res.data.url;
 }
