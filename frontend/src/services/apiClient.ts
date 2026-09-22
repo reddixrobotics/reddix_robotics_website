@@ -3,9 +3,11 @@ import type { ApiError } from '@/types';
 
 // ─── Environment ──────────────────────────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined
-  ? import.meta.env.VITE_API_BASE_URL
-  : (import.meta.env.DEV ? 'http://localhost:3000' : '');
+let _baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+if (!import.meta.env.DEV && _baseUrl.includes('localhost')) {
+  _baseUrl = ''; // Force relative path in production, ignoring local .env files
+}
+const BASE_URL = _baseUrl;
 const TIMEOUT = Number(import.meta.env['VITE_API_TIMEOUT'] ?? 15_000);
 
 // ─── Token storage key ────────────────────────────────────────────────────────
