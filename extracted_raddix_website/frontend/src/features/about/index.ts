@@ -1,0 +1,10 @@
+export { default as AboutHeroSection } from './components/AboutHeroSection';
+export { default as CompanyOverviewSection } from './components/CompanyOverviewSection';
+export { default as VisionMissionSection } from './components/VisionMissionSection';
+export { default as CoreValuesSection } from './components/CoreValuesSection';
+export { default as TechnologiesSection } from './components/TechnologiesSection';
+export { default as CapabilitiesSection } from './components/CapabilitiesSection';
+export { default as EmployeesSection } from './components/EmployeesSection';
+export { default as ProjectsSection } from './components/ProjectsSection';
+export { default as CompanyJourneySection } from './components/CompanyJourneySection';
+export { default as CtaSection } from './components/CtaSection';
