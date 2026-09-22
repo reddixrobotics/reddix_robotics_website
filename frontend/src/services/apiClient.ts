@@ -3,10 +3,7 @@ import type { ApiError } from '@/types';
 
 // ─── Environment ──────────────────────────────────────────────────────────────
 
-let _baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-if (!import.meta.env.DEV && _baseUrl.includes('localhost')) {
-  _baseUrl = ''; // Force relative path in production, ignoring local .env files
-}
+let _baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000') : '';
 const BASE_URL = _baseUrl;
 const TIMEOUT = Number(import.meta.env['VITE_API_TIMEOUT'] ?? 15_000);
 
