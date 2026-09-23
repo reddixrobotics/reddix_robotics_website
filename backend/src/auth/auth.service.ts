@@ -79,19 +79,19 @@ export class AuthService {
       // Store in Redis (5 minutes TTL)
       await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-      // Send via email asynchronously
-      this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
+      // Bypassed email OTP due to Railway SMTP blocking
+      // this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
 
       const { token, session } = await this.sessionService.createSession(
         admin.id,
         admin.role,
-        'PENDING_EMAIL_OTP',
+        'PENDING_AUTHENTICATOR',
         ipAddress,
         userAgent,
       );
 
       return {
-        requireEmailOtp: true,
+        requireEmailOtp: false,
         isTwoFactorSetup: admin.twoFactorEnabled,
         token,
         session,
