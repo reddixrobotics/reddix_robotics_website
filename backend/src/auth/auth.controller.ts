@@ -147,8 +147,8 @@ export class AuthController {
     if (adminRoles.includes(result.role)) {
       res.cookie('admin_session', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       });
 
@@ -163,8 +163,8 @@ export class AuthController {
     } else if (result.role === 'USER') {
       res.cookie('user_session', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
     }
@@ -275,8 +275,8 @@ export class AuthController {
       await this.authService.logout(adminToken);
       res.clearCookie('admin_session', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
       });
     }
 
@@ -285,8 +285,8 @@ export class AuthController {
       await this.authService.logoutUser(userToken);
       res.clearCookie('user_session', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
       });
     }
 
