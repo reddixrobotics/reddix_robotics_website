@@ -29,6 +29,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       process.env.FRONTEND_URL || 'http://localhost:5173',
+      'https://www.reddixrobotics.com',
+      'https://reddixrobotics.com',
       'http://localhost:5174',
       'http://127.0.0.1:5173'
     ],
