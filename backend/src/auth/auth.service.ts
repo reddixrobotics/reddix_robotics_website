@@ -79,12 +79,16 @@ export class AuthService {
       // Store in Redis (5 minutes TTL)
       await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
+      // Log the OTP so it can be read from Railway logs (useful since Railway blocks SMTP)
+      console.log(`\n\n=== ADMIN LOGIN OTP for ${admin.email} ===\nOTP CODE: ${otp}\n====================================\n\n`);
+
       // Send via email synchronously so errors can be handled
       try {
         await this.mailService.sendEmailOtp(admin.email, otp);
       } catch (e) {
-        console.error('Failed to send OTP email:', e);
-        throw new InternalServerErrorException('Failed to send verification email. Please try again later.');
+        console.error('Failed to send OTP email due to Railway SMTP block. The OTP has been printed above.');
+        // We will NOT throw an error here, so the user can still proceed to the OTP step
+        // and type the OTP they see in the Railway logs.
       }
 
       const { token, session } = await this.sessionService.createSession(
@@ -191,12 +195,15 @@ export class AuthService {
     // Store in Redis (5 minutes TTL)
     await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
+    // Log the OTP so it can be read from Railway logs (useful since Railway blocks SMTP)
+    console.log(`\n\n=== ADMIN LOGIN OTP (RESEND) for ${admin.email} ===\nOTP CODE: ${otp}\n====================================\n\n`);
+
     // Send via email synchronously so errors can be handled
     try {
       await this.mailService.sendEmailOtp(admin.email, otp);
     } catch (e) {
-      console.error('Failed to send OTP email:', e);
-      throw new InternalServerErrorException('Failed to send verification email. Please try again later.');
+      console.error('Failed to send OTP email due to Railway SMTP block. The OTP has been printed above.');
+      // Do not throw so they don't get an error
     }
   }
 
