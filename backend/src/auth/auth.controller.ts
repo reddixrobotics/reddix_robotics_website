@@ -81,6 +81,50 @@ export class AuthController {
   }
 
   /**
+   * TEMPORARY ENDPOINT: Seed the default admin account.
+   * Visit /api/auth/seed-admin in your browser to create the admin account on Railway.
+   */
+  @Get('seed-admin')
+  @SkipThrottle({ default: true, global: true })
+  async seedAdmin() {
+    const email = 'admin@reddixrobotics.com';
+    const password = 'ReddixAdminSecure2026!';
+
+    const existingAdmin = await this.prisma.admin.findUnique({
+      where: { email },
+    });
+
+    if (existingAdmin) {
+      return { message: `Admin account (${email}) already exists in the database!` };
+    }
+
+    // Require crypto service to hash password (we can use argon2 directly or via authService, but wait, authService doesn't expose it, so let's import argon2)
+    // Actually we can just require argon2 here since it's already in the project.
+    const argon2 = require('argon2');
+    const passwordHash = await argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
+
+    await this.prisma.admin.create({
+      data: {
+        email,
+        passwordHash,
+        role: 'SUPER_ADMIN',
+        twoFactorEnabled: false,
+      },
+    });
+
+    return { 
+      message: 'Admin account created successfully!',
+      email: email,
+      password: password
+    };
+  }
+
+  /**
    * Admin profile — returns twoFactorEnabled status and email.
    * Protected: requires a fully authenticated session (no pending 2FA).
    */
