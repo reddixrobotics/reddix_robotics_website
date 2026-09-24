@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, AlertTriangle, ShieldAlert, Clock } from 'lucide-react';
 import { InputField } from '@/components/ui/Input';
 import { Button } from '@/components/ui';
@@ -43,16 +43,18 @@ export default function LoginForm() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [searchParams] = useSearchParams();
 
+  const navigate = useNavigate();
+
   const handleSuccessRedirect = (role: string) => {
     const redirect = searchParams.get('redirect');
     if (redirect && redirect.startsWith('/')) {
-      window.location.href = redirect;
+      navigate(redirect);
       return;
     }
     if (role === 'USER') {
-      window.location.href = ROUTES.PROFILE;
+      navigate(ROUTES.PROFILE);
     } else {
-      window.location.href = ROUTES.ADMIN;
+      navigate(ROUTES.ADMIN);
     }
   };
 
@@ -302,7 +304,7 @@ export default function LoginForm() {
       <div className="space-y-6">
         <TwoFASetupWizard
           onEnabled={() => {
-            window.location.href = ROUTES.ADMIN;
+            navigate(ROUTES.ADMIN);
           }}
           onCancel={() => {
             setStep('credentials');
