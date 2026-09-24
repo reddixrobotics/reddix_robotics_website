@@ -8,6 +8,8 @@ import { fetchAdminSession } from '@/services/authSession';
 import { TwoFASetupWizard } from '@/features/auth/components/TwoFASetupWizard';
 import { ROUTES } from '@/routes/routePaths';
 
+import { useAuth } from '@/context/AuthContext';
+
 // Map raw API error messages to user-friendly strings
 function friendlyError(rawMessage: string): string {
   const msg = rawMessage.toLowerCase();
@@ -44,8 +46,10 @@ export default function LoginForm() {
   const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
 
-  const handleSuccessRedirect = (role: string) => {
+  const handleSuccessRedirect = async (role: string) => {
+    await checkAuth(); // Make sure AuthContext knows we are logged in before navigating
     const redirect = searchParams.get('redirect');
     if (redirect && redirect.startsWith('/')) {
       navigate(redirect);
