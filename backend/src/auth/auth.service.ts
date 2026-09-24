@@ -73,6 +73,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      /* TEMPORARILY DISABLED: Email OTP & 2FA to bypass Railway SMTP blocks
       // Generate 6-digit random OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       
@@ -90,17 +91,18 @@ export class AuthService {
         // We will NOT throw an error here, so the user can still proceed to the OTP step
         // and type the OTP they see in the Railway logs.
       }
+      */
 
       const { token, session } = await this.sessionService.createSession(
         admin.id,
         admin.role,
-        'PENDING_EMAIL_OTP',
+        'AUTHENTICATED', // Bypass 'PENDING_EMAIL_OTP' and 'PENDING_AUTHENTICATOR'
         ipAddress,
         userAgent,
       );
 
       return {
-        requireEmailOtp: true,
+        requireEmailOtp: false, // Bypass frontend OTP screen
         isTwoFactorSetup: admin.twoFactorEnabled,
         token,
         session,
