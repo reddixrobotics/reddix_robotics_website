@@ -67,6 +67,7 @@ export class MailService {
       }
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}`, error);
+      throw new Error(`Email sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

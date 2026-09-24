@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../crypto/crypto.service';
 import { SessionService, SessionData } from './session.service';
@@ -79,19 +79,24 @@ export class AuthService {
       // Store in Redis (5 minutes TTL)
       await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-      // Bypassed email OTP due to Railway SMTP blocking
-      // this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
+      // Send via email synchronously so errors can be handled
+      try {
+        await this.mailService.sendEmailOtp(admin.email, otp);
+      } catch (e) {
+        console.error('Failed to send OTP email:', e);
+        throw new InternalServerErrorException('Failed to send verification email. Please try again later.');
+      }
 
       const { token, session } = await this.sessionService.createSession(
         admin.id,
         admin.role,
-        'PENDING_AUTHENTICATOR',
+        'PENDING_EMAIL_OTP',
         ipAddress,
         userAgent,
       );
 
       return {
-        requireEmailOtp: false,
+        requireEmailOtp: true,
         isTwoFactorSetup: admin.twoFactorEnabled,
         token,
         session,
@@ -186,8 +191,13 @@ export class AuthService {
     // Store in Redis (5 minutes TTL)
     await this.redis.set(`email_otp:${admin.id}`, otp, 300);
 
-    // Send via email asynchronously
-    this.mailService.sendEmailOtp(admin.email, otp).catch(e => console.error('Failed to send OTP email:', e));
+    // Send via email synchronously so errors can be handled
+    try {
+      await this.mailService.sendEmailOtp(admin.email, otp);
+    } catch (e) {
+      console.error('Failed to send OTP email:', e);
+      throw new InternalServerErrorException('Failed to send verification email. Please try again later.');
+    }
   }
 
   /**
