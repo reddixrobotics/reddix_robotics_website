@@ -292,13 +292,12 @@ export const employeeService = {
     return (data || []).map((e: any) => ({
       id: e.id,
       name: e.name,
-      role: e.role,
-      department: e.department,
-      bio: e.bio,
-      profilePhoto: e.profilePhoto,
-      skills: e.skills ? e.skills.join(', ') : '',
-      linkedinUrl: e.linkedinUrl,
-      twitterUrl: e.twitterUrl
+      designation: e.designation ?? e.role ?? '',
+      experience: e.experience ?? 0,
+      biography: e.bio ?? '',
+      profilePhoto: e.profilePhoto ?? '',
+      skills: Array.isArray(e.skills) ? e.skills.join(', ') : (e.skills ?? ''),
+      linkedinUrl: e.linkedinUrl ?? '',
     }));
   },
 
@@ -310,19 +309,28 @@ export const employeeService = {
     return {
       id: e.id,
       name: e.name,
-      role: e.role,
-      department: e.department,
-      bio: e.bio,
-      profilePhoto: e.profilePhoto,
-      skills: e.skills ? e.skills.join(', ') : '',
-      linkedinUrl: e.linkedinUrl,
-      twitterUrl: e.twitterUrl
+      designation: e.designation ?? e.role ?? '',
+      experience: e.experience ?? 0,
+      biography: e.bio ?? '',
+      profilePhoto: e.profilePhoto ?? '',
+      skills: Array.isArray(e.skills) ? e.skills.join(', ') : (e.skills ?? ''),
+      linkedinUrl: e.linkedinUrl ?? '',
     };
   },
 
   async create(item: Omit<EmployeeFormData, 'id'>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const payload = { ...item, skills: item.skills.split(',').map((s: string) => s.trim()).filter(Boolean) };
+    const payload: Record<string, any> = {
+      name: item.name,
+      designation: (item as any).designation ?? '',
+      experience: (item as any).experience ?? 0,
+      bio: (item as any).biography ?? '',
+      linkedinUrl: (item as any).linkedinUrl ?? '',
+      profilePhoto: (item as any).profilePhoto ?? '',
+      skills: (typeof item.skills === 'string')
+        ? item.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : (item.skills ?? []),
+    };
     const { data, error } = await supabase.from('Employee').insert(payload).select().single();
     if (error) throw error;
     return data;
@@ -330,8 +338,18 @@ export const employeeService = {
 
   async update(id: string | number, updates: Partial<EmployeeFormData>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const payload = { ...updates };
-    if (updates.skills !== undefined) payload.skills = updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+    const payload: Record<string, any> = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if ((updates as any).designation !== undefined) payload.designation = (updates as any).designation;
+    if ((updates as any).experience !== undefined) payload.experience = (updates as any).experience;
+    if ((updates as any).biography !== undefined) payload.bio = (updates as any).biography;
+    if ((updates as any).linkedinUrl !== undefined) payload.linkedinUrl = (updates as any).linkedinUrl;
+    if (updates.profilePhoto !== undefined) payload.profilePhoto = updates.profilePhoto;
+    if (updates.skills !== undefined) {
+      payload.skills = (typeof updates.skills === 'string')
+        ? updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : updates.skills;
+    }
     const { data, error } = await supabase.from('Employee').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
