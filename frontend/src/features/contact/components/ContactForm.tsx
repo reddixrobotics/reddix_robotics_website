@@ -43,7 +43,11 @@ export default function ContactForm() {
     } catch (error: any) {
       console.error("Failed to submit message:", error);
       setStatus('error');
-      setErrorMessage(error.response?.data?.message || 'There was a problem submitting your message. Please try again later.');
+      setErrorMessage(
+        error.response?.data?.message || 
+        error.message || 
+        'There was a problem submitting your message. Please try again later.'
+      );
     }
   };
 
