@@ -22,7 +22,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
               onClick={() => setActiveImage(idx)}
               className={"relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 rounded-lg overflow-hidden border-2 transition-all " + (activeImage === idx ? 'border-[var(--color-brand)] shadow-md' : 'border-transparent hover:border-[var(--border-strong)] opacity-70 hover:opacity-100')}
             >
-              <img src={img} alt={Thumbnail  + (idx + 1)} className="w-full h-full object-cover bg-white" />
+              <img src={img} alt={"Thumbnail " + (idx + 1)} className="w-full h-full object-cover bg-white" />
             </button>
           ))}
         </div>
@@ -53,3 +53,5 @@ export default function ProductImageGallery({ images, productName }: ProductImag
     </div>
   );
 }
+
+
