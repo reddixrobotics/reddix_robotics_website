@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
 import { ROUTES, buildPath } from '@/routes/routePaths';
@@ -43,25 +43,29 @@ function NewsTicker() {
   }, []);
 
   return (
-    <div className="w-full bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] h-[40px] md:h-[48px] flex items-center overflow-hidden relative z-20 shadow-sm">
+    <div className="w-full bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] h-[40px] md:h-[48px] flex items-center overflow-hidden relative z-50 shadow-sm pointer-events-auto">
       {/* Fixed Label */}
-      <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center px-4 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)] shadow-[4px_0_12px_rgba(0,0,0,0.05)]">
+      <div className="absolute left-0 top-0 bottom-0 z-50 flex items-center px-4 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)] shadow-[4px_0_12px_rgba(0,0,0,0.05)] pointer-events-none">
         <div className="w-2 h-2 rounded-full bg-[var(--color-brand)] mr-3 animate-pulse" />
         <span className="text-xs md:text-sm font-semibold tracking-wider text-nowrap whitespace-nowrap">LATEST UPDATES</span>
       </div>
       
       {/* Scrolling Content */}
-      <div className="flex-1 overflow-hidden ml-[130px] md:ml-[160px] group relative h-full flex items-center motion-reduce:overflow-x-auto">
-        <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused]" style={{ width: 'max-content' }}>
+      <div className="flex-1 overflow-hidden ml-[130px] md:ml-[160px] group relative h-full flex items-center motion-reduce:overflow-x-auto pointer-events-auto">
+        <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused] pointer-events-auto" style={{ width: 'max-content' }}>
           {updates.concat(updates).map((item, i) => (
             item.href ? (
-              <Link 
-                to={item.href}
+              <a 
+                href={item.href}
                 key={i} 
-                className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer"
+                onClick={(e) => {
+                   e.preventDefault();
+                   window.location.href = item.href!;
+                }}
+                className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer relative z-50 pointer-events-auto"
               >
-                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
-              </Link>
+                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)] pointer-events-none" />
+              </a>
             ) : (
               <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
                 {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
