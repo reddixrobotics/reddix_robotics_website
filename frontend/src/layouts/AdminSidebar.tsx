@@ -17,7 +17,7 @@ const coreNav = [
 ];
 
 const catalogNav = [
-  { name: 'Portfolio Projects', href: ROUTES.ADMIN_PROJECTS, icon: Briefcase },
+  { name: 'R&D Projects', href: ROUTES.ADMIN_FEATURED_PROJECTS, icon: Briefcase },
   { name: 'Products', href: ROUTES.ADMIN_PRODUCTS, icon: Package },
 ];
 
@@ -163,3 +163,4 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
     </div>
   );
 }
+

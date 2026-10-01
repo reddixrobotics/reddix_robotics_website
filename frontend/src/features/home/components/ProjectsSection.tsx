@@ -10,6 +10,8 @@ interface FeaturedProject {
   category: string;
   description: string;
   imageUrl: string;
+  designProcess?: string;
+  designDate?: string;
   projectUrl?: string;
 }
 
@@ -22,11 +24,32 @@ export default function ProjectsSection() {
     const fetchProjects = async () => {
       try {
         const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase.from('FeaturedProject').select('*').order('createdAt', { ascending: true });
+                const { data, error } = await supabase.from('FeaturedProject').select('*').order('createdAt', { ascending: true });
         if (error) throw error;
-        setProjects(data as any[]);
+        
+        const unpackedData = (data || []).map(p => {
+          let description = p.description;
+          let designProcess = '';
+          let designDate = '';
+          try {
+            const parsed = JSON.parse(p.description);
+            description = parsed.text || p.description;
+            designProcess = parsed.designProcess || '';
+            designDate = parsed.designDate || '';
+          } catch (e) {
+            // legacy
+          }
+          return {
+            ...p,
+            description,
+            designProcess,
+            designDate
+          };
+        });
+        
+        setProjects(unpackedData);
       } catch (err) {
-        console.error('Failed to fetch featured projects', err);
+        console.error('Failed to fetch portfolio projects', err);
         setError('Failed to load featured projects');
       } finally {
         setIsLoading(false);
@@ -39,16 +62,16 @@ export default function ProjectsSection() {
     <Section className="bg-[var(--bg-primary)]">
       <SectionHeading 
         eyebrow="Case Studies" 
-        title="Featured Projects" 
+        title="R&D Portfolio" 
         description="See how Reddix Robotics is transforming industries with real-world deployments."
       />
       
       {isLoading ? (
-        <div className="mt-12 text-center text-zinc-500 py-12">Loading featured projects...</div>
+        <div className="mt-12 text-center text-zinc-500 py-12">Loading portfolio projects...</div>
       ) : error ? (
         <div className="mt-12 text-center text-red-500 py-12">{error}</div>
       ) : projects.length === 0 ? (
-        <div className="mt-12 text-center text-zinc-500 py-12">No featured projects currently available.</div>
+        <div className="mt-12 text-center text-zinc-500 py-12">No projects currently available.</div>
       ) : (
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project, i) => (
@@ -84,7 +107,7 @@ export default function ProjectsSection() {
                 <div className="p-6 flex-grow flex flex-col">
                   <h3 className="text-heading-md mb-3">{project.title}</h3>
                   <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">
-                    {project.description}
+                    {project.description} {project.designProcess && <div className='mt-4 text-sm text-[var(--color-brand)] border-t border-[var(--border-primary)] pt-4'><strong>Design Process:</strong> {project.designProcess}</div>} {project.designDate && <div className='mt-2 text-sm text-[var(--text-secondary)]'><strong>Designed:</strong> {new Date(project.designDate).toLocaleDateString()}</div>}
                   </p>
                   {project.projectUrl && (
                     <Button variant="ghost" className="self-start -ml-3 text-[var(--color-brand)]" onClick={() => window.open(project.projectUrl, '_blank')}>
@@ -104,4 +127,7 @@ export default function ProjectsSection() {
     </Section>
   );
 }
+
+
+
 

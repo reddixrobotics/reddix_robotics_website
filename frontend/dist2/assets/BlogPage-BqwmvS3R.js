@@ -1,0 +1,2 @@
+import{j as e}from"./motion-DHAVnYcf.js";import"./router-Cb09kdM_.js";function n(){return e.jsx("div",{className:"section-container flex min-h-[calc(100vh-80px)] items-center justify-center pt-20",children:e.jsxs("h1",{className:"font-display text-4xl font-bold text-white",children:[e.jsx("span",{className:"gradient-text",children:"Blog"})," & News"]})})}export{n as default};
+//# sourceMappingURL=BlogPage-BqwmvS3R.js.map

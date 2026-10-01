@@ -15,6 +15,8 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
     title: '',
     category: '',
     description: '',
+    designProcess: '',
+    designDate: '',
     imageUrl: '',
     projectUrl: '',
     status: 'PUBLISHED'
@@ -54,7 +56,7 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
     }
   };
 
-  return (
+    return (
     <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting || isUploading}>
       <FormRow>
         <FormField label="Project Title">
@@ -66,8 +68,8 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
       </FormRow>
 
       <FormRow>
-        <FormField label="Project URL (Optional)">
-          <input type="url" className={InputClass} value={formData.projectUrl} onChange={e => setFormData({ ...formData, projectUrl: e.target.value })} />
+        <FormField label="Design Date">
+          <input type="date" className={InputClass} value={formData.designDate || ''} onChange={e => setFormData({ ...formData, designDate: e.target.value })} />
         </FormField>
         <FormField label="Status">
           <select className={InputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as 'DRAFT' | 'PUBLISHED' })}>
@@ -77,24 +79,38 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
         </FormField>
       </FormRow>
 
-      <FormField label="Short Description">
-        <textarea required className={TextareaClass} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
-      </FormField>
+      <FormRow>
+        <FormField label="How it was Designed (Design Process & Tools)">
+          <textarea rows={3} className={TextareaClass} value={formData.designProcess || ''} onChange={e => setFormData({ ...formData, designProcess: e.target.value })} placeholder="Describe the engineering and design process..."></textarea>
+        </FormField>
+      </FormRow>
 
-      <FormField label="Project Cover Image">
+      <FormRow>
+        <FormField label="Description">
+          <textarea required rows={4} className={TextareaClass} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+        </FormField>
+      </FormRow>
+
+      <FormRow>
+        <FormField label="Project URL (Optional)">
+          <input type="url" className={InputClass} value={formData.projectUrl} onChange={e => setFormData({ ...formData, projectUrl: e.target.value })} />
+        </FormField>
+      </FormRow>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Project Image</label>
         <FileUpload 
-          accept="image/*" 
-          onChange={handleFileUpload} 
-          aspectRatio={16/9} // Featured projects often use wider layouts
+          onUpload={handleFileUpload} 
+          currentImageUrl={formData.imageUrl}
+          isUploading={isUploading}
+          aspectRatio={16/9}
         />
-        {isUploading && <p className="mt-2 text-sm text-brand animate-pulse">Uploading image...</p>}
-        {formData.imageUrl && !isUploading && (
-          <div className="mt-4">
-            <p className="text-xs text-content-secondary mb-2">Current Image Preview:</p>
-            <img src={formData.imageUrl} alt="Preview" className="w-full max-w-sm rounded-lg border border-border-strong shadow-md object-cover" />
-          </div>
-        )}
-      </FormField>
+      </div>
     </AdminForm>
   );
 }
+
+
+
+
+

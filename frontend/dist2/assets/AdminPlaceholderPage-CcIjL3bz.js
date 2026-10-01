@@ -1,0 +1,7 @@
+import{j as e}from"./motion-DHAVnYcf.js";import{u as s}from"./router-Cb09kdM_.js";import{c as n}from"./index-CGFRVqwD.js";import"./three-WVii9I-2.js";/**
+ * @license lucide-react v0.460.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const r=n("Hammer",[["path",{d:"m15 12-8.373 8.373a1 1 0 1 1-3-3L12 9",key:"eefl8a"}],["path",{d:"m18 15 4-4",key:"16gjal"}],["path",{d:"m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172V7l-2.26-2.26a6 6 0 0 0-4.202-1.756L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5",key:"b7pghm"}]]);function d(){const t=s().pathname.split("/").pop()||"Unknown",a=t.charAt(0).toUpperCase()+t.slice(1);return e.jsxs("div",{className:"h-full flex flex-col items-center justify-center text-center p-8",children:[e.jsx("div",{className:"w-16 h-16 bg-surface-card rounded-2xl flex items-center justify-center mb-6 border border-border",children:e.jsx(r,{size:32,className:"text-zinc-600"})}),e.jsxs("h1",{className:"text-2xl font-black text-content mb-2",children:[a," Management"]}),e.jsxs("p",{className:"text-content-secondary max-w-md",children:["This administration module is currently under construction. Specific CRUD operations and database schemas for ",a.toLowerCase()," will be implemented in a future update."]})]})}export{d as default};
+//# sourceMappingURL=AdminPlaceholderPage-CcIjL3bz.js.map

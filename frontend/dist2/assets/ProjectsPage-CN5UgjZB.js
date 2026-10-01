@@ -1,0 +1,2 @@
+import{j as t}from"./motion-DHAVnYcf.js";import"./router-Cb09kdM_.js";function n(){return t.jsx("div",{className:"section-container flex min-h-[calc(100vh-80px)] items-center justify-center pt-20",children:t.jsxs("h1",{className:"font-display text-4xl font-bold text-white",children:["Our ",t.jsx("span",{className:"gradient-text",children:"Projects"})]})})}export{n as default};
+//# sourceMappingURL=ProjectsPage-CN5UgjZB.js.map

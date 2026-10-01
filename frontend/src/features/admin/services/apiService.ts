@@ -673,6 +673,8 @@ export const upcomingProjectService = {
 // ─── Featured Projects Service ─────────────────────────────────────────────────
 
 export interface FeaturedProjectFormData {
+  designProcess?: string;
+  designDate?: string;
   id?: string;
   title: string;
   description: string;
@@ -683,25 +685,75 @@ export interface FeaturedProjectFormData {
 }
 
 export const featuredProjectService = {
-  async getAll(): Promise<any[]> {
+  async getAll(): Promise<FeaturedProjectFormData[]> {
     const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase.from('FeaturedProject').select('*').order('createdAt', { ascending: true });
     if (error) throw error;
-    return data;
+    return (data || []).map((p: any) => {
+      let description = p.description;
+      let designProcess = '';
+      let designDate = '';
+      try {
+        const parsed = JSON.parse(p.description);
+        description = parsed.text || p.description;
+        designProcess = parsed.designProcess || '';
+        designDate = parsed.designDate || '';
+      } catch (e) {
+      }
+      return {
+        id: p.id,
+        title: p.title,
+        description,
+        designProcess,
+        designDate,
+        imageUrl: p.imageUrl,
+        category: p.category,
+        projectUrl: p.projectUrl,
+        status: p.status,
+      };
+    });
   },
-  async create(payload: any): Promise<any> {
+  async create(item: Omit<FeaturedProjectFormData, 'id'>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
+    const packedDescription = JSON.stringify({
+      text: item.description,
+      designProcess: item.designProcess || '',
+      designDate: item.designDate || ''
+    });
+    const payload = {
+      title: item.title,
+      description: packedDescription,
+      imageUrl: item.imageUrl,
+      category: item.category,
+      projectUrl: item.projectUrl,
+      status: item.status || 'PUBLISHED'
+    };
     const { data, error } = await supabase.from('FeaturedProject').insert(payload).select().single();
     if (error) throw error;
     return data;
   },
-  async update(id: string, payload: any): Promise<any> {
+  async update(id: string | number, updates: Partial<FeaturedProjectFormData>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
+    const payload: any = {};
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.imageUrl !== undefined) payload.imageUrl = updates.imageUrl;
+    if (updates.category !== undefined) payload.category = updates.category;
+    if (updates.projectUrl !== undefined) payload.projectUrl = updates.projectUrl;
+    if (updates.status !== undefined) payload.status = updates.status;
+    
+    if (updates.description !== undefined || updates.designProcess !== undefined || updates.designDate !== undefined) {
+       payload.description = JSON.stringify({
+         text: updates.description || '',
+         designProcess: updates.designProcess || '',
+         designDate: updates.designDate || ''
+       });
+    }
+    
     const { data, error } = await supabase.from('FeaturedProject').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
   },
-  async delete(id: string): Promise<void> {
+  async delete(id: string | number): Promise<void> {
     const { supabase } = await import('@/lib/supabase');
     const { error } = await supabase.from('FeaturedProject').delete().eq('id', id);
     if (error) throw error;
@@ -926,4 +978,8 @@ export const paymentService = {
     return data;
   }
 };
+
+
+
+
 
