@@ -75,7 +75,7 @@ export default function ProductDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[var(--bg-primary)] pt-20 pb-16">
-      <Section className="pt-2 pb-8">
+      <div className="pt-4 pb-8 px-4 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <Link to="/products" className="inline-flex items-center text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-widest mb-6 transition-colors">
             <ArrowLeft size={16} className="mr-2" /> Back to Marketplace
@@ -149,8 +149,8 @@ export default function ProductDetailsPage() {
           </motion.div>
           </div>
         </div>
-      </Section>
-      
+      </div>
+
       <Section className="py-12">
         <div className="max-w-6xl mx-auto">
           <RelatedProducts category={product.category} currentProductId={product.id} />
@@ -159,6 +159,7 @@ export default function ProductDetailsPage() {
     </div>
   );
 }
+
 
 
 
