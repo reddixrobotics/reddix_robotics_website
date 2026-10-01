@@ -202,6 +202,7 @@ export const productService = {
         productId: data.id,
         url,
         isPrimary: item.images![0] === url,
+        updatedAt: new Date().toISOString()
       }));
       const { error: imgError } = await supabase.from('ProductImage').insert(imagePayloads);
       if (imgError) throw imgError;
@@ -684,7 +685,7 @@ export interface FeaturedProjectFormData {
 export const featuredProjectService = {
   async getAll(): Promise<any[]> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('FeaturedProject').select('*').order('order', { ascending: true });
+    const { data, error } = await supabase.from('FeaturedProject').select('*').order('createdAt', { ascending: true });
     if (error) throw error;
     return data;
   },
@@ -925,3 +926,4 @@ export const paymentService = {
     return data;
   }
 };
+

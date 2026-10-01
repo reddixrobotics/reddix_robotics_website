@@ -22,7 +22,7 @@ export default function ProjectsSection() {
     const fetchProjects = async () => {
       try {
         const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase.from('FeaturedProject').select('*').order('order', { ascending: true });
+        const { data, error } = await supabase.from('FeaturedProject').select('*').order('createdAt', { ascending: true });
         if (error) throw error;
         setProjects(data as any[]);
       } catch (err) {
@@ -104,3 +104,4 @@ export default function ProjectsSection() {
     </Section>
   );
 }
+
