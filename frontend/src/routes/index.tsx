@@ -123,7 +123,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
       // Publicly viewable routes (GUEST allowed)
       {
-        element: <RoleGuard allowedRoles={['USER', 'GUEST', 'ADMIN', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
+        element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
         children: [
           { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
           { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
@@ -198,6 +198,7 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
 
 
 
