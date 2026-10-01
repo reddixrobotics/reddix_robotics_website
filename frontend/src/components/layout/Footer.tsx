@@ -14,13 +14,13 @@ export default function Footer() {
         'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
       )}
     >
-      <div className="container-content py-12 md:py-16">
-        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      <div className="container-content py-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           
           {/* ─── Company ───────────────────────────────────────────────────────── */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt={BRAND_NAME} className="h-12 w-auto" />
+              <img src="/logo.png" alt={BRAND_NAME} className="w-[120px] h-auto" />
             </div>
             <p className="text-sm leading-relaxed text-[var(--text-muted)] max-w-xs">
               Building innovative robotic systems, automation solutions and intelligent technologies for the future. {BRAND_TAGLINE}
@@ -29,10 +29,10 @@ export default function Footer() {
 
           {/* ─── Quick Links ───────────────────────────────────────────────────── */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 uppercase tracking-wider">
               Quick Links
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-1.5">
               {[
                 { label: 'Home', href: ROUTES.HOME },
                 { label: 'About', href: ROUTES.ABOUT },
@@ -60,10 +60,10 @@ export default function Footer() {
 
           {/* ─── Contact ───────────────────────────────────────────────────────── */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 uppercase tracking-wider">
               Contact
             </h3>
-            <ul className="space-y-4">
+            <ul className="space-y-2">
               <li>
                 <a 
                   href={`mailto:${BRAND_EMAIL}`} 
@@ -95,7 +95,7 @@ export default function Footer() {
 
           {/* ─── Social ────────────────────────────────────────────────────────── */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-5 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 uppercase tracking-wider">
               Social
             </h3>
             <div className="flex gap-4">
@@ -131,7 +131,7 @@ export default function Footer() {
         </div>
 
         {/* ─── Bottom Section (Legal & Copyright) ────────────────────────────── */}
-        <div className="mt-16 pt-8 border-t border-[var(--border-primary)] flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-8 pt-6 border-t border-[var(--border-primary)] flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-center md:items-start gap-1">
             <p className="text-sm text-[var(--text-muted)]">
               © {year} {BRAND_NAME}. All rights reserved.
@@ -168,6 +168,8 @@ export default function Footer() {
     </footer>
   );
 }
+
+
 
 
 
