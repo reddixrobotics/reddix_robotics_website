@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
 import { ROUTES, buildPath } from '@/routes/routePaths';
@@ -17,6 +17,7 @@ const defaultUpdates: TickerItem[] = [
 
 function NewsTicker() {
   const [updates, setUpdates] = useState<TickerItem[]>(defaultUpdates);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchLatestWorkshops() {
@@ -60,7 +61,7 @@ function NewsTicker() {
                 key={i} 
                 onClick={(e) => {
                    e.preventDefault();
-                   window.location.href = item.href!;
+                   navigate(item.href!);
                 }}
                 className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer relative z-50 pointer-events-auto"
               >
