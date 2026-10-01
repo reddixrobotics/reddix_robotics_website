@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
 import { ROUTES, buildPath } from '@/routes/routePaths';
@@ -53,12 +53,20 @@ function NewsTicker() {
       
       {/* Scrolling Content */}
       <div className="flex-1 overflow-hidden ml-[130px] md:ml-[160px] group relative h-full flex items-center motion-reduce:overflow-x-auto">
-        <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused] hover:cursor-default" style={{ width: 'max-content' }}>
+        <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused]" style={{ width: 'max-content' }}>
           {updates.concat(updates).map((item, i) => (
             item.href ? (
-              <Link to={item.href} key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer">
+              <div 
+                key={i} 
+                onMouseDown={(e) => {
+                  // Use onMouseDown to trigger instantly before the element can move away
+                  e.preventDefault(); 
+                  navigate(item.href!);
+                }}
+                className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer"
+              >
                 {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
-              </Link>
+              </div>
             ) : (
               <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
                 {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
