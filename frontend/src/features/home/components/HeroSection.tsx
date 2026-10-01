@@ -1,32 +1,39 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
+import { ROUTES, buildPath } from '@/routes/routePaths';
 
-const defaultUpdates = [
-  "New Intelligent Robotics Solutions Coming Soon",
-  "Explore Our Latest Autonomous Robotics Technology",
-  "Reddix Robotics — Engineering the Future",
-  "New Robotics & Automation Solutions"
+type TickerItem = { label: string; href?: string };
+
+const defaultUpdates: TickerItem[] = [
+  { label: "New Intelligent Robotics Solutions Coming Soon", href: ROUTES.PRODUCTS },
+  { label: "Explore Our Latest Autonomous Robotics Technology", href: ROUTES.PROJECTS },
+  { label: "Reddix Robotics — Engineering the Future", href: ROUTES.ABOUT },
+  { label: "New Robotics & Automation Solutions", href: ROUTES.PRODUCTS }
 ];
 
 function NewsTicker() {
-  const [updates, setUpdates] = useState<string[]>(defaultUpdates);
+  const [updates, setUpdates] = useState<TickerItem[]>(defaultUpdates);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchLatestWorkshops() {
       try {
         const { data, error } = await supabase
           .from('Workshop')
-          .select('title')
+          .select('id, title')
           .eq('status', 'PUBLISHED')
           .order('createdAt', { ascending: false })
           .limit(3);
           
         if (!error && data && data.length > 0) {
-          const workshopUpdates = data.map((w: any) => "New Workshop: " + w.title + " — Register Now!");
+          const workshopUpdates = data.map((w: any) => ({
+            label: "New Workshop: " + w.title + " — Register Now!",
+            href: buildPath(ROUTES.CAREERS_WORKSHOP_REGISTER, { id: w.id })
+          }));
           setUpdates([...workshopUpdates, ...defaultUpdates]);
         }
       } catch (err) {
@@ -47,10 +54,16 @@ function NewsTicker() {
       {/* Scrolling Content */}
       <div className="flex-1 overflow-hidden ml-[130px] md:ml-[160px] group relative h-full flex items-center motion-reduce:overflow-x-auto">
         <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused] hover:cursor-default" style={{ width: 'max-content' }}>
-          {updates.concat(updates).map((update, i) => (
-            <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
-              {update} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
-            </span>
+          {updates.concat(updates).map((item, i) => (
+            item.href ? (
+              <Link to={item.href} key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer">
+                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
+              </Link>
+            ) : (
+              <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
+                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
+              </span>
+            )
           ))}
         </div>
       </div>
