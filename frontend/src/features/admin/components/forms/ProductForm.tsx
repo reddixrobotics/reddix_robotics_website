@@ -60,20 +60,42 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     onSubmit(formData);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      alert('Only JPG, JPEG, PNG, and WebP images are allowed.');
+    if (formData.images.length >= 3) {
+      alert('Maximum 3 items allowed.');
+      e.target.value = '';
       return;
     }
 
-    // Validate size (e.g. max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit.');
+    const isVideo = file.type.startsWith('video/');
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+    if (!validTypes.includes(file.type)) {
+      alert('Only JPG, PNG, WebP images and MP4, WebM videos are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    const maxSize = isVideo ? 25 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size exceeds limit (' + (isVideo ? '25MB for video' : '5MB for image') + ').');
+      e.target.value = '';
+      return;
+    }
+
+    if (isVideo) {
+      try {
+        setUploadingImage(true);
+        const url = await uploadFile(file);
+        setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+      } catch (err: any) {
+        alert('Video upload failed: ' + (err.message || 'Unknown error'));
+      } finally {
+        setUploadingImage(false);
+      }
+      e.target.value = '';
       return;
     }
 
@@ -83,8 +105,6 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
       setCropperOpen(true);
     };
     reader.readAsDataURL(file);
-    
-    // Clear input so selecting the same file again triggers onChange
     e.target.value = '';
   };
 
@@ -207,7 +227,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
               <div className="flex gap-3 flex-wrap">
                 {formData.images.map((img, idx) => (
                   <div key={idx} className="relative group">
-                    <img src={img} alt={"Preview " + idx} className="h-32 w-32 object-cover rounded border border-[var(--border-strong)] shadow-sm bg-[var(--bg-tertiary)]" />
+                    {img.match(/\.(mp4|webm|mov)$/i) ? <video src={img} className="h-32 w-32 object-cover rounded border border-[var(--border-strong)] shadow-sm bg-[var(--bg-tertiary)]" muted loop autoPlay /> : <img src={img} alt={"Preview " + idx} className="h-32 w-32 object-cover rounded border border-[var(--border-strong)] shadow-sm bg-[var(--bg-tertiary)]" />}
                     <button type="button" onClick={() => setFormData(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">X</button>
                   </div>
                 ))}
@@ -216,7 +236,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
             {(!formData.images || formData.images.length < 3) && (
               <input 
                 type="file" 
-                accept="image/jpeg, image/png, image/jpg, image/webp" 
+                accept="image/jpeg, image/png, image/jpg, image/webp, video/mp4, video/webm" 
                 onChange={handleFileSelect} 
                 disabled={uploadingImage}
                 className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-brand)] file:text-white hover:file:brightness-110 cursor-pointer"
@@ -240,4 +260,10 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     </>
   );
 }
+
+
+
+
+
+
 
