@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Building, MapPin, Mail, Phone, Save, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { InputClass, TextareaClass } from '@/features/admin/components/ui/AdminForm';
+import { uploadFile } from '@/features/admin/services/apiService';
 
 interface CompanyInfo {
   name: string;
@@ -15,6 +16,7 @@ interface CompanyInfo {
   country: string;
   latitude: number | null;
   longitude: number | null;
+  imageUrl: string;
 }
 
 export default function AdminCompany() {
@@ -29,10 +31,26 @@ export default function AdminCompany() {
     country: '',
     latitude: null,
     longitude: null,
+    imageUrl: '',
   });
 
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingImage(true);
+      const url = await uploadFile(file);
+      setFormData(prev => ({ ...prev, imageUrl: url }));
+    } catch (err: any) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
@@ -56,6 +74,7 @@ export default function AdminCompany() {
             country: res.data.country || '',
             latitude: res.data.latitude !== null ? Number(res.data.latitude) : null,
             longitude: res.data.longitude !== null ? Number(res.data.longitude) : null,
+            imageUrl: res.data.socialLinks?.imageUrl || '',
           });
         }
         setLoading(false);
@@ -75,15 +94,16 @@ export default function AdminCompany() {
     setIsSubmitting(true);
     setFeedback(null);
 
-    const payload = {
-      ...formData,
-      latitude: formData.latitude !== null ? Number(formData.latitude) : null,
-      longitude: formData.longitude !== null ? Number(formData.longitude) : null,
-    };
-
     try {
       const { supabase } = await import('@/lib/supabase');
-      const { data: existing } = await supabase.from('CompanyInformation').select('id').single();
+      const { data: existing } = await supabase.from('CompanyInformation').select('id, socialLinks').single();
+      const payload: any = {
+        ...formData,
+        latitude: formData.latitude !== null ? Number(formData.latitude) : null,
+        longitude: formData.longitude !== null ? Number(formData.longitude) : null,
+        socialLinks: { ...(typeof existing?.socialLinks === 'object' && existing?.socialLinks ? existing.socialLinks : {}), imageUrl: formData.imageUrl }
+      };
+      delete payload.imageUrl;
       if (existing) {
         await supabase.from('CompanyInformation').update(payload).eq('id', existing.id);
       } else {
@@ -270,3 +290,8 @@ export default function AdminCompany() {
     </div>
   );
 }
+
+
+
+
+

@@ -1,7 +1,25 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Section, SectionHeading } from '@/components/ui';
+import { supabase } from '@/lib/supabase';
 
 export default function CompanySection() {
+  const [companyData, setCompanyData] = useState<{
+    aboutContent: string;
+    imageUrl: string;
+  } | null>(null);
+
+  useEffect(() => {
+    supabase.from('CompanyInformation').select('aboutContent, socialLinks').single().then(({ data }) => {
+      if (data) {
+        setCompanyData({
+          aboutContent: data.aboutContent || '',
+          imageUrl: data.socialLinks?.imageUrl || ''
+        });
+      }
+    });
+  }, []);
+
   return (
     <Section className="bg-[var(--bg-primary)] pt-12 pb-24">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -17,12 +35,18 @@ export default function CompanySection() {
             align="left"
           />
           <div className="text-body-lg text-[var(--text-secondary)] space-y-6">
-            <p>
-              At Reddix Robotics, we make advanced automation accessible and transformative. As an R&D partner, we combine AI, computer vision, and embedded systems to solve real-world industrial challenges.
-            </p>
-            <p>
-              Our mission is to bridge the gap between simulation and reality. By integrating autonomous technologies into daily operations, we enhance efficiency, safety, and human potential.
-            </p>
+            {companyData?.aboutContent ? (
+              <p className="whitespace-pre-line">{companyData.aboutContent}</p>
+            ) : (
+              <>
+                <p>
+                  At Reddix Robotics, we make advanced automation accessible and transformative. As an R&D partner, we combine AI, computer vision, and embedded systems to solve real-world industrial challenges.
+                </p>
+                <p>
+                  Our mission is to bridge the gap between simulation and reality. By integrating autonomous technologies into daily operations, we enhance efficiency, safety, and human potential.
+                </p>
+              </>
+            )}
           </div>
         </motion.div>
         
@@ -33,16 +57,19 @@ export default function CompanySection() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {/* Placeholder for official company photo */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-tertiary)] p-6 text-center">
-            <div className="w-16 h-16 mb-4 rounded bg-[var(--border-strong)] opacity-50" />
-            <p className="text-body-md font-medium text-[var(--text-secondary)]">
-              [ Official Company Photo Placeholder ]
-            </p>
-            <p className="text-body-sm text-[var(--text-tertiary)] mt-2">
-              Replace this element with an &lt;img&gt; pointing to the company headquarters or team photo.
-            </p>
-          </div>
+          {companyData?.imageUrl ? (
+            <img src={companyData.imageUrl} alt="Company" className="w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-tertiary)] p-6 text-center">
+              <div className="w-16 h-16 mb-4 rounded bg-[var(--border-strong)] opacity-50" />
+              <p className="text-body-md font-medium text-[var(--text-secondary)]">
+                [ Official Company Photo Placeholder ]
+              </p>
+              <p className="text-body-sm text-[var(--text-tertiary)] mt-2">
+                Upload a company photo via the Admin &gt; Company Profile page.
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     </Section>
