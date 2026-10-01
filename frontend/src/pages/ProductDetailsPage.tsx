@@ -75,8 +75,12 @@ export default function ProductDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[var(--bg-primary)] pt-24 pb-16">
-      <Section className="py-12">
-        <div className="max-w-6xl mx-auto bg-white dark:bg-[var(--bg-secondary)] rounded-2xl shadow-sm p-6 md:p-10 lg:p-12">
+      <Section className="py-8">
+        <div className="max-w-6xl mx-auto">
+          <Link to="/products" className="inline-flex items-center text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-widest mb-6 transition-colors">
+            <ArrowLeft size={16} className="mr-2" /> Back to Marketplace
+          </Link>
+          <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-2xl shadow-sm p-6 md:p-10 lg:p-12">
           
           {/* Main Top Section */}
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
@@ -143,6 +147,7 @@ export default function ProductDetailsPage() {
               </div>
             </div>
           </motion.div>
+          </div>
         </div>
       </Section>
       
@@ -154,3 +159,5 @@ export default function ProductDetailsPage() {
     </div>
   );
 }
+
+
