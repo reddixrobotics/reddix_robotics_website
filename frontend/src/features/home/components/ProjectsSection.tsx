@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Section, SectionHeading, Card, Button } from '@/components/ui';
+import { Section, Card, Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 
 
@@ -60,10 +60,7 @@ export default function ProjectsSection() {
 
   return (
     <Section className="bg-[var(--bg-primary)]">
-      <SectionHeading 
-        title="R&D Portfolio" 
-        description="See how Reddix Robotics is transforming industries with real-world deployments."
-      />
+      
       
       {isLoading ? (
         <div className="mt-12 text-center text-zinc-500 py-12">Loading portfolio projects...</div>
@@ -126,6 +123,8 @@ export default function ProjectsSection() {
     </Section>
   );
 }
+
+
 
 
 
