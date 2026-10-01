@@ -10,7 +10,7 @@ export default function PartnersPage() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       
       {/* Hero Section */}
-      <Section className="pt-24 pb-20 relative overflow-hidden">
+      <Section className="pt-8 pb-20 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-[var(--color-brand)]/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[800px] h-[400px] bg-blue-900/5 blur-[100px] rounded-full pointer-events-none" />
@@ -103,3 +103,4 @@ export default function PartnersPage() {
     </div>
   );
 }
+

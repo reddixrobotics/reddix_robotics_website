@@ -62,7 +62,7 @@ export default function CheckoutPage() {
   if (items.length === 0) return null; // Avoid flicker before redirect
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-16">
+    <div className="min-h-screen bg-[var(--bg-primary)] pt-8 pb-16">
       
       <Section className="py-4 border-b border-[var(--border-primary)] hidden md:block">
         <Link to={ROUTES.CART} className="inline-flex items-center text-body-sm text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors">
@@ -111,3 +111,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+

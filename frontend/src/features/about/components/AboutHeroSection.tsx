@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 export default function AboutHeroSection() {
   return (
-    <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-[var(--bg-primary)] pt-32 pb-16">
+    <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-[var(--bg-primary)] pt-12 pb-16">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)] opacity-80" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl max-h-4xl bg-[var(--color-brand)] rounded-full blur-[200px] opacity-10 pointer-events-none" />
@@ -26,3 +26,4 @@ export default function AboutHeroSection() {
     </section>
   );
 }
+

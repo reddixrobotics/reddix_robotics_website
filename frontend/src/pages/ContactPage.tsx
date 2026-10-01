@@ -7,7 +7,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       
       {/* Hero Section */}
-      <Section className="pt-24 pb-16 bg-[var(--bg-secondary)] border-b border-[var(--border-strong)] relative overflow-hidden">
+      <Section className="pt-8 pb-16 bg-[var(--bg-secondary)] border-b border-[var(--border-strong)] relative overflow-hidden">
         {/* Subtle background glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--color-brand)]/5 blur-[120px] rounded-full pointer-events-none" />
         
@@ -46,3 +46,4 @@ export default function ContactPage() {
     </div>
   );
 }
+

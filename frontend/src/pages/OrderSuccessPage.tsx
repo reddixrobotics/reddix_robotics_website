@@ -8,7 +8,7 @@ export default function OrderSuccessPage() {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-16">
+    <div className="min-h-screen bg-[var(--bg-primary)] pt-8 pb-16">
       <Section className="py-12">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div 
@@ -50,3 +50,4 @@ export default function OrderSuccessPage() {
     </div>
   );
 }
+

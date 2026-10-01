@@ -37,7 +37,7 @@ export function WorkshopHero() {
       {/* Fallback pattern / subtle grid if needed */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_10%,transparent_100%)] pointer-events-none z-0" />
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-32 pb-20 flex flex-col items-center text-center">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center">
         {/* Badge */}
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full border border-white/10 bg-white/5 text-[#a8a8a8] text-sm font-medium tracking-wide mb-10">
@@ -127,3 +127,4 @@ export function WorkshopHero() {
     </section>
   );
 }
+

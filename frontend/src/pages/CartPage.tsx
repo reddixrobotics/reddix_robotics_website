@@ -12,7 +12,7 @@ export default function CartPage() {
   const isEmpty = items.length === 0;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-16">
+    <div className="min-h-screen bg-[var(--bg-primary)] pt-8 pb-16">
       <Section className="py-0">
         <div className="max-w-7xl mx-auto">
           
@@ -94,3 +94,4 @@ export default function CartPage() {
     </div>
   );
 }
+

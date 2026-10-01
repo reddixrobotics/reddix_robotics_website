@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 export default function ProductsHeroSection() {
   return (
-    <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden bg-[var(--bg-primary)] pt-32 pb-12 border-b border-[var(--border-primary)]">
+    <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden bg-[var(--bg-primary)] pt-12 pb-12 border-b border-[var(--border-primary)]">
       <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center opacity-[0.03] mix-blend-luminosity" />
       
       <div className="container-content relative z-10 text-center max-w-4xl mx-auto">
@@ -23,3 +23,4 @@ export default function ProductsHeroSection() {
     </section>
   );
 }
+
