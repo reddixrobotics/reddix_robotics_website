@@ -39,7 +39,7 @@ export default function Footer() {
                 { label: 'Careers', href: ROUTES.CAREERS },
                 { label: 'Products', href: ROUTES.PRODUCTS },
                 { label: 'Projects', href: ROUTES.PROJECTS || '/projects' },
-                { label: 'Workshops', href: '/workshops' },
+                { label: 'Workshops', href: '/careers?tab=workshops#open-positions' },
                 { label: 'Contact', href: ROUTES.CONTACT },
               ].map((link) => (
                 <li key={link.label}>
@@ -168,3 +168,6 @@ export default function Footer() {
     </footer>
   );
 }
+
+
+

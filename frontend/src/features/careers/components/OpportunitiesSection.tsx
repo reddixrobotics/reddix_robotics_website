@@ -2,16 +2,23 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Section, SectionHeading, Card, Button, Badge } from '@/components/ui';
 import { MapPin, Briefcase, Clock, Calendar, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/routePaths';
 
 type Tab = 'jobs' | 'internships' | 'workshops';
 
 export default function OpportunitiesSection() {
-  const [activeTab, setActiveTab] = useState<Tab>('jobs');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'jobs');
   const [jobs, setJobs] = useState<any[]>([]);
   const [internships, setInternships] = useState<any[]>([]);
   const [workshops, setWorkshops] = useState<any[]>([]);
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'jobs' || tab === 'internships' || tab === 'workshops') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const [isLoading, setIsLoading] = useState(true);
   const [appliedIds, setAppliedIds] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -265,4 +272,6 @@ export default function OpportunitiesSection() {
     </Section>
   );
 }
+
+
 
