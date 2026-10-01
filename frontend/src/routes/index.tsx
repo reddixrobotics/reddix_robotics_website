@@ -100,11 +100,8 @@ const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationR
 
 export const router = createBrowserRouter([
   {
-    element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
-    children: [
-      {
-        path: ROUTES.HOME,
-        element: <RootLayout />,
+    path: ROUTES.HOME,
+    element: <RootLayout />,
         children: [
           { index: true,               element: withSuspense(HomePage) },
           { path: ROUTES.ABOUT,        element: withSuspense(AboutPage) },
@@ -121,10 +118,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
           { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
           // Publicly viewable routes (GUEST allowed)
-          {
-            element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
-            children: [
-              { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
+            { path: ROUTES.PRODUCTS,      element: withSuspense(ProductsPage) },
               { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
               { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
               { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
@@ -133,8 +127,6 @@ export const router = createBrowserRouter([
               { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
               { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
               { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
-            ],
-          },
 
           // Protected routes (Login required)
           {
@@ -159,9 +151,7 @@ export const router = createBrowserRouter([
             ],
           },
         ]
-      }
-    ]
-  },
+      },
   {
     path: ROUTES.ADMIN,
     element: <RoleGuard allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
@@ -198,4 +188,8 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
+
+
+
 
