@@ -2,7 +2,6 @@ import {
   HeroSection,
   CompanySection,
   CapabilitiesSection,
-  ProjectsSection,
   ProductsSection,
   CareersPreviewSection,
   WorkshopsSection,
@@ -32,7 +31,6 @@ export default function HomePage() {
       <PartnersSection />
       <CompanySection />
       <CapabilitiesSection />
-      <ProjectsSection />
       <ProductsSection />
       <CareersPreviewSection />
       <WorkshopsSection />
@@ -40,3 +38,4 @@ export default function HomePage() {
     </div>
   );
 }
+

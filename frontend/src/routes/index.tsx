@@ -71,7 +71,6 @@ const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
 const AdminEmployees = lazy(() => import('@/pages/admin/AdminEmployees'));
 const AdminProjects = lazy(() => import('@/pages/admin/AdminProjects'));
-const AdminFeaturedProjects = lazy(() => import('@/pages/admin/AdminFeaturedProjects'));
 const AdminWorkshops = lazy(() => import('@/pages/admin/AdminWorkshops'));
 const AdminWorkshopMedia = lazy(() => import('@/pages/admin/AdminWorkshopMedia'));
 const AdminJobs = lazy(() => import('@/pages/admin/AdminJobs'));
@@ -176,7 +175,6 @@ export const router = createBrowserRouter([
           { path: 'employees', element: withSuspense(AdminEmployees) },
           { path: 'journeys', element: withSuspense(AdminJourneys) },
           { path: 'projects', element: withSuspense(AdminProjects) },
-          { path: 'featured-projects', element: withSuspense(AdminFeaturedProjects) },
           { path: 'workshops', element: withSuspense(AdminWorkshops) },
           { path: 'workshop-media', element: withSuspense(AdminWorkshopMedia) },
           { path: 'jobs', element: withSuspense(AdminJobs) },
@@ -200,3 +198,4 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
