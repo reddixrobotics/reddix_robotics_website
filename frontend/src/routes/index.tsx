@@ -130,14 +130,14 @@ export const router = createBrowserRouter([
           { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
           { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
           { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
+          { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
         ],
       },
 
       // Protected routes (Login required)
       {
-        element: <RoleGuard allowedRoles={['USER', 'ADMIN', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
+        element: <RoleGuard allowedRoles={['USER']} />,
         children: [
-          { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
           { path: ROUTES.CART,         element: withSuspense(CartPage) },
           { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
           { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
@@ -195,4 +195,5 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
 
