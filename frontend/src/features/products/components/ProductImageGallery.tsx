@@ -14,7 +14,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
   return (
     <div className="flex flex-col-reverse md:flex-row gap-4 h-full">
       {/* Thumbnails */}
-      {images.length > 0 && (
+      {images.length > 1 && (
         <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto custom-scrollbar pb-2 md:pb-0 md:pr-2 w-full md:w-20 lg:w-24 flex-shrink-0">
           {images.map((img, idx) => (
             <button
@@ -53,5 +53,6 @@ export default function ProductImageGallery({ images, productName }: ProductImag
     </div>
   );
 }
+
 
 

@@ -53,6 +53,10 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.images.length === 0) {
+      alert('Please upload at least 1 image.');
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -85,10 +89,15 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
   };
 
   const handleCropComplete = async (croppedFile: File) => {
+    if (formData.images.length >= 3) {
+      alert('Maximum 3 images allowed.');
+      setCropperOpen(false);
+      return;
+    }
     try {
       setUploadingImage(true);
       const url = await uploadFile(croppedFile);
-      setFormData(prev => ({ ...prev, images: [url] }));
+      setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
       setCropperOpen(false);
     } catch (err: any) {
       alert('Failed to upload cropped image: ' + (err.message || 'Unknown error'));
@@ -192,19 +201,29 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
           />
         </FormField>
 
-        <FormField label="Product Image">
-          <div className="flex flex-col gap-2">
-            {formData.images?.[0] && (
-              <img src={formData.images[0]} alt="Preview" className="h-32 w-32 object-cover rounded border border-border-strong shadow-md" />
+        <FormField label="Product Images (1 Min, 3 Max)">
+          <div className="flex flex-col gap-3">
+            {formData.images && formData.images.length > 0 && (
+              <div className="flex gap-3 flex-wrap">
+                {formData.images.map((img, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={img} alt={"Preview " + idx} className="h-32 w-32 object-cover rounded border border-[var(--border-strong)] shadow-sm bg-[var(--bg-tertiary)]" />
+                    <button type="button" onClick={() => setFormData(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+                  </div>
+                ))}
+              </div>
             )}
-            <input 
-              type="file" 
-              accept="image/jpeg, image/png, image/jpg, image/webp"
-              className={InputClass} 
-              onChange={handleFileSelect}
-              disabled={uploadingImage}
-            />
-            {uploadingImage && <span className="text-sm text-brand animate-pulse">Processing & Uploading...</span>}
+            {(!formData.images || formData.images.length < 3) && (
+              <input 
+                type="file" 
+                accept="image/jpeg, image/png, image/jpg, image/webp" 
+                onChange={handleFileSelect} 
+                disabled={uploadingImage}
+                className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-brand)] file:text-white hover:file:brightness-110 cursor-pointer"
+              />
+            )}
+            {uploadingImage && <span className="text-sm text-[var(--color-brand)] animate-pulse">Processing & Uploading...</span>}
+            {(!formData.images || formData.images.length === 0) && <p className="text-xs text-red-500 mt-1">At least 1 image is required.</p>}
           </div>
         </FormField>
       </AdminForm>
@@ -221,3 +240,4 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     </>
   );
 }
+
