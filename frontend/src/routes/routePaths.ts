@@ -50,6 +50,7 @@ export const ROUTES = {
   ADMIN_WORKSHOP_MEDIA: '/admin/workshop-media',
   ADMIN_APPLICATIONS: '/admin/applications',
   ADMIN_USERS: '/admin/users',
+  ADMIN_ADMINS: '/admin/admins',
   ADMIN_MESSAGES: '/admin/messages',
   ADMIN_SETTINGS: '/admin/settings',
   DESIGN_SYSTEM: '/design-system',
