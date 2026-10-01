@@ -101,8 +101,11 @@ const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationR
 
 export const router = createBrowserRouter([
   {
-    path: ROUTES.HOME,
-    element: <RootLayout />,
+    element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
+    children: [
+      {
+        path: ROUTES.HOME,
+        element: <RootLayout />,
     children: [
       { index: true,               element: withSuspense(HomePage) },
       { path: ROUTES.ABOUT,        element: withSuspense(AboutPage) },
@@ -195,5 +198,6 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
 
 
