@@ -97,18 +97,24 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
         </FormField>
       </FormRow>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Project Image</label>
+            <div className="mb-4">
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Project Cover Image</label>
         <FileUpload 
-          onUpload={handleFileUpload} 
-          currentImageUrl={formData.imageUrl}
-          isUploading={isUploading}
-          aspectRatio={16/9}
+          accept="image/*" 
+          onChange={handleFileUpload} 
+          aspectRatio={16/9} 
         />
+        {isUploading && <p className="mt-2 text-sm text-[var(--color-brand)] animate-pulse">Uploading image...</p>}
+        {formData.imageUrl && !isUploading && (
+          <div className="mt-4">
+             <img src={formData.imageUrl} alt="Preview" className="w-full max-w-sm rounded border border-[var(--border-strong)]" />
+          </div>
+        )}
       </div>
     </AdminForm>
   );
 }
+
 
 
 
