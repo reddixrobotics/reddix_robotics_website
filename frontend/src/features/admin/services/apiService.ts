@@ -379,13 +379,15 @@ export const projectService = {
   },
   async create(item: Omit<ProjectFormData, 'id'>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Project').insert(item).select().single();
+    const payload = { ...item, updatedAt: new Date().toISOString() };
+    const { data, error } = await supabase.from('Project').insert(payload).select().single();
     if (error) throw error;
     return data;
   },
   async update(id: string | number, updates: Partial<ProjectFormData>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Project').update(updates).eq('id', id).select().single();
+    const payload = { ...updates, updatedAt: new Date().toISOString() };
+    const { data, error } = await supabase.from('Project').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
   },
@@ -395,6 +397,7 @@ export const projectService = {
     if (error) throw error;
   }
 };
+
 
 // ─── Workshops Service ─────────────────────────────────────────────────────────
 
@@ -581,13 +584,15 @@ export const journeyService = {
   },
   async create(item: any): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Journey').insert(item).select().single();
+    const payload = { ...item, updatedAt: new Date().toISOString() };
+    const { data, error } = await supabase.from('Journey').insert(payload).select().single();
     if (error) throw error;
     return data;
   },
   async update(id: string | number, updates: any): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Journey').update(updates).eq('id', id).select().single();
+    const payload = { ...updates, updatedAt: new Date().toISOString() };
+    const { data, error } = await supabase.from('Journey').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
   },
