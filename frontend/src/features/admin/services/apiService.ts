@@ -68,37 +68,15 @@ export interface ContactMessageData {
 export const contactMessageService = {
   async create(data: Omit<ContactMessageData, 'id' | 'status' | 'createdAt'>): Promise<ContactMessageData> {
     const { supabase } = await import('@/lib/supabase');
-    
-    // Safely split name in case DB requires legacy firstName/lastName columns
-    const nameParts = (data.name || '').trim().split(' ');
-    const firstName = nameParts[0] || 'Unknown';
-    const lastName = nameParts.slice(1).join(' ') || ' ';
-
-    const payload = {
-      ...data,
-      firstName,
-      lastName,
-      id: `msg_${Date.now()}`
-    };
-
-    const { data: created, error } = await supabase.from('ContactMessage').insert(payload).select().single();
-    if (error) {
-      console.error("Supabase insert error:", error);
-      throw new Error(`DB Error: ${error.message || JSON.stringify(error)}`);
-    }
-
-    const { error: fnError } = await supabase.functions.invoke('send-email', {
+    const { data: created, error } = await supabase.from('ContactMessage').insert(data).select().single();
+    if (error) throw error;
+    await supabase.functions.invoke('send-email', {
       body: {
         to: 'admin@reddixrobotics.com',
         subject: 'New Contact Request: ' + data.subject,
-        text: `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
+        text: `Name: ${data.firstName} ${data.lastName}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
       }
     });
-
-    if (fnError) {
-      console.error("Email sending failed, but message was saved:", fnError);
-    }
-
     return created as any;
   },
   async getAll(): Promise<ContactMessageData[]> {
