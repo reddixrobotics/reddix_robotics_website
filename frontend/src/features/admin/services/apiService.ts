@@ -202,7 +202,6 @@ export const productService = {
         productId: data.id,
         url,
         isPrimary: item.images![0] === url,
-        updatedAt: new Date().toISOString()
       }));
       const { error: imgError } = await supabase.from('ProductImage').insert(imagePayloads);
       if (imgError) throw imgError;
