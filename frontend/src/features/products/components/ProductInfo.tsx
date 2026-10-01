@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '@/data/products';
 import { Button, Badge } from '@/components/ui';
-import { ShoppingCart, CreditCard, Minus, Plus, ShieldCheck, Check, Heart } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
@@ -13,8 +13,8 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product }: ProductInfoProps) {
-  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(0);
   const { addToCart } = useCart();
   const { items: wishlistItems = [], addToWishlist, removeFromWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -45,15 +45,6 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     }
   };
 
-  const getAvailabilityColor = (status: string) => {
-    switch (status) {
-      case 'In Stock': return 'text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400 border-green-200 dark:border-green-900';
-      case 'Low Stock': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900';
-      case 'Backorder': return 'text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-900';
-      default: return '';
-    }
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -62,18 +53,13 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     }).format(price);
   };
 
-  const handleQuantityChange = (delta: number) => {
-    setQuantity(prev => Math.max(1, prev + delta));
-    setAdded(false);
-  };
-
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     try {
-      await addToCart(product, quantity);
+      await addToCart(product, 1);
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
     } catch (err) {
@@ -81,94 +67,83 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     }
   };
 
+  // Mock colors for the layout requirement
+  const colors = ['bg-[#b2d3c2]', 'bg-[#c5c1c5]', 'bg-[#2b2b2b]'];
+
   return (
-    <div className="flex flex-col">
-      <div className="mb-2 flex items-center gap-3">
-        <span className="text-eyebrow text-[var(--text-tertiary)]">{product.category}</span>
-        {product.isNew && <Badge variant="primary" size="sm">NEW</Badge>}
-      </div>
+    <div className="flex flex-col md:pl-8 pt-4">
       
-      <div className="flex justify-between items-start gap-4 mb-4">
-        <h1 className="text-display-sm">{product.name}</h1>
-        <button
-          onClick={toggleWishlist}
-          disabled={wishlistLoading}
-          className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-full hover:scale-105 hover:border-[var(--color-brand)] transition-all shadow-sm focus-ring flex-shrink-0"
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <Heart 
-            size={24} 
-            className={`transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-[var(--text-secondary)] hover:text-red-500'}`} 
-          />
-        </button>
-      </div>
+      <h1 className="text-3xl lg:text-4xl font-extrabold text-[var(--text-primary)] mb-3 leading-tight tracking-tight">
+        {product.name}
+      </h1>
       
-      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[var(--border-strong)]">
-        <span className="text-heading-lg text-[var(--text-primary)]">{formatPrice(product.price)}</span>
-        <span className={`text-xs font-bold px-2 py-1 rounded border shadow-sm ${getAvailabilityColor(product.availability)}`}>
-          {product.availability}
-        </span>
-      </div>
-      
-      <p className="text-body-lg text-[var(--text-secondary)] mb-8">
-        {product.description}
-      </p>
-
-      {/* Security Note: Price calculation here is purely for display. Real calculations must occur securely on the NestJS backend. */}
-      
-      <div className="space-y-6">
-        <div>
-          <label className="block text-body-sm text-[var(--text-secondary)] mb-2">Quantity</label>
-          <div className="flex items-center w-32 border border-[var(--border-strong)] rounded-md overflow-hidden bg-[var(--bg-secondary)]">
-            <button 
-              className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
-              onClick={() => handleQuantityChange(-1)}
-              disabled={quantity <= 1}
-            >
-              <Minus size={16} />
-            </button>
-            <div className="flex-1 text-center font-medium text-[var(--text-primary)]">{quantity}</div>
-            <button 
-              className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-              onClick={() => handleQuantityChange(1)}
-            >
-              <Plus size={16} />
-            </button>
-          </div>
+      {/* Mock Rating Section to match reference layout */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="flex text-yellow-400">
+          <Star size={16} fill="currentColor" />
+          <Star size={16} fill="currentColor" />
+          <Star size={16} fill="currentColor" />
+          <Star size={16} fill="currentColor" />
+          <Star size={16} className="text-gray-300" />
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Button 
-            size="lg" 
-            className={`flex-1 transition-all ${added ? 'bg-green-600 hover:bg-green-700' : ''}`}
-            disabled={product.availability === 'Backorder'}
+        <span className="text-sm text-[var(--text-secondary)]">3,345</span>
+      </div>
+      
+      <div className="mb-8">
+        <span className="text-2xl font-black text-[var(--color-brand)]">{formatPrice(product.price)}</span>
+      </div>
+      
+      {/* Colors Section */}
+      <div className="mb-10">
+        <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">Colors</p>
+        <div className="flex gap-3">
+          {colors.map((color, idx) => (
+            <button 
+              key={idx}
+              onClick={() => setSelectedColor(idx)}
+              className={"w-8 h-8 rounded-md border-2 transition-all " + color + (selectedColor === idx ? ' border-gray-600 shadow-md scale-110' : ' border-transparent opacity-80 hover:opacity-100')}
+              aria-label={"Select color " + idx}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Actions */}
+      <div className="flex flex-col gap-4 max-w-md">
+        <div className="flex gap-4">
+          <button 
             onClick={handleAddToCart}
-          >
-            {added ? (
-              <><Check size={18} className="mr-2" /> Added</>
-            ) : (
-              <><ShoppingCart size={18} className="mr-2" /> Add to Cart</>
-            )}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="flex-1"
             disabled={product.availability === 'Backorder'}
-            onClick={() => navigate(`/checkout?productId=${product.id}`)}
+            className="flex-1 py-3 px-6 rounded-md font-semibold transition-all shadow-sm flex justify-center items-center gap-2"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--color-brand) 15%, transparent)', color: 'var(--color-brand)' }}
           >
-            <CreditCard size={18} className="mr-2" /> Buy Now
-          </Button>
+            {added ? 'Added to Cart' : 'Add To Cart'}
+          </button>
+          
+          <button
+            onClick={toggleWishlist}
+            disabled={wishlistLoading}
+            className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-md border border-[var(--border-strong)] hover:border-[var(--color-brand)] transition-colors bg-white shadow-sm"
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart 
+              size={20} 
+              className={"transition-colors " + (isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-[var(--color-brand)]')} 
+            />
+          </button>
         </div>
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-[var(--border-strong)]">
-        <div className="flex items-center gap-3 text-[var(--text-secondary)]">
-          <ShieldCheck size={20} className="text-[var(--color-brand)]" />
-          <span className="text-body-sm">Includes 2-year enterprise hardware warranty and dedicated support.</span>
-        </div>
+        
+        <button 
+          onClick={() => {
+            if (!isAuthenticated) navigate('/login');
+            else navigate('/checkout?productId=' + product.id);
+          }}
+          disabled={product.availability === 'Backorder'}
+          className="w-full py-3 px-6 rounded-md font-semibold text-white transition-all shadow-md bg-[var(--color-brand)] hover:brightness-110"
+        >
+          Buy Now
+        </button>
       </div>
     </div>
   );
 }
-
