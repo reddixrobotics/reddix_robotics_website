@@ -15,10 +15,10 @@ export default function Footer() {
       )}
     >
       <div className="container-content py-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:grid-cols-4">
           
           {/* ─── Company ───────────────────────────────────────────────────────── */}
-          <div className="flex flex-col">
+          <div className="flex flex-col sm:col-span-3 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img src="/logo.png" alt={BRAND_NAME} className="w-[120px] h-auto" />
             </div>
@@ -168,6 +168,7 @@ export default function Footer() {
     </footer>
   );
 }
+
 
 
 
