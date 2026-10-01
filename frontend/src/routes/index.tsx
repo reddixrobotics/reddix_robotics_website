@@ -5,7 +5,7 @@ import RootLayout from '@/layouts/RootLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import RoleGuard from './RoleGuard';
 
-// ─── Page loading fallback ────────────────────────────────────────────────────
+// ─── Page loading fallback ────────────────────────────────────────────────────────
 
 function PageLoader() {
   return (
@@ -30,7 +30,7 @@ function withSuspense(Component: React.ComponentType) {
   );
 }
 
-// ─── Lazy-loaded pages ────────────────────────────────────────────────────────
+// ─── Lazy-loaded pages ────────────────────────────────────────────────────────────
 
 const HomePage     = lazy(() => import('@/pages/HomePage'));
 const AboutPage    = lazy(() => import('@/pages/AboutPage'));
@@ -85,7 +85,7 @@ const AdminOrders = lazy(() => import('@/pages/admin/AdminOrders'));
 const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'));
 const AdminMessages = lazy(() => import('@/pages/admin/AdminMessages'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
-  const AdminAdmins = lazy(() => import('@/pages/admin/AdminAdmins'));
+const AdminAdmins = lazy(() => import('@/pages/admin/AdminAdmins'));
 const AdminPlaceholderPage = lazy(() => import('@/pages/admin/AdminPlaceholderPage'));
 
 const DesignSystemPage = lazy(() => import('@/pages/DesignSystemPage'));
@@ -97,7 +97,7 @@ const TermsConditionsPage = lazy(() => import('@/pages/policies/TermsConditionsP
 const ShippingPolicyPage = lazy(() => import('@/pages/policies/ShippingPolicyPage'));
 const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationRefundPage'));
 
-// ─── Router ───────────────────────────────────────────────────────────────────
+// ─── Router ───────────────────────────────────────────────────────────────────────
 
 export const router = createBrowserRouter([
   {
@@ -106,60 +106,62 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.HOME,
         element: <RootLayout />,
-    children: [
-      { index: true,               element: withSuspense(HomePage) },
-      { path: ROUTES.ABOUT,        element: withSuspense(AboutPage) },
-      { path: ROUTES.CONTACT,      element: withSuspense(ContactPage) },
-      { path: ROUTES.BLOG,         element: withSuspense(BlogPage) },
-      { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
-      { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
-      { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
-      { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
-      { path: ROUTES.PRIVACY_POLICY, element: withSuspense(PrivacyPolicyPage) },
-      { path: ROUTES.TERMS_CONDITIONS, element: withSuspense(TermsConditionsPage) },
-      { path: ROUTES.SHIPPING_POLICY, element: withSuspense(ShippingPolicyPage) },
-      { path: ROUTES.CANCELLATION_REFUND, element: withSuspense(CancellationRefundPage) },
-      { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
-      { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
-      // Publicly viewable routes (GUEST allowed)
-      {
-        element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
         children: [
-          { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
-          { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
-          { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
-          { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
-          { path: ROUTES.CAREERS_JOB_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div> },
-          { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
-          { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
-          { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
-          { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
-        ],
-      },
+          { index: true,               element: withSuspense(HomePage) },
+          { path: ROUTES.ABOUT,        element: withSuspense(AboutPage) },
+          { path: ROUTES.CONTACT,      element: withSuspense(ContactPage) },
+          { path: ROUTES.BLOG,         element: withSuspense(BlogPage) },
+          { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
+          { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
+          { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
+          { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
+          { path: ROUTES.PRIVACY_POLICY, element: withSuspense(PrivacyPolicyPage) },
+          { path: ROUTES.TERMS_CONDITIONS, element: withSuspense(TermsConditionsPage) },
+          { path: ROUTES.SHIPPING_POLICY, element: withSuspense(ShippingPolicyPage) },
+          { path: ROUTES.CANCELLATION_REFUND, element: withSuspense(CancellationRefundPage) },
+          { path: ROUTES.DESIGN_SYSTEM, element: withSuspense(DesignSystemPage) },
+          { path: ROUTES.NOT_FOUND,    element: withSuspense(NotFoundPage) },
+          // Publicly viewable routes (GUEST allowed)
+          {
+            element: <RoleGuard allowedRoles={['USER', 'GUEST']} />,
+            children: [
+              { path: ROUTES.PRODUCTS,     element: withSuspense(ProductsPage) },
+              { path: ROUTES.SERVICES,     element: withSuspense(ServicesPage) },
+              { path: ROUTES.PROJECTS,     element: withSuspense(ProjectsPage) },
+              { path: ROUTES.PARTNERS,     element: withSuspense(PartnersPage) },
+              { path: ROUTES.CAREERS_JOB_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(JobApplicationPage)}</div> },
+              { path: ROUTES.CAREERS_INTERNSHIP_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(InternshipApplicationPage)}</div> },
+              { path: ROUTES.CAREERS_WORKSHOP_REGISTER, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(WorkshopRegistrationPage)}</div> },
+              { path: ROUTES.CAREERS_GENERAL_APPLY, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(GeneralApplicationPage)}</div> },
+              { path: ROUTES.PRODUCT_DETAILS, element: withSuspense(ProductDetailsPage) },
+            ],
+          },
 
-      // Protected routes (Login required)
-      {
-        element: <RoleGuard allowedRoles={['USER']} />,
-        children: [
-          { path: ROUTES.CART,         element: withSuspense(CartPage) },
-          { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
-          { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
-          { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
-        ],
-      },
+          // Protected routes (Login required)
+          {
+            element: <RoleGuard allowedRoles={['USER']} />,
+            children: [
+              { path: ROUTES.CART,         element: withSuspense(CartPage) },
+              { path: ROUTES.CHECKOUT,     element: withSuspense(CheckoutPage) },
+              { path: ROUTES.CHECKOUT_PAYMENT, element: withSuspense(PaymentPage) },
+              { path: ROUTES.ORDER_SUCCESS, element: withSuspense(OrderSuccessPage) },
+            ],
+          },
 
-      // USER ONLY restricted routes (Replaces the old Dashboard Sidebar layout)
-      {
-        element: <RoleGuard allowedRoles={['USER']} />,
-        children: [
-          { path: ROUTES.WISHLIST, element: withSuspense(WishlistPage) },
-          { path: ROUTES.PROFILE, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardProfile)}</div> },
-          { path: ROUTES.APPLICATIONS, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardApplications)}</div> },
-          { path: ROUTES.ORDERS,  element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardOrders)}</div> },
-          { path: ROUTES.PAYMENT, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardPayments)}</div> },
-        ],
-      },
-    ],
+          // USER ONLY restricted routes (Replaces the old Dashboard Sidebar layout)
+          {
+            element: <RoleGuard allowedRoles={['USER']} />,
+            children: [
+              { path: ROUTES.WISHLIST, element: withSuspense(WishlistPage) },
+              { path: ROUTES.PROFILE, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardProfile)}</div> },
+              { path: ROUTES.APPLICATIONS, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardApplications)}</div> },
+              { path: ROUTES.ORDERS,  element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardOrders)}</div> },
+              { path: ROUTES.PAYMENT, element: <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-[60vh]">{withSuspense(DashboardPayments)}</div> },
+            ],
+          },
+        ]
+      }
+    ]
   },
   {
     path: ROUTES.ADMIN,
@@ -168,29 +170,29 @@ export const router = createBrowserRouter([
       {
         element: <AdminLayout />,
         children: [
-      { index: true, element: withSuspense(AdminOverview) },
-      { path: 'dashboard', element: withSuspense(AdminOverview) },
-      { path: 'products', element: withSuspense(AdminProducts) },
-      { path: 'employees', element: withSuspense(AdminEmployees) },
-      { path: 'journeys', element: withSuspense(AdminJourneys) },
-      { path: 'projects', element: withSuspense(AdminProjects) },
-      { path: 'featured-projects', element: withSuspense(AdminFeaturedProjects) },
-      { path: 'workshops', element: withSuspense(AdminWorkshops) },
-      { path: 'workshop-media', element: withSuspense(AdminWorkshopMedia) },
-      { path: 'jobs', element: withSuspense(AdminJobs) },
-      { path: 'upcoming-projects', element: withSuspense(AdminUpcomingProjects) },
-      // Other routes fallback to placeholder for now (internships, etc.)
-      { path: 'company', element: withSuspense(AdminCompany) },
-      { path: 'orders', element: withSuspense(AdminOrders) },
-      { path: 'payments', element: withSuspense(AdminPayments) },
-      { path: 'internships', element: withSuspense(AdminInternships) },
-      { path: 'applications', element: withSuspense(AdminApplications) },
-      { path: 'users', element: withSuspense(AdminUsers) },
-        { path: 'admins', element: withSuspense(AdminAdmins) },
-      { path: 'messages', element: withSuspense(AdminMessages) },
-      { path: 'settings', element: withSuspense(AdminSettings) },
-      { path: '*', element: withSuspense(AdminPlaceholderPage) },
-    ],
+          { index: true, element: withSuspense(AdminOverview) },
+          { path: 'dashboard', element: withSuspense(AdminOverview) },
+          { path: 'products', element: withSuspense(AdminProducts) },
+          { path: 'employees', element: withSuspense(AdminEmployees) },
+          { path: 'journeys', element: withSuspense(AdminJourneys) },
+          { path: 'projects', element: withSuspense(AdminProjects) },
+          { path: 'featured-projects', element: withSuspense(AdminFeaturedProjects) },
+          { path: 'workshops', element: withSuspense(AdminWorkshops) },
+          { path: 'workshop-media', element: withSuspense(AdminWorkshopMedia) },
+          { path: 'jobs', element: withSuspense(AdminJobs) },
+          { path: 'upcoming-projects', element: withSuspense(AdminUpcomingProjects) },
+          // Other routes fallback to placeholder for now (internships, etc.)
+          { path: 'company', element: withSuspense(AdminCompany) },
+          { path: 'orders', element: withSuspense(AdminOrders) },
+          { path: 'payments', element: withSuspense(AdminPayments) },
+          { path: 'internships', element: withSuspense(AdminInternships) },
+          { path: 'applications', element: withSuspense(AdminApplications) },
+          { path: 'users', element: withSuspense(AdminUsers) },
+          { path: 'admins', element: withSuspense(AdminAdmins) },
+          { path: 'messages', element: withSuspense(AdminMessages) },
+          { path: 'settings', element: withSuspense(AdminSettings) },
+          { path: '*', element: withSuspense(AdminPlaceholderPage) },
+        ],
       }
     ]
   },
@@ -198,7 +200,3 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
-
-
-
-
