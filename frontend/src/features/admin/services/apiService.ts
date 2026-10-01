@@ -292,12 +292,12 @@ export const employeeService = {
     return (data || []).map((e: any) => ({
       id: e.id,
       name: e.name,
-      designation: e.designation ?? e.role ?? '',
+      designation: e.position ?? '',           // DB: position
       experience: e.experience ?? 0,
-      biography: e.bio ?? '',
+      biography: e.description ?? '',          // DB: description
       profilePhoto: e.profilePhoto ?? '',
       skills: Array.isArray(e.skills) ? e.skills.join(', ') : (e.skills ?? ''),
-      linkedinUrl: e.linkedinUrl ?? '',
+      linkedinUrl: e.linkedInUrl ?? '',        // DB: linkedInUrl (capital I)
     }));
   },
 
@@ -309,12 +309,12 @@ export const employeeService = {
     return {
       id: e.id,
       name: e.name,
-      designation: e.designation ?? e.role ?? '',
+      designation: e.position ?? '',           // DB: position
       experience: e.experience ?? 0,
-      biography: e.bio ?? '',
+      biography: e.description ?? '',          // DB: description
       profilePhoto: e.profilePhoto ?? '',
       skills: Array.isArray(e.skills) ? e.skills.join(', ') : (e.skills ?? ''),
-      linkedinUrl: e.linkedinUrl ?? '',
+      linkedinUrl: e.linkedInUrl ?? '',        // DB: linkedInUrl (capital I)
     };
   },
 
@@ -322,10 +322,10 @@ export const employeeService = {
     const { supabase } = await import('@/lib/supabase');
     const payload: Record<string, any> = {
       name: item.name,
-      designation: (item as any).designation ?? '',
+      position: (item as any).designation ?? '',          // form: designation → DB: position
       experience: (item as any).experience ?? 0,
-      bio: (item as any).biography ?? '',
-      linkedinUrl: (item as any).linkedinUrl ?? '',
+      description: (item as any).biography ?? '',         // form: biography   → DB: description
+      linkedInUrl: (item as any).linkedinUrl ?? '',       // form: linkedinUrl → DB: linkedInUrl
       profilePhoto: (item as any).profilePhoto ?? '',
       skills: (typeof item.skills === 'string')
         ? item.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
@@ -340,10 +340,10 @@ export const employeeService = {
     const { supabase } = await import('@/lib/supabase');
     const payload: Record<string, any> = {};
     if (updates.name !== undefined) payload.name = updates.name;
-    if ((updates as any).designation !== undefined) payload.designation = (updates as any).designation;
+    if ((updates as any).designation !== undefined) payload.position = (updates as any).designation;       // → position
     if ((updates as any).experience !== undefined) payload.experience = (updates as any).experience;
-    if ((updates as any).biography !== undefined) payload.bio = (updates as any).biography;
-    if ((updates as any).linkedinUrl !== undefined) payload.linkedinUrl = (updates as any).linkedinUrl;
+    if ((updates as any).biography !== undefined) payload.description = (updates as any).biography;        // → description
+    if ((updates as any).linkedinUrl !== undefined) payload.linkedInUrl = (updates as any).linkedinUrl;   // → linkedInUrl
     if (updates.profilePhoto !== undefined) payload.profilePhoto = updates.profilePhoto;
     if (updates.skills !== undefined) {
       payload.skills = (typeof updates.skills === 'string')
