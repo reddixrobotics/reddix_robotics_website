@@ -1,17 +1,41 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Hero3D from './Hero3D';
+import { supabase } from '@/lib/supabase';
 
-const updates = [
-  "ROS 2 Robotics Webinar â€” Register Now",
+const defaultUpdates = [
   "New Intelligent Robotics Solutions Coming Soon",
   "Explore Our Latest Autonomous Robotics Technology",
-  "Reddix Robotics â€” Engineering the Future",
+  "Reddix Robotics — Engineering the Future",
   "New Robotics & Automation Solutions"
 ];
 
 function NewsTicker() {
+  const [updates, setUpdates] = useState<string[]>(defaultUpdates);
+
+  useEffect(() => {
+    async function fetchLatestWorkshops() {
+      try {
+        const { data, error } = await supabase
+          .from('Workshop')
+          .select('title')
+          .eq('status', 'PUBLISHED')
+          .order('createdAt', { ascending: false })
+          .limit(3);
+          
+        if (!error && data && data.length > 0) {
+          const workshopUpdates = data.map((w: any) => "New Workshop: " + w.title + " — Register Now!");
+          setUpdates([...workshopUpdates, ...defaultUpdates]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch workshops for ticker:', err);
+      }
+    }
+    fetchLatestWorkshops();
+  }, []);
+
   return (
     <div className="w-full bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] h-[40px] md:h-[48px] flex items-center overflow-hidden relative z-20 shadow-sm">
       {/* Fixed Label */}
