@@ -36,7 +36,7 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.imageUrl) {
-      alert("Please upload an image.");
+      alert("Please upload a project cover image before saving.");
       return;
     }
     onSubmit(formData);
@@ -114,6 +114,7 @@ export function FeaturedProjectForm({ initialData, onSubmit, onCancel, isSubmitt
     </AdminForm>
   );
 }
+
 
 
 

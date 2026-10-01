@@ -134,7 +134,7 @@ export default function AdminFeaturedProjects() {
         <AdminDataTable columns={columns} data={data} searchableKey="title" itemsPerPage={10} />
       )}
 
-      <AdminModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); }} title={editingItem ? 'Edit Featured Project' : 'Add New Featured Project'}>
+      <AdminModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); }} title={editingItem ? 'Edit R&D Project' : 'Add New R&D Project'}>
         <FeaturedProjectForm initialData={editingItem} onSubmit={handleSave} onCancel={() => { setIsModalOpen(false); }} isSubmitting={isSubmitting} />
       </AdminModal>
 
@@ -142,4 +142,5 @@ export default function AdminFeaturedProjects() {
     </div>
   );
 }
+
 
