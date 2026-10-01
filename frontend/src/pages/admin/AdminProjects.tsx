@@ -81,7 +81,7 @@ export default function AdminProjects() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-content mb-1">Project Portfolio</h1>
-          <p className="text-sm text-content-secondary">Manage company case studies and deployed projects.</p>
+          <p className="text-sm text-content-secondary">Manage company portfolio and deployed projects.</p>
         </div>
         <Button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2">
           <Plus size={16} /> Add Project
@@ -102,3 +102,4 @@ export default function AdminProjects() {
     </div>
   );
 }
+

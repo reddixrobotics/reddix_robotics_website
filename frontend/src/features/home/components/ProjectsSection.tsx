@@ -61,7 +61,6 @@ export default function ProjectsSection() {
   return (
     <Section className="bg-[var(--bg-primary)]">
       <SectionHeading 
-        eyebrow="Case Studies" 
         title="R&D Portfolio" 
         description="See how Reddix Robotics is transforming industries with real-world deployments."
       />
@@ -127,6 +126,7 @@ export default function ProjectsSection() {
     </Section>
   );
 }
+
 
 
 

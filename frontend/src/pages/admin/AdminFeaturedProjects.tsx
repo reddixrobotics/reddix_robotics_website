@@ -120,7 +120,7 @@ export default function AdminFeaturedProjects() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-content mb-1">Case Studies & R&D Projects</h1>
+          <h1 className="text-2xl font-black text-content mb-1">R&D Portfolio</h1>
           <p className="text-sm text-content-secondary">Manage projects displayed on the public home page.</p>
         </div>
         <Button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2">
@@ -142,5 +142,6 @@ export default function AdminFeaturedProjects() {
     </div>
   );
 }
+
 
 
