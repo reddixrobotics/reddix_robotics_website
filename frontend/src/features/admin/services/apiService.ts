@@ -74,7 +74,7 @@ export const contactMessageService = {
       body: {
         to: 'admin@reddixrobotics.com',
         subject: 'New Contact Request: ' + data.subject,
-        text: `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
+        text: `Name: ${data.firstName} ${data.lastName}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
       }
     });
     return created as any;
