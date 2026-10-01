@@ -128,14 +128,14 @@ export default function ContactForm() {
                 />
               </div>
               <div>
-                <label htmlFor="company" className="block text-body-sm text-[var(--text-secondary)] mb-2">Company</label>
+                <label htmlFor="company" className="block text-body-sm text-[var(--text-secondary)] mb-2">Company / Institute (Optional)</label>
                 <input 
                   type="text" 
                   id="company" 
                   name="company" 
                   disabled={status === 'submitting'}
                   className="w-full px-4 py-3 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow disabled:opacity-50"
-                  placeholder="Acme Corp"
+                  placeholder="Acme Corp / MIT"
                 />
               </div>
             </div>
