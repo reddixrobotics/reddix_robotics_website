@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
 import { ROUTES, buildPath } from '@/routes/routePaths';
@@ -17,7 +17,6 @@ const defaultUpdates: TickerItem[] = [
 
 function NewsTicker() {
   const [updates, setUpdates] = useState<TickerItem[]>(defaultUpdates);
-  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchLatestWorkshops() {
@@ -56,17 +55,13 @@ function NewsTicker() {
         <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused]" style={{ width: 'max-content' }}>
           {updates.concat(updates).map((item, i) => (
             item.href ? (
-              <div 
+              <Link 
+                to={item.href}
                 key={i} 
-                onMouseDown={(e) => {
-                  // Use onMouseDown to trigger instantly before the element can move away
-                  e.preventDefault(); 
-                  navigate(item.href!);
-                }}
                 className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer"
               >
                 {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
-              </div>
+              </Link>
             ) : (
               <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
                 {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
