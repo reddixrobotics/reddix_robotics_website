@@ -42,7 +42,7 @@ export default function ProductDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-20 pb-16 bg-[var(--bg-primary)]">
+      <div className="min-h-screen pt-6 pb-16 bg-[var(--bg-primary)]">
         <div className="container-content max-w-7xl mx-auto">
           <div className="animate-pulse flex flex-col lg:flex-row gap-12">
             <div className="lg:w-1/2">
@@ -74,7 +74,7 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] dark:bg-[var(--bg-primary)] pt-20 pb-16">
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[var(--bg-primary)] pt-6 pb-16">
       <div className="pt-4 pb-8 px-4 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <Link to="/products" className="inline-flex items-center text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-widest mb-6 transition-colors">
@@ -159,6 +159,7 @@ export default function ProductDetailsPage() {
     </div>
   );
 }
+
 
 
 
