@@ -369,24 +369,62 @@ export const projectService = {
     const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase.from('Project').select('*').order('createdAt', { ascending: false });
     if (error) throw error;
-    return data;
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      description: p.description,
+      year: p.date ? parseInt(p.date) : new Date().getFullYear(),   // DB: date → form: year
+      technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies ?? ''),
+      details: '',  // no matching DB column — display only
+    }));
   },
   async getById(id: string | number): Promise<ProjectFormData | null> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Project').select('*').eq('id', id).single();
+    const { data: p, error } = await supabase.from('Project').select('*').eq('id', id).single();
     if (error) throw error;
-    return data;
+    if (!p) return null;
+    return {
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      description: p.description,
+      year: p.date ? parseInt(p.date) : new Date().getFullYear(),
+      technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies ?? ''),
+      details: '',
+    };
   },
   async create(item: Omit<ProjectFormData, 'id'>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const payload = { ...item, updatedAt: new Date().toISOString() };
+    const payload: Record<string, any> = {
+      name: item.name,
+      category: item.category,
+      description: item.description,
+      date: String((item as any).year ?? new Date().getFullYear()),  // form: year → DB: date
+      technologies: (typeof item.technologies === 'string')
+        ? item.technologies.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : (item.technologies ?? []),
+      images: [],
+      status: 'PUBLISHED',
+      updatedAt: new Date().toISOString(),
+      // 'details' field has no DB column — intentionally omitted
+    };
     const { data, error } = await supabase.from('Project').insert(payload).select().single();
     if (error) throw error;
     return data;
   },
   async update(id: string | number, updates: Partial<ProjectFormData>): Promise<any> {
     const { supabase } = await import('@/lib/supabase');
-    const payload = { ...updates, updatedAt: new Date().toISOString() };
+    const payload: Record<string, any> = { updatedAt: new Date().toISOString() };
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.category !== undefined) payload.category = updates.category;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if ((updates as any).year !== undefined) payload.date = String((updates as any).year);
+    if (updates.technologies !== undefined) {
+      payload.technologies = (typeof updates.technologies === 'string')
+        ? updates.technologies.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : updates.technologies;
+    }
     const { data, error } = await supabase.from('Project').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
@@ -397,6 +435,7 @@ export const projectService = {
     if (error) throw error;
   }
 };
+
 
 
 // ─── Workshops Service ─────────────────────────────────────────────────────────
