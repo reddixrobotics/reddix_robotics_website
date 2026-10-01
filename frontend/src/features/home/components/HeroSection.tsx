@@ -6,18 +6,20 @@ import Hero3D from './Hero3D';
 import { supabase } from '@/lib/supabase';
 import { ROUTES, buildPath } from '@/routes/routePaths';
 
-type TickerItem = { label: string; href?: string };
+export type TickerItem = {
+  label: string;
+  href?: string;
+};
 
 const defaultUpdates: TickerItem[] = [
   { label: "New Intelligent Robotics Solutions Coming Soon", href: ROUTES.PRODUCTS },
   { label: "Explore Our Latest Autonomous Robotics Technology", href: ROUTES.PROJECTS },
-  { label: "Reddix Robotics — Engineering the Future", href: ROUTES.ABOUT },
+  { label: "Reddix Robotics â€” Engineering the Future", href: ROUTES.ABOUT },
   { label: "New Robotics & Automation Solutions", href: ROUTES.PRODUCTS }
 ];
 
 function NewsTicker() {
   const [updates, setUpdates] = useState<TickerItem[]>(defaultUpdates);
-  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchLatestWorkshops() {
@@ -30,8 +32,8 @@ function NewsTicker() {
           .limit(3);
           
         if (!error && data && data.length > 0) {
-          const workshopUpdates = data.map((w: any) => ({
-            label: "New Workshop: " + w.title + " — Register Now!",
+          const workshopUpdates: TickerItem[] = data.map((w: any) => ({
+            label: `New Workshop: ${w.title} â€” Register Now!`,
             href: buildPath(ROUTES.CAREERS_WORKSHOP_REGISTER, { id: w.id })
           }));
           setUpdates([...workshopUpdates, ...defaultUpdates]);
@@ -44,7 +46,7 @@ function NewsTicker() {
   }, []);
 
   return (
-    <div className="w-full bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] h-[40px] md:h-[48px] flex items-center overflow-hidden relative z-50 shadow-sm pointer-events-auto">
+    <div className="w-full bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] h-[40px] md:h-[48px] flex items-center overflow-hidden relative z-50 shadow-sm">
       {/* Fixed Label */}
       <div className="absolute left-0 top-0 bottom-0 z-50 flex items-center px-4 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)] shadow-[4px_0_12px_rgba(0,0,0,0.05)] pointer-events-none">
         <div className="w-2 h-2 rounded-full bg-[var(--color-brand)] mr-3 animate-pulse" />
@@ -54,25 +56,30 @@ function NewsTicker() {
       {/* Scrolling Content */}
       <div className="flex-1 overflow-hidden ml-[130px] md:ml-[160px] group relative h-full flex items-center motion-reduce:overflow-x-auto pointer-events-auto">
         <div className="animate-marquee motion-reduce:animate-none flex whitespace-nowrap group-hover:[animation-play-state:paused] pointer-events-auto" style={{ width: 'max-content' }}>
-          {updates.concat(updates).map((item, i) => (
-            item.href ? (
-              <a 
-                href={item.href}
-                key={i} 
-                onClick={(e) => {
-                   e.preventDefault();
-                   navigate(item.href!);
-                }}
-                className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer relative z-50 pointer-events-auto"
+          {updates.concat(updates).map((item, i) => {
+            const key = `${item.label}-${i}`;
+            const itemClasses = "mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-pointer relative z-50 pointer-events-auto";
+            
+            if (!item.href) {
+              return (
+                <span key={key} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] cursor-default">
+                  <span>{item.label}</span>
+                  <ArrowRight size={14} className="ml-2 text-[var(--color-brand)] flex-shrink-0 pointer-events-none" />
+                </span>
+              );
+            }
+
+            return (
+              <Link
+                key={key}
+                to={item.href}
+                className={itemClasses}
               >
-                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)] pointer-events-none" />
-              </a>
-            ) : (
-              <span key={i} className="mx-6 md:mx-8 text-sm md:text-base flex items-center text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
-                {item.label} <ArrowRight size={14} className="ml-2 text-[var(--color-brand)]" />
-              </span>
-            )
-          ))}
+                <span>{item.label}</span>
+                <ArrowRight size={14} className="ml-2 text-[var(--color-brand)] flex-shrink-0 pointer-events-none" />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
