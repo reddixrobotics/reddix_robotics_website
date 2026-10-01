@@ -9,9 +9,9 @@ interface PaymentSectionProps {
 
 export default function PaymentSection({ isLoading, onPay, depositAmount }: PaymentSectionProps) {
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       maximumFractionDigits: 0
     }).format(price);
   };
@@ -58,3 +58,4 @@ export default function PaymentSection({ isLoading, onPay, depositAmount }: Paym
     </div>
   );
 }
+

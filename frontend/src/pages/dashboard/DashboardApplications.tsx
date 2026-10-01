@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
 import { DataTable, StatusBadge } from '@/features/dashboard/components/DashboardUI';
 import { Button } from '@/components/ui';
 
@@ -8,10 +7,17 @@ export default function DashboardApplications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.get('/api/auth/user/applications')
-      .then(res => {
-        setData(res.data);
-      })
+    (async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.email) {
+          const { data } = await supabase.from('Application').select('*').eq('email', userData.user.email).order('createdAt', { ascending: false });
+          setApplications(data || []);
+        }
+      } catch(e) {}
+      setIsLoading(false);
+    })()
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

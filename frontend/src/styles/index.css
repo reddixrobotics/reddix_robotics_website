@@ -98,9 +98,9 @@
   --space-24:  6rem;
 
   /* Layout */
-  --header-height: 4rem;
-  --content-max:   75rem;  /* 1200px */
-  --content-wide:  87.5rem; /* 1400px */
+  --header-height: 4.5rem; /* 72px mobile */
+  --content-max:   87.5rem;  /* 1400px */
+  --content-wide:  100rem; /* 1600px */
   --content-gutter: 1.5rem;
 
   /* Transitions */
@@ -321,6 +321,9 @@
   }
 
   @media (min-width: 1024px) {
+    :root {
+      --header-height: 5.5rem;
+    }
     .container-content,
     .container-wide {
       --content-gutter: 3rem;

@@ -4,7 +4,6 @@ import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'luci
 import { InputField } from '@/components/ui/Input';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
-import apiClient from '@/services/apiClient';
 
 export default function SignupForm() {
   const navigate = useNavigate();
@@ -38,7 +37,7 @@ export default function SignupForm() {
     setStrength(score);
   }, [password]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Validation
@@ -70,10 +69,23 @@ export default function SignupForm() {
     setErrorMessage('');
 
     // Send API request to backend
-    apiClient.post('/api/auth/signup', { name, email, password, phone })
-      .then(() => {
-        setStatus('success');
-        setTimeout(() => navigate(ROUTES.LOGIN), 1500);
+    
+      const { supabase } = await import('@/lib/supabase');
+      supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: { name, phone }
+        }
+      })
+      .then(({ error }) => {
+        if (error) {
+          setStatus('error');
+          setErrorMessage(error.message);
+        } else {
+          setStatus('success');
+          setTimeout(() => navigate(ROUTES.LOGIN), 1500);
+        }
       })
       .catch((err) => {
         setStatus('error');
@@ -140,7 +152,7 @@ export default function SignupForm() {
             label="Phone Number (Optional)"
             placeholder="+1 (555) 000-0000"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 10))}
             disabled={status === 'submitting' || status === 'success'}
             autoComplete="tel"
           />
@@ -275,3 +287,4 @@ export default function SignupForm() {
     </div>
   );
 }
+

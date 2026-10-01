@@ -3,7 +3,6 @@ import { InputField } from '@/components/ui/Input';
 import { Button } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import apiClient from '@/services/apiClient';
 
 export default function DashboardProfile() {
   const [userProfile, setUserProfile] = useState({
@@ -18,13 +17,26 @@ export default function DashboardProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await apiClient.get('/api/auth/user/profile');
-        setUserProfile(prev => ({
-          ...prev,
-          name: response.data.name || '',
-          email: response.data.email || '',
-          phone: response.data.phone || '',
-        }));
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('User').select('*').eq('id', user.id).single();
+          if (data) {
+            setUserProfile(prev => ({
+              ...prev,
+              name: data.name || user.user_metadata?.name || '',
+              email: data.email || user.email || '',
+              phone: data.phone || user.user_metadata?.phone || '',
+            }));
+          } else {
+            setUserProfile(prev => ({
+              ...prev,
+              name: user.user_metadata?.name || '',
+              email: user.email || '',
+              phone: user.user_metadata?.phone || '',
+            }));
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
       } finally {

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Section, SectionHeading, Card, Badge } from '@/components/ui';
-import apiClient from '@/services/apiClient';
 
 export default function NewProjectsSection() {
   const [upcomingProjects, setUpcomingProjects] = useState<any[]>([]);
@@ -10,8 +9,10 @@ export default function NewProjectsSection() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await apiClient.get('/api/upcoming-projects');
-        setUpcomingProjects(response.data);
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('UpcomingProject').select('*').order('createdAt', { ascending: false });
+        if (error) throw error;
+        setUpcomingProjects(data || []);
       } catch (error) {
         console.error('Failed to fetch upcoming projects:', error);
       } finally {

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Section, SectionHeading, Modal, ModalHeader, ModalBody, ModalFooter, Button, Badge } from '@/components/ui';
 import { Linkedin } from 'lucide-react';
-import apiClient from '@/services/apiClient';
 
 export interface PublicEmployee {
   id: string;
@@ -22,26 +21,23 @@ export default function EmployeesSection() {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await apiClient.get('/api/employees');
-        let backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+        const { supabase } = await import('@/lib/supabase');
+        const { data: emps, error } = await supabase.from('Employee').select('*').order('priority', { ascending: false });
+        if (error) throw error;
         
-        const mapped = res.data.map((e: any) => {
+        let backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+        const mapped = (emps || []).map((e: any) => {
           let photo = e.profilePhoto;
           if (photo && photo.startsWith('/uploads/')) {
-            photo = `${backendUrl}${photo}`;
-          }
-          if (!photo) {
-            photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name)}&background=333333&color=ffffff&size=200`;
+            photo = backendUrl + photo;
           }
           return {
             id: e.id,
             name: e.name,
-            designation: e.position,
-            photoUrl: photo,
-            biography: e.description,
-            skills: Array.isArray(e.skills) ? e.skills : [],
-            experience: e.experience,
-            linkedinUrl: e.linkedInUrl || '',
+            designation: e.role || '',
+            bio: e.bio || '',
+            image: photo,
+            linkedin: e.linkedinUrl
           };
         });
         setEmployees(mapped);

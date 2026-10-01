@@ -1,5 +1,5 @@
-import apiClient from './apiClient';
-import { Product } from '@/data/products'; // Keep using the interface from there, but we'll remove the mock data later
+import { supabase } from '../lib/supabase';
+import { Product } from '@/data/products';
 
 export const mapApiProductToFrontend = (apiProduct: any): Product => {
   return {
@@ -8,10 +8,10 @@ export const mapApiProductToFrontend = (apiProduct: any): Product => {
     category: apiProduct.category,
     description: apiProduct.description,
     price: apiProduct.price,
-    imageUrl: apiProduct.images?.[0]?.url || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800', // Fallback image
+    imageUrl: apiProduct.images?.[0]?.url || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800',
     availability: apiProduct.availability ? 'In Stock' : 'Backorder',
-    isFeatured: true, // We will just default this or handle it dynamically
-    isNew: true, // Defaulting
+    isFeatured: true,
+    isNew: true,
     dateAdded: apiProduct.createdAt,
     images: apiProduct.images?.map((i: any) => i.url) || [],
     features: apiProduct.features || [],
@@ -22,29 +22,35 @@ export const mapApiProductToFrontend = (apiProduct: any): Product => {
 
 export const publicProductService = {
   async getAll(): Promise<Product[]> {
-    const res = await apiClient.get<any[]>('/api/products');
-    return res.data.map(mapApiProductToFrontend);
+    const { data, error } = await supabase
+      .from('Product')
+      .select('*, images:ProductImage(*)')
+      .order('createdAt', { ascending: false });
+      
+    if (error || !data) return [];
+    return data.map(mapApiProductToFrontend);
   },
 
   async getById(id: string): Promise<Product | null> {
-    try {
-      const res = await apiClient.get<any>(`/api/products/${id}`);
-      if (!res.data) return null;
-      return mapApiProductToFrontend(res.data);
-    } catch (e) {
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('Product')
+      .select('*, images:ProductImage(*)')
+      .eq('id', id)
+      .single();
+      
+    if (error || !data) return null;
+    return mapApiProductToFrontend(data);
   },
 
   async getRelated(category: string, excludeId: string, limit = 3): Promise<Product[]> {
-    try {
-      // For now, fetch all and filter client side. In a real app, this should be a backend query.
-      const res = await apiClient.get<any[]>(`/api/products?category=${encodeURIComponent(category)}`);
-      let products = res.data.map(mapApiProductToFrontend);
-      products = products.filter(p => p.id !== excludeId);
-      return products.slice(0, limit);
-    } catch (e) {
-      return [];
-    }
+    const { data, error } = await supabase
+      .from('Product')
+      .select('*, images:ProductImage(*)')
+      .eq('category', category)
+      .neq('id', excludeId)
+      .limit(limit);
+      
+    if (error || !data) return [];
+    return data.map(mapApiProductToFrontend);
   }
 };

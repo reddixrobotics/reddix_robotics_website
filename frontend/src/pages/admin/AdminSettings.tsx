@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-template-expressions */
 import { useState, useEffect, useCallback } from 'react';
-import apiClient from '@/services/apiClient';
 import {
   Shield,
   ShieldCheck,
@@ -76,7 +75,8 @@ function TwoFADisablePanel({
     setLoading(true);
     setError('');
     try {
-      await apiClient.post('/api/admin/security/2fa/disable', { code });
+      // mocked for Supabase architecture
+        throw new Error("2FA management requires Supabase Auth MFA upgrade");
       onDisabled();
     } catch (err: any) {
       setError(err.message || 'Invalid code. Please try again.');
@@ -178,10 +178,8 @@ function RegenerateCodesPanel({
     setLoading(true);
     setError('');
     try {
-      const res = await apiClient.post<{ backupCodes: string[] }>(
-        '/api/admin/security/backup-codes/regenerate',
-        { password },
-      );
+      // mocked for Supabase architecture
+        throw new Error("Backup codes require Supabase Auth MFA upgrade");
       setNewCodes(res.data.backupCodes);
     } catch (err: any) {
       setError(err.message || 'Incorrect password. Please try again.');
@@ -281,12 +279,33 @@ export default function AdminSettings() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [sessionsRes, profileRes] = await Promise.all([
-        apiClient.get<SessionInfo[]>('/api/admin/security/sessions'),
-        apiClient.get<AdminProfile>('/api/auth/profile'),
-      ]);
-      setSessions(sessionsRes.data);
-      setProfile(profileRes.data);
+      const { supabase } = await import('@/lib/supabase');
+        // Because of the auth migration, profile comes from Auth Context usually, but we fallback.
+        const { data: userResponse } = await supabase.auth.getUser();
+        
+        let sessions = [];
+        let profile = null;
+        
+        if (userResponse?.user) {
+           profile = { 
+             id: userResponse.user.id, 
+             email: userResponse.user.email,
+             role: userResponse.user.app_metadata?.role || 'SUPER_ADMIN',
+             twoFactorEnabled: false
+           };
+        } else {
+           // Fallback to legacy Admin info via local storage heuristic or empty
+           const legacyAdmin = JSON.parse(localStorage.getItem('adminUser') || '{}');
+           profile = legacyAdmin;
+           
+           if (legacyAdmin?.id) {
+             const { data: s } = await supabase.from('AdminSession').select('*').eq('adminId', legacyAdmin.id);
+             sessions = s || [];
+           }
+        }
+        
+        setSessions(sessions);
+        setProfile(profile);
     } catch (err) {
       console.error('Failed to load security settings:', err);
     } finally {
@@ -302,7 +321,8 @@ export default function AdminSettings() {
     setActionLoading(sessionId);
     setFeedback(null);
     try {
-      await apiClient.delete(`/api/admin/security/sessions/${sessionId}`);
+      const { supabase } = await import('@/lib/supabase');
+        await supabase.from('AdminSession').delete().eq('id', sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
       setFeedback({ type: 'success', text: 'Session terminated successfully.' });
     } catch (err: any) {

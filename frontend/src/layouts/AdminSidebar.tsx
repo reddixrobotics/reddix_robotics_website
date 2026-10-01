@@ -6,7 +6,6 @@ import {
   ShoppingCart, CreditCard, GraduationCap, School, BookOpen, 
   FileText, HardHat, UserCircle, MessageSquare, Settings, LogOut, Video
 } from 'lucide-react';
-import apiClient from '@/services/apiClient';
 import { useAuth } from '@/context/AuthContext';
 import { dashboardService } from '@/features/admin/services/apiService';
 

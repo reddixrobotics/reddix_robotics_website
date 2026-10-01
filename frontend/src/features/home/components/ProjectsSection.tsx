@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Section, SectionHeading, Card, Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
-import apiClient from '@/services/apiClient';
+
 
 interface FeaturedProject {
   id: string;
@@ -21,8 +21,10 @@ export default function ProjectsSection() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await apiClient.get<FeaturedProject[]>('/api/featured-projects');
-        setProjects(res.data);
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('FeaturedProject').select('*').order('order', { ascending: true });
+        if (error) throw error;
+        setProjects(data as any[]);
       } catch (err) {
         console.error('Failed to fetch featured projects', err);
         setError('Failed to load featured projects');
@@ -48,7 +50,7 @@ export default function ProjectsSection() {
       ) : projects.length === 0 ? (
         <div className="mt-12 text-center text-zinc-500 py-12">No featured projects currently available.</div>
       ) : (
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project, i) => (
             <motion.div
               key={project.id}

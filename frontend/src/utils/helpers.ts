@@ -4,7 +4,7 @@
 export function formatDate(
   date: string | Date,
   options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' },
-  locale = 'en-US',
+  locale = 'en-IN',
 ): string {
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }
@@ -60,9 +60,10 @@ export function isObject(value: unknown): value is Record<string, unknown> {
  * Format a number to USD currency.
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(amount);
 }
+

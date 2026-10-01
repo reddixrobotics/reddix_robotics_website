@@ -17,9 +17,9 @@ export default function CheckoutSummary({ items, subtotal }: CheckoutSummaryProp
   const effectivePercentage = subtotal > 0 ? Math.round((advanceAmount / subtotal) * 100) : 0;
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       maximumFractionDigits: 0
     }).format(price);
   };
@@ -84,3 +84,4 @@ export default function CheckoutSummary({ items, subtotal }: CheckoutSummaryProp
     </div>
   );
 }
+

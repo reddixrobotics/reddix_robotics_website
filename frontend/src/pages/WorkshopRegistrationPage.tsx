@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Section, Card, InputField, TextareaField, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui';
-import apiClient from '@/services/apiClient';
+
 
 export default function WorkshopRegistrationPage() {
   const { id } = useParams();
@@ -30,12 +30,17 @@ export default function WorkshopRegistrationPage() {
       if (id?.startsWith('ws-')) {
         await new Promise(resolve => setTimeout(resolve, 500));
       } else {
-        await apiClient.post('/api/workshops/register', {
-          workshopId: id,
+        const { supabase } = await import('@/lib/supabase');
+        const { error } = await supabase.from('WorkshopRegistration').insert({
+          workshopId,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          background: formData.background,
+          goals: formData.goals,
+          status: 'PENDING'
         });
+        if (error) throw error;
       }
       setHasApplied(true);
       const appliedIds = JSON.parse(localStorage.getItem('applied_opportunities') || '[]');

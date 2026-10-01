@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
+    "dotenv": "^18.0.5",
     "react-slick": "^0.31.0",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "ws": "^8.22.0"
   }
 }

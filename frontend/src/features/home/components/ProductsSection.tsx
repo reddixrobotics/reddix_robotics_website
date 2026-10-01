@@ -27,9 +27,9 @@ export default function ProductsSection() {
   }, []);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       maximumFractionDigits: 0
     }).format(price);
   };
@@ -47,7 +47,7 @@ export default function ProductsSection() {
       ) : featuredProducts.length === 0 ? (
         <div className="mt-12 text-center text-zinc-500 py-12">No products available.</div>
       ) : (
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featuredProducts.map((product, i) => (
             <motion.div
               key={product.id}
@@ -97,3 +97,4 @@ export default function ProductsSection() {
     </Section>
   );
 }
+

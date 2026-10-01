@@ -272,8 +272,8 @@ export default function AdminMessages() {
                   
                   <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 flex-shrink-0">
                     <div className="text-xs font-medium text-content-tertiary whitespace-nowrap">
-                      {new Date(msg.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })},{' '}
-                      {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })},{' '}
+                      {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <button 
                       className="text-xs font-bold text-[var(--color-brand)] flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
@@ -309,7 +309,7 @@ export default function AdminMessages() {
                 <div className="text-right">
                   <div className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-1">Received</div>
                   <div className="text-sm text-content font-medium">
-                    {new Date(viewingItem.createdAt).toLocaleString('en-US')}
+                    {new Date(viewingItem.createdAt).toLocaleString('en-IN')}
                   </div>
                 </div>
               </div>
@@ -416,3 +416,4 @@ export default function AdminMessages() {
     </div>
   );
 }
+

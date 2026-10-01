@@ -6,7 +6,6 @@ import { useCart } from '@/context/CartContext';
 import { Section, Button } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
 import { CheckoutSummary } from '@/features/checkout';
-import apiClient from '@/services/apiClient';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -49,18 +48,20 @@ export default function PaymentPage() {
     setIsLoading(true);
     setPaymentError(null);
     
-    try {
+      try {
+      const { supabase } = await import('@/lib/supabase');
       // 1. Create the order
       const payload = {
-        items: items.map(item => ({
-          productId: item.product.id,
-          quantity: item.quantity
-        })),
         shippingDetails: customerInfo
       };
 
-      const res = await apiClient.post('/api/orders', payload);
-      const createdOrder = res.data;
+      const { data: createdOrder, error: orderError } = await supabase.functions.invoke('create-order', {
+        body: payload
+      });
+
+      if (orderError || !createdOrder) {
+        throw new Error(orderError?.message || 'Failed to create order');
+      }
 
       // 2. Initialize Razorpay
       const isScriptLoaded = await loadRazorpayScript();
@@ -69,9 +70,13 @@ export default function PaymentPage() {
       }
 
       // 3. Create payment order on backend
-      const { data: paymentOrder } = await apiClient.post('/api/payments/create-order', {
-        orderId: createdOrder.id
+      const { data: paymentOrder, error: rzpError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { orderId: createdOrder.id }
       });
+
+      if (rzpError || !paymentOrder) {
+        throw new Error(rzpError?.message || 'Failed to create payment order');
+      }
 
       // 4. Open Razorpay Checkout
       const options = {
@@ -84,17 +89,21 @@ export default function PaymentPage() {
         handler: async (response: any) => {
           try {
             // 5. Verify Signature on backend
-            await apiClient.post('/api/payments/verify', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }
             });
+
+            if (verifyError) throw verifyError;
 
             clearCart();
             navigate(`/order-success/${createdOrder.id}`, { replace: true });
-          } catch (verifyError) {
+          } catch (verifyError: any) {
             console.error('Payment verification failed:', verifyError);
-            setPaymentError('Payment verification failed. If money was deducted, contact support.');
+            setPaymentError(verifyError.message || 'Payment verification failed. If money was deducted, contact support.');
           }
         },
         prefill: {
@@ -121,7 +130,7 @@ export default function PaymentPage() {
     } catch (e: any) {
       console.error('Failed to process payment:', e);
       setIsLoading(false);
-      setPaymentError(e.response?.data?.message || e.message || 'Failed to process payment. Please try again.');
+      setPaymentError(e.message || 'Failed to process payment. Please try again.');
     }
   };
 
@@ -190,7 +199,7 @@ export default function PaymentPage() {
                   onClick={handlePayment} 
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Processing Payment...' : `Pay Required Deposit: ${items.reduce((total, item) => total + ((item.product.price ?? (item.product as any).basePrice ?? 0) * ((item.product.depositPercentage ?? 50) / 100) * item.quantity), 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`}
+                  {isLoading ? 'Processing Payment...' : `Pay Required Deposit: ${items.reduce((total, item) => total + ((item.product.price ?? (item.product as any).basePrice ?? 0) * ((item.product.depositPercentage ?? 50) / 100) * item.quantity), 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}`}
                 </Button>
               </div>
             </div>
@@ -207,3 +216,4 @@ export default function PaymentPage() {
     </div>
   );
 }
+

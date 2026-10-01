@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
 import { Button } from '@/components/ui';
 import { Plus, Trash2, Shield, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -23,8 +22,10 @@ export default function AdminUsers() {
 
   const fetchAdmins = async () => {
     try {
-      const res = await apiClient.get('/api/admin/admins');
-      setAdmins(res.data);
+      const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('Admin').select('*').order('createdAt', { ascending: false });
+        if (error) throw error;
+        setAdmins(data || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch admins');
     } finally {
@@ -36,7 +37,11 @@ export default function AdminUsers() {
     e.preventDefault();
     setFormError('');
     try {
-      await apiClient.post('/api/admin/admins', { email, password, role });
+      const { supabase } = await import('@/lib/supabase');
+        const { error } = await supabase.functions.invoke('admin-users', {
+          body: { action: 'create_admin', email, password, role }
+        });
+        if (error) throw error;
       setIsAdding(false);
       setEmail('');
       setPassword('');
@@ -50,7 +55,9 @@ export default function AdminUsers() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this admin?')) return;
     try {
-      await apiClient.delete(`/api/admin/admins/${id}`);
+      const { supabase } = await import('@/lib/supabase');
+        const { error } = await supabase.from('Admin').delete().eq('id', id);
+        if (error) throw error;
       fetchAdmins();
     } catch (err: any) {
       alert(err.message || 'Failed to delete admin');

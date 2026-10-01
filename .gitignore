@@ -20,3 +20,7 @@ dist/
 build/
 frontend/dist/
 backend/dist/
+
+!*.env.example
+!backend/.env.example
+!frontend/.env.example

@@ -3,7 +3,7 @@ import { Button, Card } from '@/components/ui';
 import { Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 
 export default function WorkshopsSection() {
   const navigate = useNavigate();
@@ -13,9 +13,15 @@ export default function WorkshopsSection() {
   useEffect(() => {
     const fetchWorkshops = async () => {
       try {
-        const response = await apiClient.get('/api/workshops');
-        // Get the first two for the home page or all if needed
-        setWorkshops(response.data.slice(0, 2));
+        const { data, error } = await supabase
+          .from('Workshop')
+          .select('*')
+          .eq('status', 'PUBLISHED')
+          .order('date', { ascending: true })
+          .limit(2);
+          
+        if (error) throw error;
+        setWorkshops(data || []);
       } catch (err) {
         console.error('Failed to load workshops:', err);
       } finally {
@@ -64,7 +70,7 @@ export default function WorkshopsSection() {
                   <div className="flex-grow text-center sm:text-left">
                     <h4 className="text-heading-sm font-semibold mb-1">{workshop.title}</h4>
                     <p className="text-body-sm text-[var(--text-secondary)] mb-3">
-                      {new Date(workshop.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})} • {workshop.location}
+                      {new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})} • {workshop.location}
                     </p>
                     <Button size="sm" variant="secondary" onClick={() => navigate('/workshops/ros2-industry-immersion')}>View Workshop</Button>
                   </div>
@@ -77,3 +83,4 @@ export default function WorkshopsSection() {
     </section>
   );
 }
+

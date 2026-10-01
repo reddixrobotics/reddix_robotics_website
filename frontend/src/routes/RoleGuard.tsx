@@ -27,7 +27,7 @@ function PageLoader() {
 }
 
 export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) {
-  const { isAuthenticated, userRole, loading } = useAuth();
+  const { isAuthenticated, userRole, loading, isAdmin } = useAuth();
 
   if (loading) {
     return <PageLoader />;
@@ -46,7 +46,7 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
   // If authenticated but role doesn't match
   if (userRole && !allowedRoles.includes(userRole)) {
     // Redirect to their respective home
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+    if (isAdmin()) {
       return <Navigate to={ROUTES.ADMIN} replace />;
     } else {
       return <Navigate to={ROUTES.PROFILE} replace />;

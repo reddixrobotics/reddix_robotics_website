@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Upload, Video, Image, Check, X, RefreshCw, ExternalLink } from 'lucide-react';
 import { uploadFile } from '@/features/admin/services/apiService';
-import apiClient from '@/services/apiClient';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,18 +45,56 @@ const MEDIA_SLOTS = [
 const workshopMediaAdminApi = {
   async getAll(): Promise<WorkshopMediaItem[]> {
     try {
-      const res = await apiClient.get<WorkshopMediaItem[]>('/api/admin/workshop-media');
-      return res.data;
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase.from('WorkshopMedia').select('*');
+      if (error) throw error;
+      return (data || []).map((m: any) => ({
+        id: m.id,
+        sectionKey: m.sectionKey,
+        title: m.title,
+        mediaUrl: m.mediaUrl,
+        posterUrl: m.posterUrl,
+        mediaType: m.mediaType,
+        altText: m.altText,
+        isActive: m.isActive,
+        displayOrder: m.displayOrder
+      }));
     } catch {
       return [];
     }
   },
   async upsert(key: string, data: Partial<WorkshopMediaItem>): Promise<WorkshopMediaItem> {
-    const res = await apiClient.put<WorkshopMediaItem>(`/api/admin/workshop-media/${key}`, data);
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const payload = {
+      sectionKey: key,
+      title: data.title,
+      mediaUrl: data.mediaUrl,
+      posterUrl: data.posterUrl,
+      mediaType: data.mediaType,
+      altText: data.altText,
+      isActive: data.isActive,
+      displayOrder: data.displayOrder
+    };
+    
+    // Check if exists
+    const { data: existing } = await supabase.from('WorkshopMedia').select('id').eq('sectionKey', key).maybeSingle();
+    let result;
+    
+    if (existing) {
+      const { data: updated, error } = await supabase.from('WorkshopMedia').update(payload).eq('sectionKey', key).select().single();
+      if (error) throw error;
+      result = updated;
+    } else {
+      const { data: inserted, error } = await supabase.from('WorkshopMedia').insert(payload).select().single();
+      if (error) throw error;
+      result = inserted;
+    }
+    
+    return result as any;
   },
   async remove(key: string): Promise<void> {
-    await apiClient.delete(`/api/admin/workshop-media/${key}`);
+    const { supabase } = await import('@/lib/supabase');
+    await supabase.from('WorkshopMedia').delete().eq('sectionKey', key);
   },
 };
 

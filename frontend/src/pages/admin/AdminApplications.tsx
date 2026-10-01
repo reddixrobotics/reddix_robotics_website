@@ -122,7 +122,21 @@ export default function AdminApplications() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {app.resumeUrl && (
-                        <a href={app.resumeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                        <a href="#" onClick={async (e) => {
+  e.preventDefault();
+  if (!app.resumeUrl) return;
+  const fileName = app.resumeUrl.split('/').pop();
+  if (!fileName) return;
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.storage.from('application-documents').createSignedUrl(fileName, 60);
+    if (error) throw error;
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  } catch (err) {
+    console.error('Error generating signed URL:', err);
+    alert('Could not open resume.');
+  }
+}} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                           <FileText size={14} /> Resume
                         </a>
                       )}
@@ -154,7 +168,21 @@ export default function AdminApplications() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {app.resumeUrl && (
-                        <a href={app.resumeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                        <a href="#" onClick={async (e) => {
+  e.preventDefault();
+  if (!app.resumeUrl) return;
+  const fileName = app.resumeUrl.split('/').pop();
+  if (!fileName) return;
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.storage.from('application-documents').createSignedUrl(fileName, 60);
+    if (error) throw error;
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  } catch (err) {
+    console.error('Error generating signed URL:', err);
+    alert('Could not open resume.');
+  }
+}} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                           <FileText size={14} /> Resume
                         </a>
                       )}

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '@/data/products';
 import { mapApiProductToFrontend } from '@/services/publicProductService';
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
 export interface WishlistItem {
@@ -26,15 +26,22 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, userRole, loading } = useAuth();
+  const { isAuthenticated, userRole, loading, user } = useAuth();
   const isReady = !loading;
 
   const fetchWishlist = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
       setError(null);
-      const res = await apiClient.get('/api/wishlist');
-      const mappedItems = res.data.map((item: any) => ({
+      const { data, error } = await supabase
+        .from('WishlistItem')
+        .select('*, product:Product(*, images:ProductImage(*))')
+        .eq('userId', user.id);
+        
+      if (error) throw error;
+      
+      const mappedItems = (data || []).map((item: any) => ({
         ...item,
         product: mapApiProductToFrontend(item.product)
       }));
@@ -49,13 +56,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (isReady && isAuthenticated && userRole === 'USER') {
+    if (isReady && isAuthenticated && userRole === 'USER' && user) {
       fetchWishlist();
     } else if (isReady && (!isAuthenticated || userRole !== 'USER')) {
       setItems([]);
       setIsLoading(false);
     }
-  }, [isAuthenticated, isReady, userRole]);
+  }, [isAuthenticated, isReady, userRole, user]);
 
   const requireAuth = () => {
     if (!isAuthenticated) {
@@ -67,27 +74,45 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   };
 
   const addToWishlist = async (product: Product) => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !user) return;
     try {
-      // Optimistic UI update
-      setItems(prevItems => {
-        const existingItem = prevItems.find(item => item.product.id === product.id);
-        if (existingItem) return prevItems;
-        return [...prevItems, { product }];
+      // Optimistic update
+      setItems(prev => {
+        if (prev.some(item => item.product.id === product.id)) return prev;
+        return [...prev, { product }];
       });
-      await apiClient.post('/api/wishlist', { productId: product.id });
+      
+      const { data: existing } = await supabase
+        .from('WishlistItem')
+        .select('id')
+        .eq('userId', user.id)
+        .eq('productId', product.id)
+        .maybeSingle();
+
+      if (!existing) {
+        await supabase
+          .from('WishlistItem')
+          .insert({ userId: user.id, productId: product.id });
+      }
+      
+      // We don't need to re-fetch unless we want the real ID, but typically it's fine
       fetchWishlist();
     } catch (e) {
       console.error('Failed to add to wishlist', e);
-      fetchWishlist(); // Revert on failure
+      fetchWishlist();
     }
   };
 
   const removeFromWishlist = async (productId: string) => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !user) return;
     try {
-      setItems(prevItems => prevItems.filter(item => item.product.id !== productId));
-      await apiClient.delete(`/api/wishlist/${productId}`);
+      setItems(prev => prev.filter(item => item.product.id !== productId));
+      
+      await supabase
+        .from('WishlistItem')
+        .delete()
+        .eq('userId', user.id)
+        .eq('productId', productId);
     } catch (e) {
       console.error('Failed to remove from wishlist', e);
       fetchWishlist();
@@ -98,19 +123,19 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     return items.some(item => item.product.id === productId);
   };
 
-  const totalItems = items.length;
-
   return (
-    <WishlistContext.Provider value={{
-      items,
-      addToWishlist,
-      removeFromWishlist,
-      isInWishlist,
-      totalItems,
-      isLoading,
-      error,
-      fetchWishlist
-    }}>
+    <WishlistContext.Provider
+      value={{
+        items,
+        addToWishlist,
+        removeFromWishlist,
+        isInWishlist,
+        totalItems: items.length,
+        isLoading,
+        error,
+        fetchWishlist
+      }}
+    >
       {children}
     </WishlistContext.Provider>
   );

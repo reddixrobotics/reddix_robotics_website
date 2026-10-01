@@ -1,4 +1,4 @@
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 
 export interface WorkshopMediaItem {
   id: string;
@@ -14,20 +14,23 @@ export interface WorkshopMediaItem {
 
 export const workshopMediaService = {
   async getAll(): Promise<WorkshopMediaItem[]> {
-    try {
-      const res = await apiClient.get<WorkshopMediaItem[]>(`/api/workshop-media?t=${Date.now()}`);
-      return res.data;
-    } catch {
-      return [];
-    }
+    const { data, error } = await supabase
+      .from('WorkshopMedia')
+      .select('*')
+      .order('displayOrder', { ascending: true });
+      
+    if (error || !data) return [];
+    return data;
   },
 
   async getByKey(key: string): Promise<WorkshopMediaItem | null> {
-    try {
-      const res = await apiClient.get<WorkshopMediaItem>(`/api/workshop-media/${key}`);
-      return res.data;
-    } catch {
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('WorkshopMedia')
+      .select('*')
+      .eq('sectionKey', key)
+      .single();
+      
+    if (error || !data) return null;
+    return data;
   },
 };

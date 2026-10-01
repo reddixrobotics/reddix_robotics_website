@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, useAnimations, Float } from '@react-three/drei';
 import * as THREE from 'three';
@@ -7,11 +7,33 @@ import { useReducedMotion } from 'framer-motion';
 
 export default function RobotModel(props: JSX.IntrinsicElements['group']) {
   const group = useRef<THREE.Group>(null);
+  const [responsiveScale, setResponsiveScale] = useState(1);
   
   // Lazy-load the GLTF model (draco compression or optimized load depending on how it's served)
   const { scene, animations } = useGLTF('/final_dog/final_dog.gltf');
   const { actions } = useAnimations(animations, group);
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      // Mobile
+      if (w <= 320) setResponsiveScale(0.45);
+      else if (w <= 360) setResponsiveScale(0.5);
+      else if (w <= 390) setResponsiveScale(0.55);
+      else if (w <= 425) setResponsiveScale(0.6);
+      else if (w < 768) setResponsiveScale(0.68);
+      // Tablet
+      else if (w <= 820) setResponsiveScale(0.74);
+      else if (w <= 900) setResponsiveScale(0.80);
+      else if (w <= 1024) setResponsiveScale(0.88);
+      // Desktop
+      else setResponsiveScale(1);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Compute bounding box, center, and scale for automatic fitting
   const { fitScale, fitPosition } = React.useMemo(() => {
@@ -24,7 +46,7 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
 
     // 3. Calculate scale factor so the largest dimension maps to a target size
     const maxDim = Math.max(size.x, size.y, size.z);
-    const targetSize = 3.5;
+    const targetSize = 5.6;
     const scale = maxDim > 0 ? targetSize / maxDim : 1;
 
     // 4. Re-center
@@ -107,7 +129,7 @@ export default function RobotModel(props: JSX.IntrinsicElements['group']) {
       rotationIntensity={shouldReduceMotion ? 0 : 0.1} 
       floatIntensity={shouldReduceMotion ? 0 : 0.15}
     >
-      <group ref={group} {...props} dispose={null} scale={fitScale}>
+      <group ref={group} {...props} dispose={null} scale={fitScale * responsiveScale}>
         <group position={fitPosition}>
           <primitive object={scene} />
         </group>

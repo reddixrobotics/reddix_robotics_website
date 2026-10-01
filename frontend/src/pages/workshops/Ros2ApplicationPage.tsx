@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ROUTES } from '@/routes/routePaths';
-import apiClient from '@/services/apiClient';
+
 
 export default function Ros2ApplicationPage() {
   const navigate = useNavigate();
@@ -59,13 +59,17 @@ export default function Ros2ApplicationPage() {
         Goal: ${formData.goal}
       `;
 
-      await apiClient.post('/api/workshops/register', {
-        workshopId: 'ros2-industry-immersion',
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.from('WorkshopRegistration').insert({
+        workshopId: 'c19f5c40-3bd1-4d33-bc8e-9c4c794e5088', // using static UUID for ROS2 or fallback
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        message: extraDetails, // Backend may save this if supported, else it drops gracefully
+        background: formData.background,
+        goals: formData.goals,
+        status: 'PENDING'
       });
+      if (error) throw error;
       
       navigate(ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS);
     } catch (err: any) {

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { DataTable, StatusBadge } from '@/features/dashboard/components/DashboardUI';
 import { Button, Modal } from '@/components/ui';
 import { Check, X } from 'lucide-react';
-import apiClient from '@/services/apiClient';
 import { formatCurrency } from '@/utils';
 import { Link } from 'react-router-dom';
 
@@ -12,13 +11,53 @@ export default function DashboardOrders() {
   const [error, setError] = useState<string | null>(null);
 
   const [trackingOrder, setTrackingOrder] = useState<any | null>(null);
+  const [liveTracking, setLiveTracking] = useState<any>(null);
+  const [liveTrackingLoading, setLiveTrackingLoading] = useState(false);
+  const [liveTrackingError, setLiveTrackingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!trackingOrder || !trackingOrder.shipment?.awbNumber) {
+      setLiveTracking(null);
+      setLiveTrackingError(null);
+      return;
+    }
+    const fetchTracking = async () => {
+      try {
+        setLiveTrackingLoading(true);
+        setLiveTrackingError(null);
+        // We use standard fetch with the same token mechanism used by apiClient for simplicity here
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.functions.invoke('shiprocket-api', {
+          body: { action: 'track', orderId: trackingOrder.id }
+        });
+        if (error) throw new Error(error.message || 'Failed to fetch tracking data');
+        setLiveTracking(data);
+      } catch (err: any) {
+        setLiveTrackingError(err.message);
+      } finally {
+        setLiveTrackingLoading(false);
+      }
+    };
+    fetchTracking();
+  }, [trackingOrder]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setIsLoading(true);
-        const res = await apiClient.get('/api/orders');
-        setOrders(res.data);
+        const { supabase } = await import('@/lib/supabase');
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+          .from('Order')
+          .select('*, items:OrderItem(*, product:Product(*, images:ProductImage(*))), shipment:Shipment(*)')
+          .eq('customerId', userData.user.id)
+          .neq('status', 'ORDER_PLACED')
+          .order('createdAt', { ascending: false });
+          
+        if (error) throw error;
+        setOrders(data || []);
       } catch (err: any) {
         console.error('Failed to fetch orders:', err);
         setError('Failed to load your order history. Please try again.');
@@ -127,81 +166,68 @@ export default function DashboardOrders() {
       <DataTable columns={columns} data={orders} />
 
       <Modal open={!!trackingOrder} onClose={() => setTrackingOrder(null)}>
-        {trackingOrder?.shipment && (
-          <div className="p-4 sm:p-6">
-            <div className="mb-6 pb-4 border-b border-[var(--border-subtle)]">
-              <h3 className="text-lg font-bold mb-1">Track Shipment</h3>
-              <p className="text-sm text-[var(--text-secondary)]">Order #{trackingOrder.orderNumber}</p>
-            </div>
-
-            <div className="flex flex-col gap-6 relative ml-2 mb-8">
-              <div className="absolute left-[11px] top-2 bottom-2 w-[2px] bg-[var(--border-strong)] z-0" />
-              {steps.map((step, idx) => {
-                const currentIndex = getStepIndex(trackingOrder.shipment.status);
-                const isCompleted = currentIndex >= idx;
-                const isFailed = trackingOrder.shipment.status === 'CANCELLED' || trackingOrder.shipment.status === 'DELIVERY_FAILED' || trackingOrder.shipment.status === 'RTO';
-                
-                return (
-                  <div key={idx} className="relative z-10 flex gap-4 items-start">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 ${
-                      isCompleted 
-                        ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white' 
-                        : 'bg-[var(--bg-primary)] border-[var(--border-strong)] text-transparent'
-                    }`}>
-                      {isCompleted && <Check size={12} strokeWidth={3} />}
-                    </div>
-                    <div className="pb-1">
-                      <p className={`font-semibold text-sm ${isCompleted ? 'text-white' : 'text-[var(--text-tertiary)]'}`}>{step.label}</p>
-                      <p className={`text-xs ${isCompleted ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)]'}`}>{step.desc}</p>
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {(trackingOrder.shipment.status === 'CANCELLED' || trackingOrder.shipment.status === 'DELIVERY_FAILED' || trackingOrder.shipment.status === 'RTO') && (
-                <div className="relative z-10 flex gap-4 items-start mt-2">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 bg-red-500 border-red-500 text-white">
-                    <X size={12} strokeWidth={3} />
-                  </div>
-                  <div className="pb-1">
-                    <p className="font-semibold text-sm text-red-500">Delivery Failed / Cancelled</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Status: {trackingOrder.shipment.status.replace(/_/g, ' ')}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {(trackingOrder.shipment.courier || trackingOrder.shipment.awbNumber) && (
-              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-4 rounded-xl mb-4">
-                <p className="text-sm font-medium mb-2">Courier Details</p>
-                {trackingOrder.shipment.courier && (
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[var(--text-secondary)]">Provider:</span>
-                    <span className="font-medium">{trackingOrder.shipment.courier}</span>
-                  </div>
-                )}
+          {trackingOrder?.shipment && (
+            <div className="p-4 sm:p-6">
+              <div className="mb-6 pb-4 border-b border-[var(--border-subtle)]">
+                <h3 className="text-lg font-bold mb-1">Track Shipment</h3>
+                <p className="text-sm text-[var(--text-secondary)]">Order #{trackingOrder.orderNumber}</p>
                 {trackingOrder.shipment.awbNumber && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-[var(--text-secondary)]">AWB / Tracking Number:</span>
-                    <span className="font-mono text-[var(--color-brand)]">{trackingOrder.shipment.awbNumber}</span>
-                  </div>
+                    <p className="text-xs text-[var(--color-brand)] font-mono mt-1">AWB: {trackingOrder.shipment.awbNumber}</p>
                 )}
               </div>
-            )}
 
-            {trackingOrder.shipment.trackingUrl && (
-              <a 
-                href={trackingOrder.shipment.trackingUrl} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="flex justify-center w-full py-2.5 bg-[var(--color-brand)] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Track on Courier Website
-              </a>
-            )}
-          </div>
-        )}
-      </Modal>
+              {liveTrackingLoading ? (
+                <div className="flex justify-center p-8">
+                  <div className="h-6 w-6 animate-spinner rounded-full border-2 border-[var(--border-strong)] border-t-[var(--color-brand)]" />
+                </div>
+              ) : liveTracking && liveTracking.tracking_data?.track_status === 1 ? (
+                <div className="flex flex-col gap-6 relative ml-2 mb-8 max-h-[300px] overflow-y-auto pr-2">
+                  <div className="absolute left-[11px] top-2 bottom-2 w-[2px] bg-[var(--border-strong)] z-0" />
+                  
+                  {liveTracking.tracking_data.shipment_track.map((track: any, idx: number) => (
+                    <div key={idx} className="relative z-10 flex gap-4 items-start">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 bg-[var(--bg-primary)] border-[var(--color-brand)] text-[var(--color-brand)]">
+                        <div className="w-2 h-2 rounded-full bg-[var(--color-brand)]" />
+                      </div>
+                      <div className="pb-1">
+                        <p className="font-semibold text-sm text-white">{track.activity || 'Status Update'}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{new Date(track.date).toLocaleString()} - {track.location}</p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(!liveTracking.tracking_data.shipment_track || liveTracking.tracking_data.shipment_track.length === 0) && (
+                     <p className="text-sm text-[var(--text-secondary)] pl-8">Awaiting courier updates...</p>
+                  )}
+                </div>
+              ) : liveTrackingError ? (
+                <p className="text-sm text-red-400 mb-6">{liveTrackingError}</p>
+              ) : (
+                <p className="text-sm text-[var(--text-secondary)] mb-6">Tracking timeline is not available yet.</p>
+              )}
+
+              {trackingOrder.shipment.trackingUrl ? (
+                <a 
+                  href={trackingOrder.shipment.trackingUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full py-2.5 text-center bg-[var(--surface-tertiary)] hover:bg-[var(--surface-hover)] rounded-lg transition-colors text-sm font-medium border border-[var(--border-subtle)]"
+                >
+                  View on Courier Website
+                </a>
+              ) : trackingOrder.shipment.provider === 'SHIPROCKET' && trackingOrder.shipment.awbNumber ? (
+                <a 
+                  href={`https://shiprocket.co/tracking/${trackingOrder.shipment.awbNumber}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full py-2.5 text-center bg-[var(--surface-tertiary)] hover:bg-[var(--surface-hover)] rounded-lg transition-colors text-sm font-medium border border-[var(--border-subtle)]"
+                >
+                  Track via Shiprocket
+                </a>
+              ) : null}
+            </div>
+          )}
+        </Modal>
     </div>
   );
 }

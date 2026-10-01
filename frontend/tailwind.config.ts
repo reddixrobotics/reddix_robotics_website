@@ -77,14 +77,14 @@ const config: Config = {
 
       fontSize: {
         // Display scale
-        'display-xl': ['5rem',   { lineHeight: '1.0',  letterSpacing: '-0.03em',  fontWeight: '700' }],
-        'display-lg': ['3.75rem',{ lineHeight: '1.05', letterSpacing: '-0.025em', fontWeight: '700' }],
-        'display-md': ['3rem',   { lineHeight: '1.1',  letterSpacing: '-0.02em',  fontWeight: '700' }],
-        'display-sm': ['2.25rem',{ lineHeight: '1.15', letterSpacing: '-0.015em', fontWeight: '700' }],
+        'display-xl': ['clamp(3rem, 8vw, 5rem)',   { lineHeight: '1.0',  letterSpacing: '-0.03em',  fontWeight: '700' }],
+        'display-lg': ['clamp(2.5rem, 6vw, 3.75rem)',{ lineHeight: '1.05', letterSpacing: '-0.025em', fontWeight: '700' }],
+        'display-md': ['clamp(2rem, 5vw, 3rem)',   { lineHeight: '1.1',  letterSpacing: '-0.02em',  fontWeight: '700' }],
+        'display-sm': ['clamp(1.75rem, 4vw, 2.25rem)',{ lineHeight: '1.15', letterSpacing: '-0.015em', fontWeight: '700' }],
         // Heading scale
-        'heading-xl': ['1.75rem',{ lineHeight: '1.25', letterSpacing: '-0.01em',  fontWeight: '600' }],
-        'heading-lg': ['1.5rem', { lineHeight: '1.3',  letterSpacing: '-0.008em', fontWeight: '600' }],
-        'heading-md': ['1.25rem',{ lineHeight: '1.35', letterSpacing: '-0.005em', fontWeight: '600' }],
+        'heading-xl': ['clamp(1.5rem, 3vw, 1.75rem)',{ lineHeight: '1.25', letterSpacing: '-0.01em',  fontWeight: '600' }],
+        'heading-lg': ['clamp(1.25rem, 2.5vw, 1.5rem)', { lineHeight: '1.3',  letterSpacing: '-0.008em', fontWeight: '600' }],
+        'heading-md': ['clamp(1.125rem, 2vw, 1.25rem)',{ lineHeight: '1.35', letterSpacing: '-0.005em', fontWeight: '600' }],
         'heading-sm': ['1.125rem',{ lineHeight: '1.4', letterSpacing: '0',        fontWeight: '600' }],
         // Body scale
         'body-lg':    ['1.125rem',{ lineHeight: '1.7', letterSpacing: '0' }],
@@ -179,6 +179,8 @@ const config: Config = {
         'slide-up': 'slideUp 250ms cubic-bezier(0.16, 1, 0.3, 1)',
         'modal-in': 'modalIn 250ms cubic-bezier(0.16, 1, 0.3, 1)',
         'spinner':  'spin 700ms linear infinite',
+        'marquee':  'marquee 40s linear infinite',
+        'float':    'float 6s ease-in-out infinite',
       },
 
       keyframes: {
@@ -193,6 +195,14 @@ const config: Config = {
         modalIn: {
           from: { opacity: '0', transform: 'scale(0.97) translateY(8px)' },
           to:   { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-15px)' },
         },
       },
     },

@@ -1,41 +1,13 @@
-import { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
-import {
-  ShieldCheck,
-  AlertTriangle,
-  CheckCircle,
-  Copy,
-  Download,
-  X,
-  QrCode,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { QrCode, ShieldCheck, ChevronRight, Copy, RefreshCw, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { supabase } from '@/lib/supabase';
 
 type SetupStep = 'idle' | 'qr' | 'verify' | 'success';
-type FeedbackType = 'success' | 'error' | 'warning';
 
-interface FeedbackMessage {
-  type: FeedbackType;
-  text: string;
-}
-
-export function FeedbackAlert({ message, onDismiss }: { message: FeedbackMessage; onDismiss?: () => void }) {
-  const styles: Record<FeedbackType, string> = {
-    success: 'bg-emerald-950/30 border-emerald-800/50 text-emerald-400',
-    error: 'bg-red-950/30 border-red-800/50 text-red-400',
-    warning: 'bg-yellow-950/30 border-yellow-800/50 text-yellow-400',
-  };
-  const icons: Record<FeedbackType, React.ReactNode> = {
-    success: <CheckCircle size={18} />,
-    error: <AlertTriangle size={18} />,
-    warning: <AlertTriangle size={18} />,
-  };
-
+export function FeedbackAlert({ message, onDismiss }: { message: { type: 'error', text: string }, onDismiss?: () => void }) {
   return (
-    <div className={`p-4 rounded-lg flex items-start gap-3 border ${styles[message.type]}`}>
-      <span className="flex-shrink-0 mt-0.5">{icons[message.type]}</span>
+    <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start gap-2 text-red-400">
       <p className="text-sm font-medium flex-1">{message.text}</p>
       {onDismiss && (
         <button type="button" onClick={onDismiss} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
@@ -57,12 +29,13 @@ export function TwoFASetupWizard({
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [secret, setSecret] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
-  const [backupCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [factorId, setFactorId] = useState('');
+  const [challengeId, setChallengeId] = useState('');
 
   useEffect(() => {
-    // Automatically start setup when component mounts if not already started
     startSetup();
   }, []);
 
@@ -70,11 +43,14 @@ export function TwoFASetupWizard({
     setLoading(true);
     setError('');
     try {
-      const res = await apiClient.post<{ secret: string; qrCodeUrl: string }>(
-        '/api/admin/security/2fa/setup',
-      );
-      setQrCodeUrl(res.data.qrCodeUrl);
-      setSecret(res.data.secret);
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp'
+      });
+      if (error) throw error;
+      
+      setFactorId(data.id);
+      setQrCodeUrl(data.totp.qr_code);
+      setSecret(data.totp.secret);
       setStep('qr');
     } catch (err: any) {
       setError(err.message || 'Failed to start 2FA setup. Please try again.');
@@ -93,10 +69,17 @@ export function TwoFASetupWizard({
     setLoading(true);
     setError('');
     try {
-      await apiClient.post(
-        '/api/admin/security/2fa/verify',
-        { token: verifyCode },
-      );
+      const challengeRes = await supabase.auth.mfa.challenge({ factorId });
+      if (challengeRes.error) throw challengeRes.error;
+      
+      const verifyRes = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challengeRes.data.id,
+        code: verifyCode
+      });
+      
+      if (verifyRes.error) throw verifyRes.error;
+      
       setStep('success');
     } catch (err: any) {
       setError(err.message || 'Invalid code. Please check your authenticator app and try again.');
@@ -148,7 +131,7 @@ export function TwoFASetupWizard({
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-bold text-white mb-1">Set up Microsoft Authenticator</h3>
+          <h3 className="text-lg font-bold text-white mb-1">Set up Authenticator App</h3>
           <p className="text-sm text-zinc-400">
             Scan this QR code using Microsoft Authenticator or Google Authenticator to protect your account.
           </p>
@@ -160,7 +143,6 @@ export function TwoFASetupWizard({
           </div>
         </div>
 
-        {/* Manual entry fallback */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
           <p className="text-xs text-zinc-500 mb-2 uppercase tracking-widest font-bold">Can't scan? Enter this key manually:</p>
           <div className="flex items-center gap-3">
@@ -183,7 +165,7 @@ export function TwoFASetupWizard({
             onClick={() => setStep('verify')}
             className="flex-1"
           >
-            Next â€” Enter Code <ChevronRight size={16} className="ml-1" />
+            Next — Enter Code <ChevronRight size={16} className="ml-1" />
           </Button>
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} className="border-zinc-700 text-zinc-400 hover:text-white">
@@ -246,7 +228,6 @@ export function TwoFASetupWizard({
     );
   }
 
-  // success
   return (
     <div className="space-y-6">
       <div className="p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-lg flex items-start gap-3">

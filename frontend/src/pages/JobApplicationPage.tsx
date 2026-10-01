@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Section, Card, InputField, TextareaField, Button, Modal, ModalHeader, ModalBody, ModalFooter, Badge } from '@/components/ui';
 import { MapPin, Briefcase } from 'lucide-react';
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 
 export default function JobApplicationPage() {
   const { id } = useParams();
@@ -27,10 +27,13 @@ export default function JobApplicationPage() {
       setHasApplied(true);
     }
 
-    apiClient.get('/api/careers/jobs')
-      .then(res => {
-        const item = res.data.find((i: any) => i.id === id);
-        if (item) setJob(item);
+    supabase
+      .from('Job')
+      .select('*')
+      .eq('id', id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) setJob(data);
       })
       .catch(console.error);
   }, [id]);
@@ -44,15 +47,16 @@ export default function JobApplicationPage() {
     setIsSubmitting(true);
     try {
       // 1. Upload Resume
-      const fileData = new FormData();
-      fileData.append('file', resumeFile);
-      const uploadRes = await apiClient.post('/api/upload', fileData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const resumeUrl = uploadRes.data.url;
+      const { supabase } = await import('@/lib/supabase');
+        const fileExt = resumeFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const { error } = await supabase.storage.from('application-documents').upload(fileName, resumeFile);
+        if (error) throw new Error('Upload failed: ' + error.message);
+        const { data: publicUrlData } = supabase.storage.from('application-documents').getPublicUrl(fileName);
+        const resumeUrl = publicUrlData.publicUrl;
 
       // 2. Submit Application
-      await apiClient.post('/api/careers/apply', {
+      const appData = {
         type: 'JOB',
         jobId: id,
         name: formData.name,
@@ -60,6 +64,16 @@ export default function JobApplicationPage() {
         phone: formData.phone,
         resumeUrl,
         coverLetter: formData.message,
+      };
+      const { error: dbError } = await supabase.from('Application').insert(appData);
+      if (dbError) throw dbError;
+      
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appData.email,
+          subject: 'Application Received: Reddix Robotics',
+          text: 'Hello ' + appData.name + ',\n\nWe have successfully received your application.\n\nBest,\nReddix Robotics Team'
+        }
       });
 
       setHasApplied(true);

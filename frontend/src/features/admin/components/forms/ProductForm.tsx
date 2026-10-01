@@ -89,6 +89,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
       setUploadingImage(true);
       const url = await uploadFile(croppedFile);
       setFormData(prev => ({ ...prev, images: [url] }));
+      setCropperOpen(false);
     } catch (err: any) {
       alert('Failed to upload cropped image: ' + (err.message || 'Unknown error'));
     } finally {

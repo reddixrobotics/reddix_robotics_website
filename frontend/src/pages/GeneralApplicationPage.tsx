@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Section, Card, InputField, TextareaField, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui';
-import apiClient from '@/services/apiClient';
 
 export default function GeneralApplicationPage() {
   const navigate = useNavigate();
@@ -30,21 +29,32 @@ export default function GeneralApplicationPage() {
     setIsSubmitting(true);
     try {
       // 1. Upload Resume
-      const fileData = new FormData();
-      fileData.append('file', resumeFile);
-      const uploadRes = await apiClient.post('/api/upload', fileData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const resumeUrl = uploadRes.data.url;
+      const { supabase } = await import('@/lib/supabase');
+        const fileExt = resumeFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const { error } = await supabase.storage.from('application-documents').upload(fileName, resumeFile);
+        if (error) throw new Error('Upload failed: ' + error.message);
+        const { data: publicUrlData } = supabase.storage.from('application-documents').getPublicUrl(fileName);
+        const resumeUrl = publicUrlData.publicUrl;
 
       // 2. Submit Application
-      await apiClient.post('/api/careers/apply', {
+      const appData = {
         type: 'GENERAL',
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         resumeUrl,
         coverLetter: formData.message ? `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}\n\n${formData.message}` : `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}`,
+      };
+      const { error: dbError } = await supabase.from('Application').insert(appData);
+      if (dbError) throw dbError;
+      
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appData.email,
+          subject: 'Application Received: Reddix Robotics',
+          text: 'Hello ' + appData.name + ',\n\nWe have successfully received your application.\n\nBest,\nReddix Robotics Team'
+        }
       });
 
       setHasApplied(true);

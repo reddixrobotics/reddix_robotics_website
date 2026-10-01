@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Section, SectionHeading } from '@/components/ui';
-import apiClient from '@/services/apiClient';
 
 interface Milestone {
   id: string;
@@ -16,8 +15,10 @@ export default function CompanyJourneySection() {
   useEffect(() => {
     const fetchJourneys = async () => {
       try {
-        const res = await apiClient.get('/api/journeys');
-        setMilestones(res.data);
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('Journey').select('*').order('year', { ascending: false });
+        if (error) throw error;
+        setMilestones(data);
       } catch (err) {
         console.error('Failed to fetch journeys:', err);
       }

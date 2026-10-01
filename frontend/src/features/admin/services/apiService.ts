@@ -1,4 +1,4 @@
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 import { ProductFormData } from '../components/forms/ProductForm';
 import { EmployeeFormData } from '../components/forms/EmployeeForm';
 import { ProjectFormData } from '../components/forms/ProjectForm';
@@ -16,19 +16,37 @@ export const uploadFile = async (file: File): Promise<string> => {
   // ('application/json') for this request only, so the browser auto-generates:
   // "multipart/form-data; boundary=----WebKitFormBoundaryXXXX"
   // Without the boundary, multer cannot parse the file parts and returns 400.
-  const res = await apiClient.post<any>('/api/upload', formData, {
-    headers: { 'Content-Type': undefined },
-    timeout: 300000,
-  });
-  return res.data.url;
+  const { supabase } = await import('@/lib/supabase');
+  const uploadedFile = formData.get('file') as File;
+  if (!uploadedFile) throw new Error("No file provided");
+  const ext = uploadedFile.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+  
+  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true });
+  if (error) throw error;
+  
+  const { data: publicUrl } = supabase.storage.from('public-media').getPublicUrl(data.path);
+  return publicUrl.publicUrl;
 }
 
 // ─── Dashboard Service ─────────────────────────────────────────────────────────
 
 export const dashboardService = {
   async getStats(): Promise<any> {
-    const res = await apiClient.get<any>('/api/admin/dashboard');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const [orders, revenue, products, workshops] = await Promise.all([
+      supabase.from('Order').select('id', { count: 'exact', head: true }),
+      supabase.from('Order').select('totalAmount').eq('paymentStatus', 'FULLY_PAID'),
+      supabase.from('Product').select('id', { count: 'exact', head: true }),
+      supabase.from('Workshop').select('id', { count: 'exact', head: true }),
+    ]);
+    const totalRev = (revenue.data || []).reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+    return {
+      totalOrders: orders.count || 0,
+      totalRevenue: totalRev,
+      totalProducts: products.count || 0,
+      totalWorkshops: workshops.count || 0
+    };
   }
 };
 
@@ -49,32 +67,50 @@ export interface ContactMessageData {
 
 export const contactMessageService = {
   async create(data: Omit<ContactMessageData, 'id' | 'status' | 'createdAt'>): Promise<ContactMessageData> {
-    const res = await apiClient.post<ContactMessageData>('/api/contact', data);
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data: created, error } = await supabase.from('ContactMessage').insert(data).select().single();
+    if (error) throw error;
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: 'admin@reddixrobotics.com',
+        subject: 'New Contact Request: ' + data.subject,
+        text: `Name: ${data.firstName} ${data.lastName}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
+      }
+    });
+    return created as any;
   },
-
   async getAll(): Promise<ContactMessageData[]> {
-    const res = await apiClient.get<ContactMessageData[]>('/api/admin/contact');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('ContactMessage').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data as any;
   },
-
   async getById(id: string): Promise<ContactMessageData> {
-    const res = await apiClient.get<ContactMessageData>(`/api/admin/contact/${id}`);
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('ContactMessage').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data as any;
   },
-
-  async updateStatus(id: string, status: string): Promise<ContactMessageData> {
-    const res = await apiClient.patch<ContactMessageData>(`/api/admin/contact/${id}/status`, { status });
-    return res.data;
+  async updateStatus(id: string, status: 'UNREAD' | 'READ' | 'RESOLVED'): Promise<ContactMessageData> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('ContactMessage').update({ status }).eq('id', id).select().single();
+    if (error) throw error;
+    return data as any;
   },
-
   async delete(id: string): Promise<void> {
-    await apiClient.delete(`/api/admin/contact/${id}`);
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('ContactMessage').delete().eq('id', id);
+    if (error) throw error;
   },
-
-  async reply(id: string, message: string): Promise<any> {
-    const res = await apiClient.post(`/api/admin/contact/${id}/reply`, { message });
-    return res.data;
+  async replyTo(id: string, message: string): Promise<void> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data: msg } = await supabase.from('ContactMessage').select('email').eq('id', id).single();
+    if (msg?.email) {
+      await supabase.functions.invoke('send-email', {
+        body: { to: msg.email, subject: 'Reply to your contact message', text: message }
+      });
+      await supabase.from('ContactMessage').update({ status: 'RESOLVED' }).eq('id', id);
+    }
   }
 };
 
@@ -82,8 +118,9 @@ export const contactMessageService = {
 
 export const productService = {
   async getAll(): Promise<ProductFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/products');
-    return res.data.map(p => ({
+    const { data, error } = await supabase.from('Product').select('*, ProductImage(*)').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
       category: p.category,
@@ -92,19 +129,18 @@ export const productService = {
       depositPercentage: p.depositPercentage ?? 20,
       stock: p.stock ?? 10,
       specifications: p.technicalSpecifications 
-        ? (Object.keys(p.technicalSpecifications).length === 1 && p.technicalSpecifications.details)
-          ? p.technicalSpecifications.details
-          : Object.entries(p.technicalSpecifications).map(([k, v]) => `${k}: ${v}`).join('\n')
+        ? (Object.keys(p.technicalSpecifications).length === 1 && (p.technicalSpecifications as any).details)
+          ? (p.technicalSpecifications as any).details
+          : Object.entries(p.technicalSpecifications as any).map(([k, v]) => `${k}: ${v}`).join('\n')
         : '',
       features: Array.isArray(p.features) ? p.features.join('\n') : (p.features || ''),
-      images: p.images?.map((i: any) => i.url) || [],
+      images: p.ProductImage?.map((i: any) => i.url) || [],
     }));
   },
 
   async getById(id: string | number): Promise<ProductFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/products/${id}`);
-    const p = res.data;
-    if (!p) return null;
+    const { data: p, error } = await supabase.from('Product').select('*, ProductImage(*)').eq('id', id).single();
+    if (error || !p) return null;
     return {
       id: p.id,
       name: p.name,
@@ -114,12 +150,12 @@ export const productService = {
       depositPercentage: p.depositPercentage ?? 20,
       stock: p.stock ?? 10,
       specifications: p.technicalSpecifications 
-        ? (Object.keys(p.technicalSpecifications).length === 1 && p.technicalSpecifications.details)
-          ? p.technicalSpecifications.details
-          : Object.entries(p.technicalSpecifications).map(([k, v]) => `${k}: ${v}`).join('\n')
+        ? (Object.keys(p.technicalSpecifications).length === 1 && (p.technicalSpecifications as any).details)
+          ? (p.technicalSpecifications as any).details
+          : Object.entries(p.technicalSpecifications as any).map(([k, v]) => `${k}: ${v}`).join('\n')
         : '',
       features: Array.isArray(p.features) ? p.features.join('\n') : (p.features || ''),
-      images: p.images?.map((i: any) => i.url) || [],
+      images: p.ProductImage?.map((i: any) => i.url) || [],
     };
   },
 
@@ -131,7 +167,7 @@ export const productService = {
         techSpecs = JSON.parse(item.specifications);
       } catch (e) {
         const lines = item.specifications.split('\n');
-        lines.forEach(line => {
+        lines.forEach((line: string) => {
           const colonIdx = line.indexOf(':');
           if (colonIdx !== -1) {
             const k = line.slice(0, colonIdx).trim();
@@ -155,14 +191,31 @@ export const productService = {
       features: typeof item.features === 'string' ? item.features.split('\n').filter(Boolean) : item.features || [],
       technicalSpecifications: techSpecs,
       availability: true,
-      images: item.images || []
+      updatedAt: new Date().toISOString(),
     };
-    const res = await apiClient.post<any>('/api/admin/products', payload);
-    return res.data;
+    const { data, error } = await supabase.from('Product').insert(payload).select().single();
+    if (error) throw error;
+    
+    if (item.images && item.images.length > 0) {
+      const imagePayloads = item.images.map((url: string) => ({
+        id: `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        productId: data.id,
+        url,
+        isPrimary: item.images![0] === url,
+        updatedAt: new Date().toISOString()
+      }));
+      const { error: imgError } = await supabase.from('ProductImage').insert(imagePayloads);
+      if (imgError) throw imgError;
+    }
+    
+    return this.getById(data.id) as Promise<ProductFormData>;
   },
 
   async update(id: string | number, updates: Partial<ProductFormData>): Promise<ProductFormData> {
-    const payload: any = { ...updates };
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.category !== undefined) payload.category = updates.category;
+    if (updates.description !== undefined) payload.description = updates.description;
     if (updates.price !== undefined) payload.price = Number(updates.price);
     if (updates.depositPercentage !== undefined) payload.depositPercentage = Number(updates.depositPercentage);
     if (updates.stock !== undefined) payload.stock = Number(updates.stock);
@@ -175,7 +228,7 @@ export const productService = {
       } catch (e) {
         const lines = updates.specifications.split('\n');
         const techSpecs: any = {};
-        lines.forEach(line => {
+        lines.forEach((line: string) => {
           const colonIdx = line.indexOf(':');
           if (colonIdx !== -1) {
             const k = line.slice(0, colonIdx).trim();
@@ -187,81 +240,107 @@ export const productService = {
         });
         payload.technicalSpecifications = techSpecs;
       }
-      delete payload.specifications;
     }
-    const res = await apiClient.patch<any>(`/api/admin/products/${id}`, payload);
-    return res.data;
+    
+    if (Object.keys(payload).length > 0) {
+      payload.updatedAt = new Date().toISOString();
+      const { error } = await supabase.from('Product').update(payload).eq('id', id);
+      if (error) throw error;
+    }
+    
+    if (updates.images !== undefined) {
+      const { data: existingImages } = await supabase.from('ProductImage').select('*').eq('productId', id);
+      const currentUrls = existingImages?.map((img: any) => img.url) || [];
+      const newUrls = updates.images || [];
+      
+      const toDelete = existingImages?.filter((img: any) => !newUrls.includes(img.url)) || [];
+      const toAdd = newUrls.filter((url: string) => !currentUrls.includes(url));
+      
+      if (toDelete.length > 0) {
+        await supabase.from('ProductImage').delete().in('id', toDelete.map((img: any) => img.id));
+      }
+      
+      if (toAdd.length > 0) {
+        const imagePayloads = toAdd.map((url: string) => ({
+          id: `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          productId: id as string,
+          url,
+          isPrimary: newUrls[0] === url,
+          updatedAt: new Date().toISOString()
+        }));
+        await supabase.from('ProductImage').insert(imagePayloads);
+      }
+    }
+
+    return this.getById(id) as Promise<ProductFormData>;
   },
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/products/${id}`);
+    const { error } = await supabase.from('Product').delete().eq('id', id);
+    if (error) throw error;
   }
 };
+
 
 // ─── Employees Service ─────────────────────────────────────────────────────────
 
 export const employeeService = {
   async getAll(): Promise<EmployeeFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/employees');
-    return res.data.map(e => ({
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Employee').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((e: any) => ({
       id: e.id,
       name: e.name,
-      designation: e.position,
-      experience: parseInt(e.experience) || 0,
-      skills: Array.isArray(e.skills) ? e.skills.join(', ') : '',
-      biography: e.description,
-      linkedinUrl: e.linkedInUrl || '',
-      profilePhoto: e.profilePhoto || '',
+      role: e.role,
+      department: e.department,
+      bio: e.bio,
+      profilePhoto: e.profilePhoto,
+      skills: e.skills ? e.skills.join(', ') : '',
+      linkedinUrl: e.linkedinUrl,
+      twitterUrl: e.twitterUrl
     }));
   },
 
   async getById(id: string | number): Promise<EmployeeFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/employees/${id}`);
-    const e = res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data: e, error } = await supabase.from('Employee').select('*').eq('id', id).single();
+    if (error) throw error;
     if (!e) return null;
     return {
       id: e.id,
       name: e.name,
-      designation: e.position,
-      experience: parseInt(e.experience) || 0,
-      skills: Array.isArray(e.skills) ? e.skills.join(', ') : '',
-      biography: e.description,
-      linkedinUrl: e.linkedInUrl || '',
-      profilePhoto: e.profilePhoto || '',
+      role: e.role,
+      department: e.department,
+      bio: e.bio,
+      profilePhoto: e.profilePhoto,
+      skills: e.skills ? e.skills.join(', ') : '',
+      linkedinUrl: e.linkedinUrl,
+      twitterUrl: e.twitterUrl
     };
   },
 
-  async create(item: Omit<EmployeeFormData, 'id'>): Promise<EmployeeFormData> {
-    const payload = {
-      name: item.name,
-      position: item.designation,
-      experience: item.experience.toString(),
-      description: item.biography,
-      linkedInUrl: item.linkedinUrl || undefined,
-      profilePhoto: item.profilePhoto || '/images/placeholder.jpg',
-      skills: item.skills.split(',').map(s => s.trim()).filter(Boolean),
-      priority: 1
-    };
-    const res = await apiClient.post<any>('/api/admin/employees', payload);
-    return res.data;
+  async create(item: Omit<EmployeeFormData, 'id'>): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const payload = { ...item, skills: item.skills.split(',').map((s: string) => s.trim()).filter(Boolean) };
+    const { data, error } = await supabase.from('Employee').insert(payload).select().single();
+    if (error) throw error;
+    return data;
   },
 
-  async update(id: string | number, updates: Partial<EmployeeFormData>): Promise<EmployeeFormData> {
-    const payload: any = {};
-    if (updates.name !== undefined) payload.name = updates.name;
-    if (updates.designation !== undefined) payload.position = updates.designation;
-    if (updates.experience !== undefined) payload.experience = updates.experience.toString();
-    if (updates.biography !== undefined) payload.description = updates.biography;
-    if (updates.linkedinUrl !== undefined) payload.linkedInUrl = updates.linkedinUrl;
-    if (updates.profilePhoto !== undefined) payload.profilePhoto = updates.profilePhoto;
-    if (updates.skills !== undefined) payload.skills = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
-    
-    const res = await apiClient.patch<any>(`/api/admin/employees/${id}`, payload);
-    return res.data;
+  async update(id: string | number, updates: Partial<EmployeeFormData>): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const payload = { ...updates };
+    if (updates.skills !== undefined) payload.skills = updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+    const { data, error } = await supabase.from('Employee').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/employees/${id}`);
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('Employee').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 
@@ -269,62 +348,33 @@ export const employeeService = {
 
 export const projectService = {
   async getAll(): Promise<ProjectFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/projects');
-    return res.data.map(p => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      description: p.description,
-      technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies || ''),
-      year: parseInt(p.date) || new Date().getFullYear(),
-      details: p.description,
-    }));
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Project').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data;
   },
-
   async getById(id: string | number): Promise<ProjectFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/projects/${id}`);
-    const p = res.data;
-    if (!p) return null;
-    return {
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      description: p.description,
-      technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies || ''),
-      year: parseInt(p.date) || new Date().getFullYear(),
-      details: p.description,
-    };
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Project').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data;
   },
-
-  async create(item: Omit<ProjectFormData, 'id'>): Promise<ProjectFormData> {
-    const payload = {
-      name: item.name,
-      category: item.category,
-      description: item.description,
-      technologies: item.technologies.split(',').map(s => s.trim()).filter(Boolean),
-      images: [],
-      status: 'Completed',
-      date: item.year.toString()
-    };
-    const res = await apiClient.post<any>('/api/admin/projects', payload);
-    return res.data;
+  async create(item: Omit<ProjectFormData, 'id'>): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Project').insert(item).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  async update(id: string | number, updates: Partial<ProjectFormData>): Promise<ProjectFormData> {
-    const payload: any = {};
-    if (updates.name !== undefined) payload.name = updates.name;
-    if (updates.category !== undefined) payload.category = updates.category;
-    if (updates.description !== undefined) payload.description = updates.description;
-    if (updates.technologies !== undefined) {
-      payload.technologies = updates.technologies.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    if (updates.year !== undefined) payload.date = updates.year.toString();
-    const res = await apiClient.patch<any>(`/api/admin/projects/${id}`, payload);
-    return res.data;
+  async update(id: string | number, updates: Partial<ProjectFormData>): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Project').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
-
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/projects/${id}`);
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('Project').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 
@@ -332,8 +382,9 @@ export const projectService = {
 
 export const workshopService = {
   async getAll(): Promise<WorkshopFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/workshops');
-    return res.data.map(w => ({
+    const { data, error } = await supabase.from('Workshop').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((w: any) => ({
       id: w.id,
       title: w.title,
       description: w.description,
@@ -346,9 +397,8 @@ export const workshopService = {
   },
 
   async getById(id: string | number): Promise<WorkshopFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/workshops/${id}`);
-    const w = res.data;
-    if (!w) return null;
+    const { data: w, error } = await supabase.from('Workshop').select('*').eq('id', id).single();
+    if (error || !w) return null;
     return {
       id: w.id,
       title: w.title,
@@ -363,6 +413,7 @@ export const workshopService = {
 
   async create(item: Omit<WorkshopFormData, 'id'>): Promise<WorkshopFormData> {
     const payload = {
+      id: `w_${Date.now()}`,
       title: item.title,
       description: item.description,
       date: new Date(item.date).toISOString(),
@@ -372,10 +423,12 @@ export const workshopService = {
       posterUrl: item.posterUrl,
       externalUrl: item.externalUrl,
       capacity: 50,
-      status: 'PUBLISHED'
+      status: 'PUBLISHED',
+      updatedAt: new Date().toISOString(),
     };
-    const res = await apiClient.post<any>('/api/admin/workshops', payload);
-    return res.data;
+    const { data, error } = await supabase.from('Workshop').insert(payload).select().single();
+    if (error) throw error;
+    return this.getById(data.id) as Promise<WorkshopFormData>;
   },
 
   async update(id: string | number, updates: Partial<WorkshopFormData>): Promise<WorkshopFormData> {
@@ -387,21 +440,29 @@ export const workshopService = {
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.posterUrl !== undefined) payload.posterUrl = updates.posterUrl;
     if (updates.externalUrl !== undefined) payload.externalUrl = updates.externalUrl;
-    const res = await apiClient.patch<any>(`/api/admin/workshops/${id}`, payload);
-    return res.data;
+    
+    if (Object.keys(payload).length > 0) {
+      payload.updatedAt = new Date().toISOString();
+      const { error } = await supabase.from('Workshop').update(payload).eq('id', id);
+      if (error) throw error;
+    }
+    return this.getById(id) as Promise<WorkshopFormData>;
   },
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/workshops/${id}`);
+    const { error } = await supabase.from('Workshop').delete().eq('id', id);
+    if (error) throw error;
   }
 };
+
 
 // ─── Jobs Service ──────────────────────────────────────────────────────────────
 
 export const jobService = {
   async getAll(): Promise<JobFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/careers/jobs');
-    return res.data.map(j => ({
+    const { data, error } = await supabase.from('Job').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((j: any) => ({
       id: j.id,
       title: j.title,
       department: j.department,
@@ -415,9 +476,8 @@ export const jobService = {
   },
 
   async getById(id: string | number): Promise<JobFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/careers/jobs/${id}`);
-    const j = res.data;
-    if (!j) return null;
+    const { data: j, error } = await supabase.from('Job').select('*').eq('id', id).single();
+    if (error || !j) return null;
     return {
       id: j.id,
       title: j.title,
@@ -433,19 +493,22 @@ export const jobService = {
 
   async create(item: Omit<JobFormData, 'id'>): Promise<JobFormData> {
     const payload = {
+      id: `job_${Date.now()}`,
       title: item.title,
       department: item.department,
       location: item.location,
       type: item.employmentType,
       experienceLevel: item.experience,
       salary: item.salary,
-      requirements: item.skills.split(',').map(s => s.trim()).filter(Boolean),
+      requirements: item.skills.split(',').map((s: string) => s.trim()).filter(Boolean),
       responsibilities: [],
       description: item.description,
-      status: 'PUBLISHED'
+      status: 'PUBLISHED',
+      updatedAt: new Date().toISOString(),
     };
-    const res = await apiClient.post<any>('/api/admin/careers/jobs', payload);
-    return res.data;
+    const { data, error } = await supabase.from('Job').insert(payload).select().single();
+    if (error) throw error;
+    return this.getById(data.id) as Promise<JobFormData>;
   },
 
   async update(id: string | number, updates: Partial<JobFormData>): Promise<JobFormData> {
@@ -457,17 +520,24 @@ export const jobService = {
     if (updates.experience !== undefined) payload.experienceLevel = updates.experience;
     if (updates.salary !== undefined) payload.salary = updates.salary;
     if (updates.skills !== undefined) {
-      payload.requirements = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
+      payload.requirements = updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
     }
     if (updates.description !== undefined) payload.description = updates.description;
-    const res = await apiClient.patch<any>(`/api/admin/careers/jobs/${id}`, payload);
-    return res.data;
+    
+    if (Object.keys(payload).length > 0) {
+      payload.updatedAt = new Date().toISOString();
+      const { error } = await supabase.from('Job').update(payload).eq('id', id);
+      if (error) throw error;
+    }
+    return this.getById(id) as Promise<JobFormData>;
   },
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/careers/jobs/${id}`);
+    const { error } = await supabase.from('Job').delete().eq('id', id);
+    if (error) throw error;
   }
 };
+
 
 // ─── Journeys Service ──────────────────────────────────────────────────────────
 
@@ -479,71 +549,62 @@ export interface JourneyFormData {
 }
 
 export const journeyService = {
-  async getAll(): Promise<JourneyFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/journeys');
-    return res.data;
+  async getAll(): Promise<any[]> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Journey').select('*').order('year', { ascending: false });
+    if (error) throw error;
+    return data;
   },
-
-  async getById(id: string | number): Promise<JourneyFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/journeys/${id}`);
-    return res.data;
+  async getById(id: string | number): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Journey').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data;
   },
-
-  async create(item: Omit<JourneyFormData, 'id'>): Promise<JourneyFormData> {
-    const res = await apiClient.post<any>('/api/admin/journeys', item);
-    return res.data;
+  async create(item: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Journey').insert(item).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  async update(id: string | number, updates: Partial<JourneyFormData>): Promise<JourneyFormData> {
-    const res = await apiClient.patch<any>(`/api/admin/journeys/${id}`, updates);
-    return res.data;
+  async update(id: string | number, updates: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Journey').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
-
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/journeys/${id}`);
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('Journey').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 
 // ─── Upcoming Projects Service ─────────────────────────────────────────────────
 
 export const upcomingProjectService = {
-  getAll: async () => {
-    try {
-      const res = await apiClient.get<any[]>('/api/admin/upcoming-projects');
-      return res.data;
-    } catch (error) {
-      console.error('Failed to fetch upcoming projects', error);
-      throw error;
-    }
+  async getAll(): Promise<any[]> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('UpcomingProject').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data;
   },
-
-  create: async (payload: any) => {
-    try {
-      const res = await apiClient.post<any>('/api/admin/upcoming-projects', payload);
-      return res.data;
-    } catch (error) {
-      console.error('Failed to create upcoming project', error);
-      throw error;
-    }
+  async create(payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('UpcomingProject').insert(payload).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  update: async (id: string, payload: any) => {
-    try {
-      const res = await apiClient.patch<any>(`/api/admin/upcoming-projects/${id}`, payload);
-      return res.data;
-    } catch (error) {
-      console.error('Failed to update upcoming project', error);
-      throw error;
-    }
+  async update(id: string, payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('UpcomingProject').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  delete: async (id: string) => {
-    try {
-      await apiClient.delete(`/api/admin/upcoming-projects/${id}`);
-    } catch (error) {
-      console.error('Failed to delete upcoming project', error);
-      throw error;
-    }
+  async delete(id: string): Promise<void> {
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('UpcomingProject').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 
@@ -560,43 +621,28 @@ export interface FeaturedProjectFormData {
 }
 
 export const featuredProjectService = {
-  getAll: async (): Promise<FeaturedProjectFormData[]> => {
-    try {
-      const res = await apiClient.get<any[]>('/api/admin/featured-projects');
-      return res.data;
-    } catch (error) {
-      console.error('Failed to fetch featured projects', error);
-      throw error;
-    }
+  async getAll(): Promise<any[]> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('FeaturedProject').select('*').order('order', { ascending: true });
+    if (error) throw error;
+    return data;
   },
-
-  create: async (payload: Omit<FeaturedProjectFormData, 'id'>): Promise<FeaturedProjectFormData> => {
-    try {
-      const res = await apiClient.post<any>('/api/admin/featured-projects', payload);
-      return res.data;
-    } catch (error) {
-      console.error('Failed to create featured project', error);
-      throw error;
-    }
+  async create(payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('FeaturedProject').insert(payload).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  update: async (id: string, payload: Partial<FeaturedProjectFormData>): Promise<FeaturedProjectFormData> => {
-    try {
-      const res = await apiClient.put<any>(`/api/admin/featured-projects/${id}`, payload);
-      return res.data;
-    } catch (error) {
-      console.error('Failed to update featured project', error);
-      throw error;
-    }
+  async update(id: string, payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('FeaturedProject').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  delete: async (id: string): Promise<void> => {
-    try {
-      await apiClient.delete(`/api/admin/featured-projects/${id}`);
-    } catch (error) {
-      console.error('Failed to delete featured project', error);
-      throw error;
-    }
+  async delete(id: string): Promise<void> {
+    const { supabase } = await import('@/lib/supabase');
+    const { error } = await supabase.from('FeaturedProject').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 
@@ -604,8 +650,9 @@ export const featuredProjectService = {
 
 export const internshipService = {
   async getAll(): Promise<InternshipFormData[]> {
-    const res = await apiClient.get<any[]>('/api/admin/careers/internships');
-    return res.data.map(i => ({
+    const { data, error } = await supabase.from('Internship').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((i: any) => ({
       id: i.id,
       title: i.title,
       company: i.company || '',
@@ -625,9 +672,8 @@ export const internshipService = {
   },
 
   async getById(id: string | number): Promise<InternshipFormData | null> {
-    const res = await apiClient.get<any>(`/api/admin/careers/internships/${id}`);
-    const i = res.data;
-    if (!i) return null;
+    const { data: i, error } = await supabase.from('Internship').select('*').eq('id', id).single();
+    if (error || !i) return null;
     return {
       id: i.id,
       title: i.title,
@@ -649,6 +695,7 @@ export const internshipService = {
 
   async create(item: Omit<InternshipFormData, 'id'>): Promise<InternshipFormData> {
     const payload = {
+      id: `int_${Date.now()}`,
       title: item.title,
       company: item.company,
       description: item.description,
@@ -657,15 +704,17 @@ export const internshipService = {
       duration: item.duration,
       type: item.type,
       stipend: item.stipend,
-      skills: item.skills ? item.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
-      requirements: item.requirements ? item.requirements.split(',').map(s => s.trim()).filter(Boolean) : [],
+      skills: item.skills ? item.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+      requirements: item.requirements ? item.requirements.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
       applicationLink: item.applicationLink,
       imageUrl: item.imageUrl,
-      deadline: item.deadline ? new Date(item.deadline).toISOString() : undefined,
-      status: item.status || 'PUBLISHED'
+      deadline: item.deadline ? new Date(item.deadline).toISOString() : null,
+      status: item.status || 'PUBLISHED',
+      updatedAt: new Date().toISOString(),
     };
-    const res = await apiClient.post<any>('/api/admin/careers/internships', payload);
-    return res.data;
+    const { data, error } = await supabase.from('Internship').insert(payload).select().single();
+    if (error) throw error;
+    return this.getById(data.id) as Promise<InternshipFormData>;
   },
 
   async update(id: string | number, updates: Partial<InternshipFormData>): Promise<InternshipFormData> {
@@ -679,24 +728,30 @@ export const internshipService = {
     if (updates.type !== undefined) payload.type = updates.type;
     if (updates.stipend !== undefined) payload.stipend = updates.stipend;
     if (updates.skills !== undefined) {
-      payload.skills = updates.skills.split(',').map(s => s.trim()).filter(Boolean);
+      payload.skills = updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
     }
     if (updates.requirements !== undefined) {
-      payload.requirements = updates.requirements.split(',').map(s => s.trim()).filter(Boolean);
+      payload.requirements = updates.requirements.split(',').map((s: string) => s.trim()).filter(Boolean);
     }
     if (updates.applicationLink !== undefined) payload.applicationLink = updates.applicationLink;
     if (updates.imageUrl !== undefined) payload.imageUrl = updates.imageUrl;
     if (updates.deadline !== undefined) payload.deadline = updates.deadline ? new Date(updates.deadline).toISOString() : null;
     if (updates.status !== undefined) payload.status = updates.status;
 
-    const res = await apiClient.patch<any>(`/api/admin/careers/internships/${id}`, payload);
-    return res.data;
+    if (Object.keys(payload).length > 0) {
+      payload.updatedAt = new Date().toISOString();
+      const { error } = await supabase.from('Internship').update(payload).eq('id', id);
+      if (error) throw error;
+    }
+    return this.getById(id) as Promise<InternshipFormData>;
   },
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`/api/admin/careers/internships/${id}`);
+    const { error } = await supabase.from('Internship').delete().eq('id', id);
+    if (error) throw error;
   }
 };
+
 
 // ─── Applications & Registrations ──────────────────────────────────────────────
 
@@ -729,23 +784,28 @@ export interface WorkshopRegistrationData {
 
 export const applicationService = {
   async getAllApplications(): Promise<ApplicationData[]> {
-    const res = await apiClient.get<ApplicationData[]>('/api/admin/careers/applications');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Application').select('*').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data as any;
   },
-
   async updateApplicationStatus(id: string, status: string): Promise<ApplicationData> {
-    const res = await apiClient.patch<ApplicationData>(`/api/admin/careers/applications/${id}/status`, { status });
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Application').update({ status }).eq('id', id).select().single();
+    if (error) throw error;
+    return data as any;
   },
-
   async getAllWorkshopRegistrations(): Promise<WorkshopRegistrationData[]> {
-    const res = await apiClient.get<WorkshopRegistrationData[]>('/api/admin/workshops/registrations');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('WorkshopRegistration').select('*, workshop:Workshop(title)').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data as any;
   },
-
   async updateWorkshopRegistrationStatus(id: string, status: string): Promise<WorkshopRegistrationData> {
-    const res = await apiClient.patch<WorkshopRegistrationData>(`/api/admin/workshops/registrations/${id}/status`, { status });
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('WorkshopRegistration').update({ status }).eq('id', id).select().single();
+    if (error) throw error;
+    return data as any;
   }
 };
 
@@ -753,28 +813,38 @@ export const applicationService = {
 
 export const orderService = {
   async getAll(): Promise<any[]> {
-    const res = await apiClient.get<any[]>('/api/admin/orders');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Order').select('*, customer:User(name, email), items:OrderItem(*, product:Product(*)), shipment:Shipment(*)').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data;
   },
-
   async getById(id: string): Promise<any> {
-    const res = await apiClient.get<any>(`/api/admin/orders/${id}`);
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Order').select('*, customer:User(name, email), items:OrderItem(*, product:Product(*)), shipment:Shipment(*), payment:Payment(*)').eq('id', id).single();
+    if (error) throw error;
+    return data;
   },
-
   async updateStatus(id: string, status: string): Promise<any> {
-    const res = await apiClient.patch<any>(`/api/admin/orders/${id}/status`, { status });
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Order').update({ status }).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
   },
-
-  createShipment: async (id: string, data: any) => {
-    const response = await apiClient.post(`/api/admin/orders/${id}/shipment`, data);
-    return response.data;
+  async createShipment(id: string, payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data: res, error } = await supabase.functions.invoke('shiprocket-api', {
+      body: { action: 'create_shipment', orderId: id, payload }
+    });
+    if (error) throw error;
+    return res;
   },
-
-  updateShipment: async (id: string, data: any) => {
-    const response = await apiClient.patch(`/api/admin/orders/${id}/shipment`, data);
-    return response.data;
+  async updateShipment(id: string, payload: any): Promise<any> {
+    const { supabase } = await import('@/lib/supabase');
+    const { data: res, error } = await supabase.functions.invoke('shiprocket-api', {
+      body: { action: 'generate_awb', orderId: id, payload }
+    });
+    if (error) throw error;
+    return res;
   }
 };
 
@@ -782,12 +852,15 @@ export const orderService = {
 
 export const paymentService = {
   async getAll(): Promise<any[]> {
-    const res = await apiClient.get<any[]>('/api/admin/payments');
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Payment').select('*, order:Order(orderNumber, customerId)').order('createdAt', { ascending: false });
+    if (error) throw error;
+    return data;
   },
-
   async getById(id: string): Promise<any> {
-    const res = await apiClient.get<any>(`/api/admin/payments/${id}`);
-    return res.data;
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.from('Payment').select('*, order:Order(*)').eq('id', id).single();
+    if (error) throw error;
+    return data;
   }
 };

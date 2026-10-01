@@ -71,14 +71,24 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
   const validate = () => {
     const newErrors: Partial<CheckoutFormData> = {};
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
+    
     if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Email is invalid';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Please enter a valid email address';
+    
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    else if (formData.phone.replace(/[^\d]/g, '').length !== 10) newErrors.phone = 'Phone number must be exactly 10 digits';
+    
     if (!formData.address.trim()) newErrors.address = 'Street address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
+    
     if (!formData.state.trim()) newErrors.state = 'State is required';
+    else if (!/^[a-zA-Z\s.-]+$/.test(formData.state.trim())) newErrors.state = 'State should only contain letters';
+    
     if (!formData.country.trim()) newErrors.country = 'Country is required';
-    if (!formData.postalCode.trim()) newErrors.postalCode = 'Postal code is required';
+    else if (!/^[a-zA-Z\s.-]+$/.test(formData.country.trim())) newErrors.country = 'Country should only contain letters';
+    
+    if (!formData.postalCode.trim()) newErrors.postalCode = 'Postal code / PIN code is required';
+    else if (!/^[a-zA-Z0-9\s-]{4,10}$/.test(formData.postalCode.trim())) newErrors.postalCode = 'Please enter a valid postal/PIN code';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -229,8 +239,8 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
             id="name"
             name="name"
             value={formData.name}
-            onChange={handleChange}
-            disabled={isLoading}
+            onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
+              disabled={isLoading}
             className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.name ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
             placeholder="Jane Doe"
           />
@@ -245,7 +255,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.email ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="jane@company.com"
@@ -259,7 +269,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="phone"
               name="phone"
               value={formData.phone}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.phone ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="+1 (555) 000-0000"
@@ -336,8 +346,8 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
             id="address"
             name="address"
             value={formData.address}
-            onChange={handleChange}
-            disabled={isLoading}
+            onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
+              disabled={isLoading}
             className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.address ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
             placeholder="123 Robotics Blvd"
           />
@@ -352,7 +362,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="city"
               name="city"
               value={formData.city}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.city ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="San Francisco"
@@ -366,7 +376,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="state"
               name="state"
               value={formData.state}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.state ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="CA"
@@ -383,7 +393,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="country"
               name="country"
               value={formData.country}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.country ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="United States"
@@ -397,7 +407,7 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
               id="postalCode"
               name="postalCode"
               value={formData.postalCode}
-              onChange={handleChange}
+              onChange={(e) => { if (e.target.name === 'phone') e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 10); handleChange(e); }}
               disabled={isLoading}
               className={`w-full px-4 py-3 rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] transition-shadow ${errors.postalCode ? 'border-red-500' : 'border-[var(--border-strong)]'}`}
               placeholder="94105"
@@ -409,3 +419,8 @@ export default function CheckoutForm({ onSubmit, isLoading }: CheckoutFormProps)
     </form>
   );
 }
+
+
+
+
+

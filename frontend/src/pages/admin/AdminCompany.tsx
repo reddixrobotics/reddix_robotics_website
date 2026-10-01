@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-template-expressions */
 import { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
 import { Building, MapPin, Mail, Phone, Save, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { InputClass, TextareaClass } from '@/features/admin/components/ui/AdminForm';
@@ -38,8 +37,12 @@ export default function AdminCompany() {
 
   useEffect(() => {
     let active = true;
-    apiClient.get<CompanyInfo>('/api/admin/company')
-      .then(res => {
+    (async () => {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('CompanyInformation').select('*').single();
+        if (error) throw error;
+        return { data };
+      })().then(res => {
         if (!active) return;
         if (res.data) {
           setFormData({
@@ -79,7 +82,13 @@ export default function AdminCompany() {
     };
 
     try {
-      await apiClient.patch('/api/admin/company', payload);
+      const { supabase } = await import('@/lib/supabase');
+      const { data: existing } = await supabase.from('CompanyInformation').select('id').single();
+      if (existing) {
+        await supabase.from('CompanyInformation').update(payload).eq('id', existing.id);
+      } else {
+        await supabase.from('CompanyInformation').insert(payload);
+      }
       setFeedback({ type: 'success', message: 'Company settings updated successfully.' });
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to update company settings.' });

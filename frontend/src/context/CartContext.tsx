@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '@/data/products';
 import { mapApiProductToFrontend } from '@/services/publicProductService';
-import apiClient from '@/services/apiClient';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
 export interface CartItem {
@@ -28,14 +28,21 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAuthenticated, userRole, loading } = useAuth();
+  const { isAuthenticated, userRole, loading, user } = useAuth();
   const isReady = !loading;
 
   const fetchCart = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
-      const res = await apiClient.get('/api/cart');
-      const mappedItems = res.data.map((item: any) => ({
+      const { data, error } = await supabase
+        .from('CartItem')
+        .select('*, product:Product(*, images:ProductImage(*))')
+        .eq('userId', user.id);
+        
+      if (error) throw error;
+      
+      const mappedItems = (data || []).map((item: any) => ({
         ...item,
         product: mapApiProductToFrontend(item.product)
       }));
@@ -49,16 +56,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (isReady && isAuthenticated && userRole === 'USER') {
+    if (isReady && isAuthenticated && userRole === 'USER' && user) {
       fetchCart().then(() => {
         const pending = sessionStorage.getItem('pendingCartAction');
         if (pending) {
           try {
             sessionStorage.removeItem('pendingCartAction');
             const action = JSON.parse(pending);
-            // Since we only have productId, we need to fetch the product or just hit the API
-            // The API for cart requires productId and quantity
-            apiClient.post('/api/cart', { productId: action.productId, quantity: action.quantity })
+            
+            // Upsert the cart item directly via Supabase
+            supabase
+              .from('CartItem')
+              .select('id, quantity')
+              .eq('userId', user.id)
+              .eq('productId', action.productId)
+              .maybeSingle()
+              .then(({ data: existing }) => {
+                if (existing) {
+                  return supabase
+                    .from('CartItem')
+                    .update({ quantity: existing.quantity + action.quantity })
+                    .eq('id', existing.id);
+                } else {
+                  return supabase
+                    .from('CartItem')
+                    .insert({ userId: user.id, productId: action.productId, quantity: action.quantity });
+                }
+              })
               .then(() => fetchCart())
               .catch(e => console.error('Failed to add pending cart item', e));
           } catch (e) {
@@ -70,7 +94,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems([]);
       setIsLoading(false);
     }
-  }, [isAuthenticated, isReady, userRole]);
+  }, [isAuthenticated, isReady, userRole, user]);
 
   const requireAuth = (product?: Product, quantity?: number) => {
     if (!isAuthenticated) {
@@ -85,7 +109,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCart = async (product: Product, quantity: number) => {
-    if (!requireAuth(product, quantity)) return;
+    if (!requireAuth(product, quantity) || !user) return;
     try {
       // Optimistic UI update
       setItems(prevItems => {
@@ -99,8 +123,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [...prevItems, { product, quantity }];
       });
-      await apiClient.post('/api/cart', { productId: product.id, quantity });
-      // Refresh to ensure sync
+      
+      const { data: existing } = await supabase
+        .from('CartItem')
+        .select('id, quantity')
+        .eq('userId', user.id)
+        .eq('productId', product.id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('CartItem')
+          .update({ quantity: existing.quantity + quantity })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('CartItem')
+          .insert({ userId: user.id, productId: product.id, quantity });
+      }
+
       fetchCart();
     } catch (e) {
       console.error('Failed to add to cart', e);
@@ -109,10 +150,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeFromCart = async (productId: string) => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !user) return;
     try {
       setItems(prevItems => prevItems.filter(item => item.product.id !== productId));
-      await apiClient.delete(`/api/cart/${productId}`);
+      await supabase
+        .from('CartItem')
+        .delete()
+        .eq('userId', user.id)
+        .eq('productId', productId);
     } catch (e) {
       console.error('Failed to remove from cart', e);
       fetchCart();
@@ -120,19 +165,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !user) return;
     if (quantity <= 0) {
       return removeFromCart(productId);
     }
     try {
       setItems(prevItems =>
         prevItems.map(item =>
-          item.product.id === productId
-            ? { ...item, quantity }
-            : item
+          item.product.id === productId ? { ...item, quantity } : item
         )
       );
-      await apiClient.put(`/api/cart/${productId}`, { quantity });
+      await supabase
+        .from('CartItem')
+        .update({ quantity })
+        .eq('userId', user.id)
+        .eq('productId', productId);
     } catch (e) {
       console.error('Failed to update quantity', e);
       fetchCart();
@@ -140,41 +187,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !user) return;
     try {
       setItems([]);
-      await apiClient.delete('/api/cart');
+      await supabase.from('CartItem').delete().eq('userId', user.id);
     } catch (e) {
       console.error('Failed to clear cart', e);
       fetchCart();
     }
   };
 
-  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-  const subtotal = items.reduce((total, item) => {
-    const price = item.product.price ?? (item.product as any).basePrice ?? 0;
-    return total + (price * item.quantity);
-  }, 0);
-  const advanceAmount = items.reduce((total, item) => {
-    const price = item.product.price ?? (item.product as any).basePrice ?? 0;
-    const depositPerc = item.product.depositPercentage ?? 50; // Fallback to 50% if backend misses it
-    return total + (price * (depositPerc / 100) * item.quantity);
-  }, 0);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const advanceAmount = items.reduce((sum, item) => sum + (item.product.price * (item.product.depositPercentage / 100)) * item.quantity, 0);
   const remainingAmount = subtotal - advanceAmount;
 
   return (
-    <CartContext.Provider value={{
-      items,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      totalItems,
-      subtotal,
-      advanceAmount,
-      remainingAmount,
-      isLoading
-    }}>
+    <CartContext.Provider 
+      value={{ 
+        items, 
+        addToCart, 
+        removeFromCart, 
+        updateQuantity, 
+        clearCart,
+        totalItems, 
+        subtotal, 
+        advanceAmount, 
+        remainingAmount, 
+        isLoading 
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

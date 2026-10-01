@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Section, SectionHeading, Card, Button, Badge } from '@/components/ui';
 import { MapPin, Briefcase, Clock, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '@/services/apiClient';
 import { ROUTES } from '@/routes/routePaths';
 
 type Tab = 'jobs' | 'internships' | 'workshops';
@@ -25,17 +24,18 @@ export default function OpportunitiesSection() {
       } catch (e) {}
     }
 
-    const fetchData = async () => {
+      const fetchData = async () => {
       setIsLoading(true);
       try {
+        const { supabase } = await import('@/lib/supabase');
         const [jobsRes, internshipsRes, workshopsRes] = await Promise.all([
-          apiClient.get('/api/careers/jobs').catch(() => ({ data: [] })),
-          apiClient.get('/api/careers/internships').catch(() => ({ data: [] })),
-          apiClient.get('/api/workshops').catch(() => ({ data: [] }))
+          supabase.from('Job').select('*').eq('status', 'PUBLISHED').order('createdAt', { ascending: false }),
+          supabase.from('Internship').select('*').eq('status', 'PUBLISHED').order('createdAt', { ascending: false }),
+          supabase.from('Workshop').select('*').eq('status', 'PUBLISHED').order('date', { ascending: true })
         ]);
         
-        setJobs(jobsRes.data?.length ? jobsRes.data : []);
-        setInternships(internshipsRes.data?.length ? internshipsRes.data : []);
+        setJobs(jobsRes.data || []);
+        setInternships(internshipsRes.data || []);
         
         // Provide a default mock workshop if none exist so users can preview the flow
         setWorkshops(workshopsRes.data?.length ? workshopsRes.data : [
@@ -237,7 +237,7 @@ export default function OpportunitiesSection() {
                       <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
                       
                       <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
-                        <div className="flex items-center gap-2"><Calendar size={16} /> {new Date(workshop.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})} ({workshop.duration})</div>
+                        <div className="flex items-center gap-2"><Calendar size={16} /> {new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})} ({workshop.duration})</div>
                         <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
                       </div>
                       
@@ -265,3 +265,4 @@ export default function OpportunitiesSection() {
     </Section>
   );
 }
+

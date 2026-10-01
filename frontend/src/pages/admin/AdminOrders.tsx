@@ -186,44 +186,39 @@ export default function AdminOrders() {
               <h3 className="text-content font-semibold mb-3">Shipment</h3>
               
               {!selectedOrder.shipment ? (
-                <div className="bg-surface-card border border-border rounded p-4">
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-yellow-400 mb-1">⚠️ Manual Delhivery Shipment</p>
-                    <p className="text-xs text-content-secondary mb-2">Create the shipment in Delhivery One first. Then enter the AWB number here.</p>
-                    
-                    <div className="text-xs text-content-secondary bg-zinc-950 p-3 rounded mt-3">
-                      <p className="font-semibold mb-1">Workflow:</p>
-                      <ul className="list-decimal pl-4 space-y-1 text-content-secondary">
-                        <li>Create the shipment manually in Delhivery One.</li>
-                        <li>Copy the AWB/tracking number from Delhivery.</li>
-                        <li>Click below to initialize the shipment in our system.</li>
-                        <li>Enter the AWB and tracking URL.</li>
-                      </ul>
+<>
+<div className="bg-surface-card border border-border rounded p-4 mb-4">
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-brand mb-1">?? Automated Shiprocket Shipment</p>
+                      <p className="text-xs text-content-secondary mb-2">Automatically syncs with Shiprocket, generates an AWB, and schedules pickup.</p>
                     </div>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          setIsSubmitting(true);
+                          const { ordersAdminService } = await import('@/features/admin/services/apiService');
+                          await ordersAdminService.createShipment(selectedOrder.id, {
+                            length: 10, breadth: 10, height: 10, weight: 1.5
+                          });
+                          await loadData();
+                          // reload page or modal
+                          window.location.reload();
+                        } catch (error: any) {
+                          alert(error.message || 'Failed to create Shiprocket shipment');
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
+                      disabled={isSubmitting || selectedOrder.paymentStatus === 'PENDING'}
+                      className="w-full py-2 bg-brand hover:bg-brand-hover text-white rounded text-sm font-medium transition-colors disabled:opacity-50"
+                    >
+                      {selectedOrder.paymentStatus === 'PENDING' ? 'Cannot Ship Unpaid Order' : 'Create Shiprocket Shipment'}
+                    </button>
                   </div>
+
                   
-                  <button 
-                    onClick={async () => {
-                      try {
-                        setIsSubmitting(true);
-                        await orderService.createShipment(selectedOrder.id, { courier: 'DELHIVERY' });
-                        await loadData();
-                        // Close and reopen to refresh or rely on parent refetch (here we just reload data and close modal for simplicity or fetch specific order)
-                        // For smooth UI, we manually patch the state
-                        setSelectedOrder({ ...selectedOrder, shipment: { courier: 'DELHIVERY', status: 'CREATED', awbNumber: null, trackingUrl: null } });
-                      } catch (error: any) {
-                        alert(error.message || 'Failed to create shipment');
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }}
-                    disabled={isSubmitting || selectedOrder.paymentStatus === 'PENDING'}
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-content rounded text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {selectedOrder.paymentStatus === 'PENDING' ? 'Cannot Ship Unpaid Order' : 'Initialize Shipment Entry'}
-                  </button>
-                </div>
-              ) : (
+                </>
+                  ) : (
                 <div className="bg-surface-card border border-border rounded p-4 space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -232,28 +227,7 @@ export default function AdminOrders() {
                     </div>
                     <div className="text-right">
                       <span className="text-content-tertiary text-xs block">Status</span>
-                      <select 
-                        value={selectedOrder.shipment.status}
-                        onChange={async (e) => {
-                          const newStatus = e.target.value;
-                          try {
-                            setIsSubmitting(true);
-                            await orderService.updateShipment(selectedOrder.id, { status: newStatus });
-                            await loadData();
-                            setSelectedOrder(prev => prev ? { ...prev, shipment: { ...prev.shipment, status: newStatus } } : prev);
-                          } catch (error: any) {
-                            alert(error.message || 'Failed to update status');
-                          } finally {
-                            setIsSubmitting(false);
-                          }
-                        }}
-                        disabled={isSubmitting}
-                        className="bg-zinc-950 border border-border text-indigo-400 text-xs font-semibold rounded px-2 py-1 outline-none focus:border-indigo-500"
-                      >
-                        {['CREATED', 'READY_TO_SHIP', 'PICKUP_REQUESTED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED', 'DELIVERY_FAILED', 'RTO', 'CANCELLED'].map(s => (
-                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                        ))}
-                      </select>
+                      <span className="text-indigo-400 text-xs font-semibold rounded px-2 py-1 bg-zinc-950 border border-border inline-block">{selectedOrder.shipment.status.replace(/_/g, ' ')}</span>
                     </div>
                   </div>
 
@@ -291,6 +265,7 @@ export default function AdminOrders() {
                         type="text" 
                         name="awbNumber"
                         defaultValue={selectedOrder.shipment.awbNumber || ''}
+                          disabled={selectedOrder.shipment.provider === 'SHIPROCKET'}
                         placeholder="e.g. 123456789"
                         className="w-full bg-zinc-950 border border-border rounded px-3 py-1.5 text-sm text-content focus:border-blue-500 outline-none"
                       />
@@ -301,6 +276,7 @@ export default function AdminOrders() {
                         type="url" 
                         name="trackingUrl"
                         defaultValue={selectedOrder.shipment.trackingUrl || ''}
+                          disabled={selectedOrder.shipment.provider === 'SHIPROCKET'}
                         placeholder="https://www.delhivery.com/track/..."
                         className="w-full bg-zinc-950 border border-border rounded px-3 py-1.5 text-sm text-content focus:border-blue-500 outline-none"
                       />
@@ -365,25 +341,7 @@ export default function AdminOrders() {
               </div>
             </div>
 
-            <div className="border-t border-border pt-4">
-              <h3 className="text-content font-semibold mb-3">Update Status</h3>
-              <div className="flex flex-wrap gap-2">
-                {['ORDER_PLACED', 'ORDER_CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleUpdateStatus(status)}
-                    disabled={selectedOrder.status === status || isSubmitting}
-                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                      selectedOrder.status === status
-                        ? 'bg-blue-600 text-content cursor-default'
-                        : 'bg-surface-tertiary text-content-secondary hover:bg-surface-tertiary disabled:opacity-50'
-                    }`}
-                  >
-                    {status.replace(/_/g, ' ')}
-                  </button>
-                ))}
-              </div>
-            </div>
+            
           </div>
         )}
       </AdminModal>
