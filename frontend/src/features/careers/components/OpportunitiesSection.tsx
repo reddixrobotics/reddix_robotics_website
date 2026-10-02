@@ -45,26 +45,7 @@ export default function OpportunitiesSection() {
         setInternships(internshipsRes.data || []);
         
         // Provide a default mock workshop if none exist so users can preview the flow
-        setWorkshops(workshopsRes.data?.length ? workshopsRes.data : [
-          {
-            id: 'ros2-mentorship',
-            title: '30 DAYS ROS 2 MENTORSHIP',
-            description: 'Build Autonomous Robots. Solve Real-World Problems. Build Your Career. Hands-On Learning with ROS 2, Expert Mentorship & 1:1 Guidance, Industry Projects & Portfolio, Placement Support & Career Guidance.',
-            date: '2026-09-15T00:00:00.000Z',
-            duration: '30 Days',
-            location: 'Remote / Virtual',
-            imageUrl: '/ros2_mentorship.jpg'
-          },
-          {
-            id: 'ros2-industry-immersion',
-            title: 'ROS 2 Industry Immersion',
-            description: '30 Days. One Robot. Full ROS 2 Engineering Stack. Join our intensive 30-day engineering workshop designed to take you from a Linux terminal to deploying an autonomous robot using the real Reddix Robotics engineering stack.',
-            date: '2026-10-01T00:00:00.000Z',
-            duration: '30 Days',
-            location: 'Remote / Virtual',
-            imageUrl: '/robot2.jpeg'
-          }
-        ]);
+        setWorkshops(workshopsRes.data || []);
       } catch (err) {
         console.error('Failed to load career opportunities:', err);
       } finally {
