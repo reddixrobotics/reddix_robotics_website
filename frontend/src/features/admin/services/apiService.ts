@@ -618,7 +618,7 @@ export interface JourneyFormData {
 export const journeyService = {
   async getAll(): Promise<any[]> {
     const { supabase } = await import('@/lib/supabase');
-    const { data, error } = await supabase.from('Journey').select('*').order('year', { ascending: false });
+    const { data, error } = await supabase.from('Journey').select('*').order('createdAt', { ascending: true });
     if (error) throw error;
     return data;
   },
@@ -985,6 +985,7 @@ export const paymentService = {
     return data;
   }
 };
+
 
 
 

@@ -16,7 +16,7 @@ export default function CompanyJourneySection() {
     const fetchJourneys = async () => {
       try {
         const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase.from('Journey').select('*').order('year', { ascending: false });
+        const { data, error } = await supabase.from('Journey').select('*').order('createdAt', { ascending: true });
         if (error) throw error;
         setMilestones(data);
       } catch (err) {
@@ -74,3 +74,4 @@ export default function CompanyJourneySection() {
     </Section>
   );
 }
+
