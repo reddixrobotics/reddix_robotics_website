@@ -116,14 +116,26 @@ export default function ProductDetailsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-24">
               <div className="lg:col-span-2">
                 <h3 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">Description</h3>
-                <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+                <p className="text-sm leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">
                   {product.description}
                 </p>
-                {product.features && product.features.length > 0 && (
-                  <p className="text-sm leading-relaxed text-[var(--text-secondary)] mt-4">
-                    Engineered with premium materials and advanced robotics components, 
-                    this product guarantees exceptional performance and durability.
-                  </p>
+                
+                {product.specifications && typeof product.specifications === 'object' && Object.keys(product.specifications).length > 0 && (
+                  <div className="mt-12">
+                    <h3 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">Technical Specifications</h3>
+                    <div className="overflow-x-auto rounded-xl border border-[var(--border-strong)] bg-[var(--bg-secondary)]">
+                      <table className="w-full text-left border-collapse">
+                        <tbody>
+                          {Object.entries(product.specifications).map(([key, value], idx) => (
+                            <tr key={key} className={`border-b border-[var(--border-strong)] last:border-b-0 ${idx % 2 === 0 ? "bg-[var(--bg-primary)]/50" : ""}`}>
+                              <th className="py-4 px-6 text-sm font-medium text-[var(--text-primary)] w-1/3">{key}</th>
+                              <td className="py-4 px-6 text-sm text-[var(--text-secondary)]">{String(value)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="lg:col-span-1">
@@ -159,6 +171,8 @@ export default function ProductDetailsPage() {
     </div>
   );
 }
+
+
 
 
 
