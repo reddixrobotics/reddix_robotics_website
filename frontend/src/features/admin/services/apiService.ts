@@ -460,6 +460,7 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
+        status: w.status,
     }));
   },
 
@@ -475,6 +476,7 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
+        status: w.status,
     };
   },
 
@@ -489,6 +491,7 @@ export const workshopService = {
       location: item.location,
       posterUrl: item.posterUrl,
       externalUrl: item.externalUrl,
+        status: item.status || 'PUBLISHED',
       capacity: 50,
       status: 'PUBLISHED',
       updatedAt: new Date().toISOString(),
@@ -504,6 +507,7 @@ export const workshopService = {
     if (updates.description !== undefined) payload.description = updates.description;
     if (updates.date !== undefined) payload.date = new Date(updates.date).toISOString();
     if (updates.duration !== undefined) payload.duration = updates.duration;
+      if (updates.status !== undefined) payload.status = updates.status;
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.posterUrl !== undefined) payload.posterUrl = updates.posterUrl;
     if (updates.externalUrl !== undefined) payload.externalUrl = updates.externalUrl;
@@ -846,6 +850,7 @@ export const internshipService = {
     if (updates.department !== undefined) payload.department = updates.department;
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.duration !== undefined) payload.duration = updates.duration;
+      if (updates.status !== undefined) payload.status = updates.status;
     if (updates.type !== undefined) payload.type = updates.type;
     if (updates.stipend !== undefined) payload.stipend = updates.stipend;
     if (updates.skills !== undefined) {
@@ -985,6 +990,8 @@ export const paymentService = {
     return data;
   }
 };
+
+
 
 
 

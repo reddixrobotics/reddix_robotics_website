@@ -124,3 +124,4 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     </AdminForm>
   );
 }
+

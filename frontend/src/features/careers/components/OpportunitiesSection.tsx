@@ -38,7 +38,7 @@ export default function OpportunitiesSection() {
         const [jobsRes, internshipsRes, workshopsRes] = await Promise.all([
           supabase.from('Job').select('*').eq('status', 'PUBLISHED').order('createdAt', { ascending: false }),
           supabase.from('Internship').select('*').eq('status', 'PUBLISHED').order('createdAt', { ascending: false }),
-          supabase.from('Workshop').select('*').eq('status', 'PUBLISHED').order('date', { ascending: true })
+          supabase.from('Workshop').select('*').neq('status', 'DRAFT').order('date', { ascending: true })
         ]);
         
         setJobs(jobsRes.data || []);
@@ -272,6 +272,9 @@ export default function OpportunitiesSection() {
     </Section>
   );
 }
+
+
+
 
 
 
