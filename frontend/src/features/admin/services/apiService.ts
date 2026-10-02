@@ -75,7 +75,7 @@ export const contactMessageService = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    const { data: created, error } = await supabase.from('ContactMessage').insert(insertData).select().single();
+    const { error } = await supabase.from('ContactMessage').insert(insertData);
     if (error) throw error;
     await supabase.functions.invoke('send-email', {
       body: {
@@ -84,7 +84,7 @@ export const contactMessageService = {
         text: `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
       }
     });
-    return created as any;
+    return insertData as any;
   },
   async getAll(): Promise<ContactMessageData[]> {
     const { supabase } = await import('@/lib/supabase');
@@ -985,6 +985,7 @@ export const paymentService = {
     return data;
   }
 };
+
 
 
 
