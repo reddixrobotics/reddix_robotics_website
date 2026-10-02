@@ -91,7 +91,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         </span>
       </div>
 
-      <h1 className="text-3xl lg:text-4xl font-black text-[var(--text-primary)] mb-4 leading-tight tracking-tight uppercase">
+      <h1 className="text-3xl lg:text-4xl font-black text-[var(--text-primary)] mb-4 leading-tight tracking-tight uppercase break-words hyphens-auto">
         {product.name}
       </h1>
       
@@ -99,8 +99,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         {product.description}
       </p>
       
-      <div className="mb-10 flex items-baseline gap-4">
-        <span className="text-4xl font-black text-[var(--text-primary)]">{formatPrice(product.price)}</span>
+      <div className="mb-10 flex items-baseline gap-4 flex-wrap">
+        <span className="text-4xl font-black text-[var(--text-primary)] break-all">{formatPrice(product.price)}</span>
         <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Excl. Taxes</span>
       </div>
       
@@ -111,8 +111,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <div className="grid grid-cols-2 gap-3">
             {specKeys.map((key, idx) => (
               <div key={idx} className="flex flex-col p-3 border border-[var(--border-strong)] bg-[var(--bg-secondary)] rounded-sm hover:border-[var(--text-primary)] transition-colors">
-                <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{key}</span>
-                <span className="text-sm font-bold text-[var(--text-primary)] truncate" title={product.specifications[key]}>
+                <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1 break-words">{key}</span>
+                <span className="text-sm font-bold text-[var(--text-primary)] break-words line-clamp-2" title={product.specifications[key]}>
                   {product.specifications[key]}
                 </span>
               </div>
@@ -182,3 +182,5 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     </div>
   );
 }
+
+
