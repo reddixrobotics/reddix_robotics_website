@@ -112,15 +112,34 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           </button>
         </div>
       </FormField>
-      <FormField label="External Website URL (Optional)">
-        <input 
-          type="url" 
-          className={InputClass} 
-          value={formData.externalUrl || ''} 
-          onChange={e => setFormData({ ...formData, externalUrl: e.target.value })} 
-          placeholder="https://..."
-        />
-      </FormField>
+      <FormField label="Button Destination">
+          <select 
+            className={InputClass} 
+            value={formData.externalUrl === '/workshops/ros2-industry-immersion' ? 'ROS2' : 'CUSTOM'}
+            onChange={e => {
+              if (e.target.value === 'ROS2') {
+                setFormData({ ...formData, externalUrl: '/workshops/ros2-industry-immersion' });
+              } else {
+                setFormData({ ...formData, externalUrl: '' });
+              }
+            }}
+          >
+            <option value="ROS2">Link to ROS 2 Industry Immersion Landing Page</option>
+            <option value="CUSTOM">Custom Link (Google Form, External Website, etc.)</option>
+          </select>
+        </FormField>
+
+        {formData.externalUrl !== '/workshops/ros2-industry-immersion' && (
+          <FormField label="Custom Link URL">
+            <input 
+              type="url" 
+              className={InputClass} 
+              value={formData.externalUrl || ''} 
+              onChange={e => setFormData({ ...formData, externalUrl: e.target.value })} 
+              placeholder="https://docs.google.com/forms/..."
+            />
+          </FormField>
+        )}
     </AdminForm>
   );
 }
