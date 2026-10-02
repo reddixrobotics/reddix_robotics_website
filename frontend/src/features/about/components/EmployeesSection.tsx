@@ -35,9 +35,11 @@ export default function EmployeesSection() {
             id: e.id,
             name: e.name,
             designation: e.role || '',
-            bio: e.bio || '',
-            image: photo,
-            linkedin: e.linkedinUrl
+            biography: e.bio || '',
+            photoUrl: photo || '',
+            skills: e.skills ? (typeof e.skills === 'string' ? JSON.parse(e.skills) : e.skills) : [],
+            experience: e.experience || '',
+            linkedinUrl: e.linkedinUrl || ''
           };
         });
         setEmployees(mapped);
@@ -147,3 +149,4 @@ export default function EmployeesSection() {
     </Section>
   );
 }
+
