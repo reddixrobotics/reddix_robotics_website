@@ -22,7 +22,7 @@ export default function EmployeesSection() {
     const fetchEmployees = async () => {
       try {
         const { supabase } = await import('@/lib/supabase');
-        const { data: emps, error } = await supabase.from('Employee').select('*').order('priority', { ascending: false });
+        const { data: emps, error } = await supabase.from('Employee').select('*').order('createdAt', { ascending: true });
         if (error) throw error;
         
         let backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
