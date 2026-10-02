@@ -183,7 +183,7 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       </AdminForm>
 
       {cropperOpen && (
-        <ImageCropperModal
+        <ImageCropperModal isOpen={true}
           imageSrc={currentImageSrc}
           onClose={() => setCropperOpen(false)}
           onCropComplete={handleCropComplete}
