@@ -68,13 +68,20 @@ export interface ContactMessageData {
 export const contactMessageService = {
   async create(data: Omit<ContactMessageData, 'id' | 'status' | 'createdAt'>): Promise<ContactMessageData> {
     const { supabase } = await import('@/lib/supabase');
-    const { data: created, error } = await supabase.from('ContactMessage').insert(data).select().single();
+    const insertData = {
+      ...data,
+      id: crypto.randomUUID(),
+      status: 'NEW',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const { data: created, error } = await supabase.from('ContactMessage').insert(insertData).select().single();
     if (error) throw error;
     await supabase.functions.invoke('send-email', {
       body: {
         to: 'admin@reddixrobotics.com',
         subject: 'New Contact Request: ' + data.subject,
-        text: `Name: ${data.firstName} ${data.lastName}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
+        text: `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`
       }
     });
     return created as any;
@@ -978,6 +985,7 @@ export const paymentService = {
     return data;
   }
 };
+
 
 
 
