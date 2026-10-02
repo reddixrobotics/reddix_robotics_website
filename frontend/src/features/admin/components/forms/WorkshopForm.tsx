@@ -12,6 +12,7 @@ export interface WorkshopFormData {
   location: string;
   posterUrl?: string;
   externalUrl?: string;
+  status?: string;
 }
 
 interface WorkshopFormProps {
@@ -29,7 +30,8 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     duration: '',
     location: '',
     posterUrl: '',
-    externalUrl: ''
+    externalUrl: '',
+    status: 'PUBLISHED'
   });
   
   const [uploading, setUploading] = useState(false);
@@ -37,7 +39,10 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        status: initialData.status || 'PUBLISHED'
+      });
     }
   }, [initialData]);
 
@@ -67,19 +72,59 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
         <FormField label="Workshop Title">
           <input required type="text" className={InputClass} value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
         </FormField>
-        <FormField label="Date">
-          <input type="date" className={InputClass} value={formData.date || ""} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+        <FormField label="Status">
+          <select className={InputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+            <option value="PUBLISHED">Published (Open)</option>
+            <option value="COMING_SOON">Coming Soon</option>
+            <option value="DRAFT">Draft</option>
+          </select>
         </FormField>
       </FormRow>
 
       <FormRow>
-        <FormField label="Duration (e.g., '3 Days', '4 Hours')">
+        <FormField label="Date (Optional)">
+          <input type="date" className={InputClass} value={formData.date || ""} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+        </FormField>
+        <FormField label="Duration (e.g., '3 Days', '90 Minutes')">
           <input required type="text" className={InputClass} value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} />
         </FormField>
+      </FormRow>
+
+      <FormRow>
         <FormField label="Location">
           <input required type="text" className={InputClass} value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
         </FormField>
+        <FormField label="Button Destination">
+          <select 
+            className={InputClass} 
+            value={formData.externalUrl === '/workshops/ros2-industry-immersion' ? 'ROS2' : 'CUSTOM'}
+            onChange={e => {
+              if (e.target.value === 'ROS2') {
+                setFormData({ ...formData, externalUrl: '/workshops/ros2-industry-immersion' });
+              } else {
+                setFormData({ ...formData, externalUrl: '' });
+              }
+            }}
+          >
+            <option value="ROS2">Link to ROS 2 Industry Immersion Page</option>
+            <option value="CUSTOM">Custom Link (Google Form, External, etc.)</option>
+          </select>
+        </FormField>
       </FormRow>
+      
+      {formData.externalUrl !== '/workshops/ros2-industry-immersion' && (
+        <FormRow>
+          <FormField label="Custom Link URL">
+            <input 
+              type="url" 
+              className={InputClass} 
+              value={formData.externalUrl || ''} 
+              onChange={e => setFormData({ ...formData, externalUrl: e.target.value })} 
+              placeholder="https://docs.google.com/forms/..."
+            />
+          </FormField>
+        </FormRow>
+      )}
 
       <FormField label="Description">
         <textarea required className={TextareaClass} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
@@ -105,43 +150,13 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+            className="px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-strong)] rounded-md hover:bg-[var(--bg-tertiary)] flex items-center gap-2"
           >
             {uploading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
-            {uploading ? 'Uploading…' : 'Upload'}
+            {uploading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
       </FormField>
-      <FormField label="Button Destination">
-          <select 
-            className={InputClass} 
-            value={formData.externalUrl === '/workshops/ros2-industry-immersion' ? 'ROS2' : 'CUSTOM'}
-            onChange={e => {
-              if (e.target.value === 'ROS2') {
-                setFormData({ ...formData, externalUrl: '/workshops/ros2-industry-immersion' });
-              } else {
-                setFormData({ ...formData, externalUrl: '' });
-              }
-            }}
-          >
-            <option value="ROS2">Link to ROS 2 Industry Immersion Landing Page</option>
-            <option value="CUSTOM">Custom Link (Google Form, External Website, etc.)</option>
-          </select>
-        </FormField>
-
-        {formData.externalUrl !== '/workshops/ros2-industry-immersion' && (
-          <FormField label="Custom Link URL">
-            <input 
-              type="url" 
-              className={InputClass} 
-              value={formData.externalUrl || ''} 
-              onChange={e => setFormData({ ...formData, externalUrl: e.target.value })} 
-              placeholder="https://docs.google.com/forms/..."
-            />
-          </FormField>
-        )}
     </AdminForm>
   );
 }
-
-

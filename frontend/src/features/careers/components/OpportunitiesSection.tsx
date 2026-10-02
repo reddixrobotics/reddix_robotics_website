@@ -241,24 +241,24 @@ export default function OpportunitiesSection() {
                     </div>
                     <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-heading-md mb-3">{workshop.title}</h3>
-                      <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
-                      
-                      <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
+                        <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
+                        
+                        <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
                           {workshop.status === 'COMING_SOON' ? (
                             <div className="flex items-center gap-2 text-[var(--text-primary)] font-medium">
-                              <Calendar size={16} className="text-[var(--color-brand)]" /> Coming Soon {workshop.date ? `- ${new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})}` : ''} ({workshop.duration})
+                              <Calendar size={16} className="text-[var(--color-brand)]" /> 
+                              Coming Soon {workshop.date ? `- ${new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})}` : ''} ({workshop.duration})
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <Calendar size={16} /> {workshop.date ? new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Date TBD'} ({workshop.duration})
-                            </div>
-                          )}} ({workshop.duration})
+                              <Calendar size={16} /> 
+                              {workshop.date ? new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Date TBD'} ({workshop.duration})
                             </div>
                           )}
-                        <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
-                      </div>
-                      
-                      {workshop.status === 'COMING_SOON' ? (
+                          <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
+                        </div>
+                        
+                        {workshop.status === 'COMING_SOON' ? (
                           <Button 
                             variant="outline" 
                             className="w-full justify-center opacity-50 cursor-not-allowed" 
@@ -288,8 +288,8 @@ export default function OpportunitiesSection() {
                             View Workshop <ArrowRight size={16} className="ml-2" />
                           </Button>
                         )}
-                    </div>
-                  </Card>
+                      </div>
+                    </Card>
                 ))}
               </motion.div>
             )}

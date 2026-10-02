@@ -493,8 +493,7 @@ export const workshopService = {
       externalUrl: item.externalUrl,
         status: item.status || 'PUBLISHED',
       capacity: 50,
-      status: 'PUBLISHED',
-      updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     };
     const { data, error } = await supabase.from('Workshop').insert(payload).select().single();
     if (error) throw error;
