@@ -244,7 +244,15 @@ export default function OpportunitiesSection() {
                       <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>
                       
                       <div className="space-y-2 mb-6 text-body-sm text-[var(--text-tertiary)]">
-                        <div className="flex items-center gap-2"><Calendar size={16} /> {new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})} ({workshop.duration})</div>
+                          {workshop.status === 'COMING_SOON' ? (
+                            <div className="flex items-center gap-2 text-[var(--text-primary)] font-medium">
+                              <Calendar size={16} className="text-[var(--color-brand)]" /> Coming Soon ({workshop.duration})
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Calendar size={16} /> {new Date(workshop.date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'})} ({workshop.duration})
+                            </div>
+                          )}
                         <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
                       </div>
                       
