@@ -120,19 +120,23 @@ export default function PaymentPage() {
               </div>
 
               <div className="bg-[var(--bg-secondary)] border border-[var(--border-strong)] rounded-xl p-6 mb-8">
-                <h3 className="text-heading-sm mb-4">Payment Method (Mock)</h3>
-                <p className="text-body-sm text-[var(--text-secondary)] mb-6">
-                  This is a mock payment page. Clicking the button below will simulate processing a payment for the required deposit amount.
-                </p>
+                <h3 className="text-heading-sm mb-4">Online Payments Unavailable</h3>
+                <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg flex items-start gap-3 text-yellow-500">
+                  <AlertCircle className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-sm mb-1">Testing Phase (eKYC Pending)</h4>
+                    <p className="text-sm">Online payments are currently not available. If you would like to place an order, please message us directly from the Contact page and we will process it manually.</p>
+                  </div>
+                </div>
                 
-                <Button 
-                  size="lg" 
-                  className="w-full" 
-                  onClick={handlePayment} 
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Processing Payment...' : `Pay Required Deposit: ${items.reduce((total, item) => total + ((item.product.price ?? (item.product as any).basePrice ?? 0) * ((item.product.depositPercentage ?? 50) / 100) * item.quantity), 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}`}
-                </Button>
+                <Link to={ROUTES.CONTACT}>
+                  <Button 
+                    size="lg" 
+                    className="w-full" 
+                  >
+                    Message Us to Order
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -148,6 +152,7 @@ export default function PaymentPage() {
     </div>
   );
 }
+
 
 
 
