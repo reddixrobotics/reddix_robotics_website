@@ -14,7 +14,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
   const isVideo = (url: string) => url?.match(/\.(mp4|webm|mov)$/i);
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-4 h-full">
+    <div className="flex flex-col-reverse md:flex-row gap-4 h-full w-full min-w-0">
       {/* Thumbnails */}
       {images.length > 1 && (
         <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto custom-scrollbar pb-2 md:pb-0 md:pr-2 w-full md:w-20 lg:w-24 flex-shrink-0">
@@ -41,7 +41,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
 
       {/* Main Image Container */}
       <div 
-        className="flex-1 relative aspect-square md:aspect-auto md:h-[500px] bg-white rounded-xl overflow-hidden cursor-pointer group shadow-sm"
+        className="flex-1 min-w-0 w-full relative aspect-square md:aspect-auto md:h-[500px] bg-white rounded-xl overflow-hidden cursor-pointer group shadow-sm"
         onClick={() => !isVideo(images[activeImage]) && setIsLightboxOpen(true)}
       >
         <AnimatePresence mode="wait">
@@ -82,3 +82,4 @@ export default function ProductImageGallery({ images, productName }: ProductImag
     </div>
   );
 }
+

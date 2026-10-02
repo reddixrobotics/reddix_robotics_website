@@ -83,10 +83,10 @@ export default function ProductDetailsPage() {
           <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-2xl shadow-sm p-6 md:p-10 lg:p-12">
           
           {/* Main Top Section */}
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 w-full min-w-0">
             {/* Left: Image Gallery */}
             <motion.div 
-              className="lg:w-7/12"
+              className="w-full lg:w-7/12 min-w-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -96,7 +96,7 @@ export default function ProductDetailsPage() {
             
             {/* Right: Product Info */}
             <motion.div 
-              className="lg:w-5/12"
+              className="w-full lg:w-5/12 min-w-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -159,6 +159,7 @@ export default function ProductDetailsPage() {
     </div>
   );
 }
+
 
 
 
