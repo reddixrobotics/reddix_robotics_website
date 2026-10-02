@@ -65,7 +65,7 @@ export default function WorkshopsSection() {
                       <img 
                           src={workshop.posterUrl} 
                           alt={workshop.title} 
-                          className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[var(--color-brand)] opacity-50">
