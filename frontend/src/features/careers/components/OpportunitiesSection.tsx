@@ -248,19 +248,36 @@ export default function OpportunitiesSection() {
                         <div className="flex items-center gap-2"><MapPin size={16} /> {workshop.location}</div>
                       </div>
                       
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-center" 
-                        onClick={() => {
-                          if (workshop.externalUrl) {
-                            window.open(workshop.externalUrl, '_blank');
-                          } else {
-                            navigate(ROUTES.WORKSHOP_ROS2_IMMERSION);
-                          }
-                        }}
-                      >
-                        View Workshop <ArrowRight size={16} className="ml-2" />
-                      </Button>
+                      {workshop.status === 'COMING_SOON' ? (
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-center opacity-50 cursor-not-allowed" 
+                            disabled
+                          >
+                            Coming Soon
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-center" 
+                            onClick={() => {
+                              if (workshop.externalUrl) {
+                                if (workshop.externalUrl.startsWith('/')) {
+                                  navigate(workshop.externalUrl);
+                                } else if (workshop.externalUrl.includes('reddixrobotics.com/workshops')) {
+                                  const path = new URL(workshop.externalUrl).pathname;
+                                  navigate(path);
+                                } else {
+                                  window.open(workshop.externalUrl, '_blank');
+                                }
+                              } else {
+                                navigate(ROUTES.WORKSHOP_ROS2_IMMERSION);
+                              }
+                            }}
+                          >
+                            View Workshop <ArrowRight size={16} className="ml-2" />
+                          </Button>
+                        )}
                     </div>
                   </Card>
                 ))}
