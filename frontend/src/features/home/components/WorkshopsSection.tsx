@@ -58,9 +58,9 @@ export default function WorkshopsSection() {
                 transition={{ duration: 0.6, delay: index * 0.15 }}
                 className="flex"
               >
-                <Card className="flex flex-col h-full w-full overflow-hidden border-[var(--border-strong)] hover:border-[var(--color-brand)] hover:shadow-xl transition-all duration-300 group bg-[var(--bg-secondary)]">
+                <Card className="flex flex-col h-full w-full border-[var(--border-strong)] hover:border-[var(--color-brand)] hover:shadow-xl transition-all duration-300 group bg-[var(--bg-secondary)] p-3 rounded-xl">
                   
-                  <div className="relative aspect-video w-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center">
+                  <div className="relative aspect-video w-full overflow-hidden bg-[var(--bg-tertiary)] rounded-lg">
                     {workshop.posterUrl ? (
                       <img 
                           src={workshop.posterUrl} 
@@ -93,7 +93,7 @@ export default function WorkshopsSection() {
                       )}
                   </div>
                   
-                  <div className="flex flex-col flex-grow p-6">
+                  <div className="flex flex-col flex-grow pt-4 px-1 pb-2">
                     <h4 className="text-lg font-bold text-[var(--text-primary)] mb-3 line-clamp-2 group-hover:text-[var(--color-brand)] transition-colors">
                       {workshop.title}
                     </h4>

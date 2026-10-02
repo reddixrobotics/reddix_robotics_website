@@ -216,8 +216,8 @@ export default function OpportunitiesSection() {
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
                 {workshops.map((workshop) => (
-                  <Card key={workshop.id} className="p-0 overflow-hidden border-[var(--border-strong)] flex flex-col">
-                    <div className="w-full aspect-video bg-[var(--bg-tertiary)] overflow-hidden">
+                  <Card key={workshop.id} className="border-[var(--border-strong)] hover:border-[var(--color-brand)] transition-colors p-3 rounded-xl flex flex-col">
+                    <div className="relative w-full aspect-video bg-[var(--bg-tertiary)] overflow-hidden rounded-lg">
                         <img src={workshop.posterUrl || workshop.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800'} alt={workshop.title} className="w-full h-full object-cover" />
                       </div>
                     <div className="p-6 flex flex-col flex-grow">
