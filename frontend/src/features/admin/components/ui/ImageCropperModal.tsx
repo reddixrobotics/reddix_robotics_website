@@ -94,6 +94,7 @@ export function ImageCropperModal({
       <div className="relative flex-1 bg-black overflow-hidden">
         <Cropper
           image={localImageSrc}
+          minZoom={0.1}
           crop={crop}
           zoom={zoom}
           rotation={rotation}
