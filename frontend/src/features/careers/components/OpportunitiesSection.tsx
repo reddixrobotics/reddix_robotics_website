@@ -217,9 +217,9 @@ export default function OpportunitiesSection() {
               >
                 {workshops.map((workshop) => (
                   <Card key={workshop.id} className="p-0 overflow-hidden border-[var(--border-strong)] flex flex-col">
-                    <div className="h-48 w-full">
-                      <img src={workshop.posterUrl || workshop.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800'} alt={workshop.title} className="w-full h-full object-cover" />
-                    </div>
+                    <div className="w-full aspect-video bg-[var(--bg-tertiary)] flex items-center justify-center p-2">
+                        <img src={workshop.posterUrl || workshop.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800'} alt={workshop.title} className="w-full h-full object-contain rounded-sm" />
+                      </div>
                     <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-heading-md mb-3">{workshop.title}</h3>
                         <p className="text-body-sm text-[var(--text-secondary)] mb-6 flex-grow">{workshop.description}</p>

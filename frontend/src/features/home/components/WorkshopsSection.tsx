@@ -60,13 +60,13 @@ export default function WorkshopsSection() {
               >
                 <Card className="flex flex-col h-full w-full overflow-hidden border-[var(--border-strong)] hover:border-[var(--color-brand)] hover:shadow-xl transition-all duration-300 group bg-[var(--bg-secondary)]">
                   
-                  <div className="relative h-56 w-full overflow-hidden bg-[var(--bg-tertiary)]">
+                  <div className="relative aspect-video w-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center">
                     {workshop.posterUrl ? (
                       <img 
-                        src={workshop.posterUrl} 
-                        alt={workshop.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+                          src={workshop.posterUrl} 
+                          alt={workshop.title} 
+                          className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover:scale-105"
+                        />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[var(--color-brand)] opacity-50">
                         <Calendar size={48} strokeWidth={1.5} />
