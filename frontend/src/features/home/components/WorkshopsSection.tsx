@@ -72,25 +72,7 @@ export default function WorkshopsSection() {
                         <Calendar size={48} strokeWidth={1.5} />
                       </div>
                     )}
-                    {workshop.status === 'COMING_SOON' ? (
-                        <div className="absolute top-4 left-4 bg-[var(--color-brand)]/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-lg border border-[var(--color-brand)]/20">
-                          <div className="text-[10px] font-bold uppercase text-[var(--color-brand)] tracking-wider">
-                            COMING
-                          </div>
-                          <div className="text-xl font-black text-[var(--color-brand)] leading-none mt-0.5">
-                            SOON
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="absolute top-4 left-4 bg-white dark:bg-black/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-lg border border-[var(--border-primary)]">
-                          <div className="text-[10px] font-bold uppercase text-[var(--color-brand)] tracking-wider">
-                            {workshop.date ? new Date(workshop.date).toLocaleDateString('en-US', { month: 'short' }) : 'TBA'}
-                          </div>
-                          <div className="text-xl font-black text-[var(--text-primary)] leading-none mt-0.5">
-                            {workshop.date ? new Date(workshop.date).toLocaleDateString('en-US', { day: '2-digit' }) : '-'}
-                          </div>
-                        </div>
-                      )}
+                    
                   </div>
                   
                   <div className="flex flex-col flex-grow pt-4 px-1 pb-2">
@@ -103,8 +85,19 @@ export default function WorkshopsSection() {
                     </p>
                     
                     <div className="flex flex-col gap-2.5 mt-auto pt-5 border-t border-[var(--border-primary)] mb-6">
-                      <div className="flex items-center text-xs text-[var(--text-secondary)] font-medium">
-                        <Clock size={15} className="mr-2.5 text-[var(--color-brand)] shrink-0" />
+                      {workshop.status === 'COMING_SOON' ? (
+                          <div className="flex items-center text-xs text-[var(--text-primary)] font-medium mb-1">
+                            <Calendar size={15} className="mr-2.5 text-[var(--color-brand)] shrink-0" />
+                            <span className="truncate">Coming Soon {workshop.date ? `- ${new Date(workshop.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}` : ''}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-xs text-[var(--text-secondary)] font-medium mb-1">
+                            <Calendar size={15} className="mr-2.5 text-[var(--color-brand)] shrink-0" />
+                            <span className="truncate">{workshop.date ? new Date(workshop.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Date TBA'}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center text-xs text-[var(--text-secondary)] font-medium">
+                          <Clock size={15} className="mr-2.5 text-[var(--color-brand)] shrink-0" />
                         <span className="truncate">{workshop.duration || 'TBA'}</span>
                       </div>
                       <div className="flex items-center text-xs text-[var(--text-secondary)] font-medium">
