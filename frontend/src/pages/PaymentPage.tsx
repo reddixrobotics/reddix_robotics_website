@@ -55,78 +55,10 @@ export default function PaymentPage() {
         shippingDetails: customerInfo
       };
 
-      const { data: createdOrder, error: orderError } = await supabase.functions.invoke('create-order', {
-        body: payload
-      });
-
-      if (orderError || !createdOrder) {
-        throw new Error(orderError?.message || 'Failed to create order');
-      }
-
-      // 2. Initialize Razorpay
-      const isScriptLoaded = await loadRazorpayScript();
-      if (!isScriptLoaded) {
-        throw new Error('Razorpay SDK failed to load. Are you online?');
-      }
-
-      // 3. Create payment order on backend
-      const { data: paymentOrder, error: rzpError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { orderId: createdOrder.id }
-      });
-
-      if (rzpError || !paymentOrder) {
-        throw new Error(rzpError?.message || 'Failed to create payment order');
-      }
-
-      // 4. Open Razorpay Checkout
-      const options = {
-        key: paymentOrder.keyId,
-        amount: paymentOrder.amount,
-        currency: paymentOrder.currency,
-        name: 'Reddix Robotics',
-        description: 'Advance Deposit',
-        order_id: paymentOrder.orderId,
-        handler: async (response: any) => {
-          try {
-            // 5. Verify Signature on backend
-            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }
-            });
-
-            if (verifyError) throw verifyError;
-
-            clearCart();
-            navigate(`/order-success/${createdOrder.id}`, { replace: true });
-          } catch (verifyError: any) {
-            console.error('Payment verification failed:', verifyError);
-            setPaymentError(verifyError.message || 'Payment verification failed. If money was deducted, contact support.');
-          }
-        },
-        prefill: {
-          name: customerInfo?.name || '',
-          email: customerInfo?.email || '',
-          contact: customerInfo?.phone || '',
-        },
-        theme: {
-          color: '#e11d48', // var(--color-brand) roughly
-        },
-        modal: {
-          ondismiss: () => {
-            setIsLoading(false);
-          }
-        }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        console.error('Payment failed', response.error);
-        setPaymentError(response.error.description);
-      });
-      rzp.open();
+      const mockOrderId = "MOCK-" + crypto.randomUUID().slice(0,8).toUpperCase();
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      clearCart();
+      navigate('/order-success/' + mockOrderId, { replace: true });
     } catch (e: any) {
       console.error('Failed to process payment:', e);
       setIsLoading(false);
@@ -216,5 +148,7 @@ export default function PaymentPage() {
     </div>
   );
 }
+
+
 
 
