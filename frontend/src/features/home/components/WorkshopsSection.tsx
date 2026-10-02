@@ -16,7 +16,7 @@ export default function WorkshopsSection() {
         const { data, error } = await supabase
           .from('Workshop')
           .select('*')
-          .eq('status', 'PUBLISHED')
+          .neq('status', 'DRAFT')
           .order('date', { ascending: true })
           .limit(3);
           
@@ -72,14 +72,25 @@ export default function WorkshopsSection() {
                         <Calendar size={48} strokeWidth={1.5} />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4 bg-white dark:bg-black/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-lg border border-[var(--border-primary)]">
-                      <div className="text-[10px] font-bold uppercase text-[var(--color-brand)] tracking-wider">
-                        {new Date(workshop.date).toLocaleDateString('en-US', { month: 'short' })}
-                      </div>
-                      <div className="text-xl font-black text-[var(--text-primary)] leading-none mt-0.5">
-                        {new Date(workshop.date).toLocaleDateString('en-US', { day: '2-digit' })}
-                      </div>
-                    </div>
+                    {workshop.status === 'COMING_SOON' ? (
+                        <div className="absolute top-4 left-4 bg-[var(--color-brand)]/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-lg border border-[var(--color-brand)]/20">
+                          <div className="text-[10px] font-bold uppercase text-[var(--color-brand)] tracking-wider">
+                            COMING
+                          </div>
+                          <div className="text-xl font-black text-[var(--color-brand)] leading-none mt-0.5">
+                            SOON
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="absolute top-4 left-4 bg-white dark:bg-black/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-lg border border-[var(--border-primary)]">
+                          <div className="text-[10px] font-bold uppercase text-[var(--color-brand)] tracking-wider">
+                            {workshop.date ? new Date(workshop.date).toLocaleDateString('en-US', { month: 'short' }) : 'TBA'}
+                          </div>
+                          <div className="text-xl font-black text-[var(--text-primary)] leading-none mt-0.5">
+                            {workshop.date ? new Date(workshop.date).toLocaleDateString('en-US', { day: '2-digit' }) : '-'}
+                          </div>
+                        </div>
+                      )}
                   </div>
                   
                   <div className="flex flex-col flex-grow p-6">
@@ -102,20 +113,30 @@ export default function WorkshopsSection() {
                       </div>
                     </div>
                     
-                    <Button 
-                      className="w-full transition-all group-hover:bg-[var(--color-brand)] group-hover:text-white group-hover:border-[var(--color-brand)]"
-                      variant="outline"
-                      onClick={() => {
-                        if (workshop.externalUrl && workshop.externalUrl.startsWith('http')) {
-                          window.open(workshop.externalUrl, '_blank');
-                        } else {
-                          navigate('/careers?tab=workshops');
-                        }
-                      }}
-                    >
-                      {workshop.externalUrl ? 'Register Now' : 'View Details'}
-                      <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    {workshop.status === 'COMING_SOON' ? (
+                        <Button 
+                          className="w-full transition-all opacity-50 cursor-not-allowed"
+                          variant="outline"
+                          disabled
+                        >
+                          Coming Soon
+                        </Button>
+                      ) : (
+                        <Button 
+                          className="w-full transition-all group-hover:bg-[var(--color-brand)] group-hover:text-white group-hover:border-[var(--color-brand)]"
+                          variant="outline"
+                          onClick={() => {
+                            if (workshop.externalUrl && workshop.externalUrl.startsWith('http')) {
+                              window.open(workshop.externalUrl, '_blank');
+                            } else {
+                              navigate('/careers?tab=workshops');
+                            }
+                          }}
+                        >
+                          {workshop.externalUrl ? 'Register Now' : 'View Details'}
+                          <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      )}
                   </div>
                 </Card>
               </motion.div>
