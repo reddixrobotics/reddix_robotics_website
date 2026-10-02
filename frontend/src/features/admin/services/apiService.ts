@@ -485,7 +485,7 @@ export const workshopService = {
       id: `w_${Date.now()}`,
       title: item.title,
       description: item.description,
-      date: new Date(item.date).toISOString(),
+      date: item.date ? new Date(item.date).toISOString() : null,
       time: '10:00 AM',
       duration: item.duration,
       location: item.location,
@@ -505,7 +505,7 @@ export const workshopService = {
     const payload: any = {};
     if (updates.title !== undefined) payload.title = updates.title;
     if (updates.description !== undefined) payload.description = updates.description;
-    if (updates.date !== undefined) payload.date = new Date(updates.date).toISOString();
+    if (updates.date !== undefined) payload.date = updates.date ? new Date(updates.date).toISOString() : null;
     if (updates.duration !== undefined) payload.duration = updates.duration;
       if (updates.status !== undefined) payload.status = updates.status;
     if (updates.location !== undefined) payload.location = updates.location;
@@ -990,6 +990,7 @@ export const paymentService = {
     return data;
   }
 };
+
 
 
 

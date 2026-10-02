@@ -68,7 +68,7 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           <input required type="text" className={InputClass} value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
         </FormField>
         <FormField label="Date">
-          <input required type="date" className={InputClass} value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+          <input type="date" className={InputClass} value={formData.date || ""} onChange={e => setFormData({ ...formData, date: e.target.value })} />
         </FormField>
       </FormRow>
 
@@ -143,4 +143,5 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     </AdminForm>
   );
 }
+
 
