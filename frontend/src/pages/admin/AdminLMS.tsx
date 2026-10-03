@@ -24,7 +24,7 @@ export default function AdminLMS() {
   }, []);
 
   async function fetchData() {
-    const { data: cData } = await supabase.from('Course').select('*');
+    const { data: cData } = await supabase.from('Workshop').select('*');
     if (cData) setCourses(cData);
 
     // Fetch from the secure view we will ask the admin to create
@@ -121,7 +121,7 @@ export default function AdminLMS() {
               </div>
             </div>
             <div>
-              <label className="block text-sm text-[var(--text-secondary)] mb-1">Assign Course (Optional)</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Assign Workshop (Optional)</label>
               <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none">
                 <option value="">-- Do not assign yet --</option>
                 {courses.map(c => (
