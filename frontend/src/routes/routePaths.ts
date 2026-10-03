@@ -32,6 +32,8 @@ export const ROUTES = {
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
   PROFILE: '/profile',
+  PORTAL: '/portal',
+  PORTAL_COURSE: '/portal/courses/:id',
   APPLICATIONS: '/profile/applications',
   ORDERS: '/orders',
   PAYMENT: '/payment',

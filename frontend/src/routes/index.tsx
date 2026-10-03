@@ -65,8 +65,13 @@ const DashboardProfile = lazy(() => import('@/pages/dashboard/DashboardProfile')
 const DashboardOrders = lazy(() => import('@/pages/dashboard/DashboardOrders'));
 const DashboardPayments = lazy(() => import('@/pages/dashboard/DashboardPayments'));
 const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardApplications'));
+const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
+const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
 
 // Admin Pages
+const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
+const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
+
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
 const AdminEmployees = lazy(() => import('@/pages/admin/AdminEmployees'));

@@ -632,6 +632,9 @@ export default function Navbar() {
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated && userRole === 'USER' && (
               <div className="flex items-center gap-1 mr-2">
+                <Link to={ROUTES.PORTAL} className="flex items-center gap-2 px-3 py-1.5 mr-2 bg-[var(--color-brand)]/10 text-[var(--color-brand)] font-bold rounded-full hover:bg-[var(--color-brand)] hover:text-white transition-all text-sm">
+                  My Courses
+                </Link>
                 <Link
                   to={ROUTES.PROFILE}
                   className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
@@ -711,8 +714,12 @@ export default function Navbar() {
           {/* ── Mobile controls ───────────────────────────────────── */}
           <div className="flex items-center gap-1 md:hidden">
             {isAuthenticated && userRole === 'USER' && (
-              <Link
-                to={ROUTES.PROFILE}
+              <>
+                <Link to={ROUTES.PORTAL} className="p-1 text-[var(--color-brand)] mr-1" aria-label="My Courses">
+                  <span className="text-[10px] font-bold uppercase border border-[var(--color-brand)] px-2 py-0.5 rounded-full">Courses</span>
+                </Link>
+                <Link
+                  to={ROUTES.PROFILE}
                 className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
                 aria-label="Profile"
               >
