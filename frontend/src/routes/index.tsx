@@ -65,10 +65,9 @@ const DashboardProfile = lazy(() => import('@/pages/dashboard/DashboardProfile')
 const DashboardOrders = lazy(() => import('@/pages/dashboard/DashboardOrders'));
 const DashboardPayments = lazy(() => import('@/pages/dashboard/DashboardPayments'));
 const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardApplications'));
-const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
-const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
 
 // Admin Pages
+
 const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
 const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
 
@@ -157,6 +156,18 @@ export const router = createBrowserRouter([
           },
         ]
       },
+  {
+    path: ROUTES.PORTAL,
+    element: <RoleGuard allowedRoles={['USER']} />,
+    children: [
+      {
+        element: withSuspense(PortalLayout),
+        children: [
+          { index: true, element: withSuspense(StudentDashboard) },
+        ],
+      }
+    ]
+  },
   {
     path: ROUTES.ADMIN,
     element: <RoleGuard allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'ORDER_MANAGER', 'CAREER_MANAGER']} />,
