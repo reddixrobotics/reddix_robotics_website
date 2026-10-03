@@ -321,7 +321,7 @@ const MobileDrawer = memo(function MobileDrawer({
                 </motion.div>
               ))}
 
-              {isAuthenticated && userRole === 'USER' && (
+              {isAuthenticated && (!userRole || userRole === 'USER') && (
                 <>
                   <motion.div variants={reducedItem}>
                     <NavLink
@@ -537,7 +537,7 @@ export default function Navbar() {
   const { totalItems: wishlistItems } = useWishlist();
 
   const navLinks = useMemo(() => {
-    if (userRole === 'USER') {
+    if ((!userRole || userRole === 'USER')) {
       return [
         { label: 'Home', href: ROUTES.HOME },
         { label: 'About', href: ROUTES.ABOUT },
@@ -630,7 +630,7 @@ export default function Navbar() {
 
           {/* ── Desktop right actions ─────────────────────────────── */}
           <div className="hidden items-center gap-2 md:flex">
-            {isAuthenticated && userRole === 'USER' && (
+            {isAuthenticated && (!userRole || userRole === 'USER') && (
               <div className="flex items-center gap-1 mr-2">
                 <Link to={ROUTES.PORTAL} className="flex items-center gap-2 px-3 py-1.5 mr-2 bg-[var(--color-brand)]/10 text-[var(--color-brand)] font-bold rounded-full hover:bg-[var(--color-brand)] hover:text-white transition-all text-sm">
                   My Courses
@@ -713,7 +713,7 @@ export default function Navbar() {
 
           {/* ── Mobile controls ───────────────────────────────────── */}
           <div className="flex items-center gap-1 md:hidden">
-            {isAuthenticated && userRole === 'USER' && (
+            {isAuthenticated && (!userRole || userRole === 'USER') && (
               <>
                 <Link to={ROUTES.PORTAL} className="p-1 text-[var(--color-brand)] mr-1" aria-label="My Courses">
                   <span className="text-[10px] font-bold uppercase border border-[var(--color-brand)] px-2 py-0.5 rounded-full">Courses</span>
