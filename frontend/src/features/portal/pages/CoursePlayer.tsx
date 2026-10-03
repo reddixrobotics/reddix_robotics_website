@@ -40,7 +40,7 @@ export default function CoursePlayer() {
   async function fetchCourseData() {
     setLoading(true);
     // Fetch Course
-    const { data: cData } = await supabase.from('Course').select('*').eq('id', courseId).single();
+    const { data: cData } = await supabase.from('Workshop').select('*').eq('id', courseId).single();
     if (cData) setCourse(cData);
 
     // Fetch Modules & Lessons
