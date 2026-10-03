@@ -42,6 +42,10 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
             We leave the center open so the user can still scroll down!
           */}
           <div className="absolute top-0 right-0 w-64 h-20 bg-transparent z-40"></div>
+          {/* Invisible shield over the bottom bar to block Full Screen / Download buttons */}
+          <div className="absolute bottom-0 left-0 w-full h-16 bg-transparent z-40"></div>
+          {/* Shield right edge scrollbar area just in case there are popouts there */}
+          <div className="absolute bottom-16 right-0 w-16 h-32 bg-transparent z-40"></div>
           
           <iframe 
             src={embedUrl}
