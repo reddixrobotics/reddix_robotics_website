@@ -113,7 +113,12 @@ export default function AdminLMS() {
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Temporary Password</label>
-              <input type="text" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none" />
+              <div className="flex gap-2">
+                <input type="text" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none" />
+                <button type="button" onClick={() => setPassword(generatePassword())} className="px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded-lg hover:bg-[var(--surface-hover)] text-sm font-medium transition-colors" title="Generate New Password">
+                  Regenerate
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Assign Course (Optional)</label>
