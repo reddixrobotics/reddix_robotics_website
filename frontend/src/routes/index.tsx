@@ -167,7 +167,7 @@ export const router = createBrowserRouter([
         element: withSuspense(PortalLayout),
         children: [
           { index: true, element: withSuspense(StudentDashboard) },
-          { path: 'course/:courseId', element: withSuspense(CoursePlayer) },
+          { path: 'courses/:courseId', element: withSuspense(CoursePlayer) },
         ],
       }
     ]
