@@ -57,10 +57,10 @@ export default function AdminLMS() {
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-3xl font-black text-white mb-8">LMS Management</h1>
+      <h1 className="text-3xl font-black text-[var(--text-primary)] mb-8">LMS Management</h1>
       
       <div className="bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-2xl p-6">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
           <UserPlus className="text-[var(--color-brand)]" />
           Provision New Student
         </h2>
@@ -68,15 +68,15 @@ export default function AdminLMS() {
         <form onSubmit={handleProvision} className="space-y-4 max-w-md">
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Student Email</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-white focus:border-[var(--color-brand)] outline-none" />
+            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none" />
           </div>
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Temporary Password</label>
-            <input type="text" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-white focus:border-[var(--color-brand)] outline-none" />
+            <input type="text" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none" />
           </div>
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Assign Course (Optional)</label>
-            <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-white focus:border-[var(--color-brand)] outline-none">
+            <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none">
               <option value="">-- Do not assign yet --</option>
               {courses.map(c => (
                 <option key={c.id} value={c.id}>{c.title}</option>
