@@ -34,7 +34,8 @@ const hrNav = [
 ];
 
 const systemNav = [
-  { name: 'LMS Portal', href: '/admin/lms', icon: BookOpen },
+  { name: 'LMS Provisioning', href: '/admin/lms', icon: BookOpen },
+  { name: 'Course Builder', href: '/admin/course-builder', icon: BookOpen },
   { name: 'Customers', href: ROUTES.ADMIN_USERS, icon: UserCircle },
   { name: 'Admins', href: ROUTES.ADMIN_ADMINS, icon: Shield },
   { name: 'Messages', href: ROUTES.ADMIN_MESSAGES, icon: MessageSquare },
