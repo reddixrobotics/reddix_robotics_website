@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import ReactPlayer from 'react-player/youtube';
+import ReactPlayer from 'react-player';
 import { Play, Pause } from 'lucide-react';
 
 interface SecureVideoPlayerProps {
