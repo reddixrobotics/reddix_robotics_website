@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ROUTES } from './routePaths';
 import RootLayout from '@/layouts/RootLayout';
@@ -112,7 +112,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.CONTACT,      element: withSuspense(ContactPage) },
           { path: ROUTES.BLOG,         element: withSuspense(BlogPage) },
           { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
-          { path: ROUTES.SIGNUP,       element: withSuspense(SignupPage) },
+          { path: ROUTES.SIGNUP,       element: <Navigate to={ROUTES.LOGIN} replace /> },
           { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
           { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
           { path: ROUTES.PRIVACY_POLICY, element: withSuspense(PrivacyPolicyPage) },
