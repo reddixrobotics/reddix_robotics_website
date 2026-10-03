@@ -22,7 +22,7 @@ export default function StudentDashboard() {
               id,
               title,
               description,
-              image_url
+              posterUrl
             )
           `)
           .eq('status', 'ACTIVE');
