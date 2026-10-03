@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { FileText } from 'lucide-react';
 
@@ -10,16 +10,26 @@ interface SecureDocumentViewerProps {
 
 export default function SecureDocumentViewer({ url, type, title }: SecureDocumentViewerProps) {
   const { user } = useAuth();
+  
+  // Detect if this is an Office document (PowerPoint, Word, Excel)
+  const isOfficeDoc = url.match(/\.(pptx|ppt|docx|doc|xlsx|xls)(\?.*)?$/i);
+  
+  // Route to the correct viewer
+  // For Office docs, we use Microsoft's official embed viewer
+  // For PDFs, we use the browser's native PDF viewer
+  const embedUrl = isOfficeDoc 
+    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
+    : `${url}#toolbar=0&navpanes=0`;
 
   return (
     <div 
-      className="relative w-full h-[600px] bg-[var(--surface-secondary)] rounded-xl overflow-hidden border border-[var(--border-strong)]"
-      onContextMenu={(e) => e.preventDefault()} // Disable Right Click
+      className="relative w-full h-[700px] bg-[var(--surface-secondary)] rounded-xl overflow-hidden border border-[var(--border-strong)]"
+      onContextMenu={(e) => e.preventDefault()}
     >
       {/* Dynamic Watermark */}
-      <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden flex flex-wrap gap-12 opacity-[0.03] select-none transform -rotate-12 scale-150 justify-center items-center">
+      <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden flex flex-wrap gap-12 opacity-[0.04] select-none transform -rotate-12 scale-150 justify-center items-center">
         {Array.from({ length: 50 }).map((_, i) => (
-          <span key={i} className="text-xl font-bold whitespace-nowrap text-black dark:text-white">
+          <span key={i} className="text-xl font-bold whitespace-nowrap text-black dark:text-white drop-shadow-md">
             {user?.email || 'Reddix Robotics'}
           </span>
         ))}
@@ -27,11 +37,15 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
 
       {type === 'PDF' ? (
         <div className="relative w-full h-full select-none">
-          {/* Transparent shield overlay to block saving */}
-          <div className="absolute inset-0 z-40 bg-transparent" />
+          {/* 
+            Invisible shield over the top right corner to block the native download/print buttons. 
+            We leave the center open so the user can still scroll down!
+          */}
+          <div className="absolute top-0 right-0 w-64 h-20 bg-transparent z-40"></div>
+          
           <iframe 
-            src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
-            className="w-full h-full select-none pointer-events-none"
+            src={embedUrl}
+            className="w-full h-full select-none"
             title={title}
           />
         </div>
@@ -42,9 +56,7 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
             <h3 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h3>
           </div>
           <div className="prose dark:prose-invert max-w-none text-[var(--text-secondary)]">
-            {/* If it's HTML notes, we render safely. For MVP, we just show a placeholder */}
-            <p>This document is securely encrypted. Notes will render here.</p>
-            <div dangerouslySetInnerHTML={{ __html: url }} />
+            <p>This document is securely encrypted.</p>
           </div>
         </div>
       )}

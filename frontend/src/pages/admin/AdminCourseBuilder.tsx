@@ -180,7 +180,7 @@ export default function AdminCourseBuilder() {
                               <input required type="text" placeholder="Material Title (e.g. Recording 1)" value={newMaterialData.title} onChange={e => setNewMaterialData({...newMaterialData, title: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
                               <select value={newMaterialData.type} onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none">
                                 <option value="VIDEO">YouTube Video</option>
-                                <option value="PDF">Document (PDF)</option>
+                                <option value="PDF">Document (PDF / PowerPoint)</option>
                               </select>
                               {newMaterialData.type === 'VIDEO' ? (
                                 <input required type="text" placeholder="Paste YouTube Link here..." value={newMaterialData.file as any || ''} onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
