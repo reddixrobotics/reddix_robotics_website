@@ -725,6 +725,7 @@ export default function Navbar() {
               >
                 <User size={20} />
               </Link>
+              </>
             )}
             <ThemeToggle />
             <HamburgerButton
