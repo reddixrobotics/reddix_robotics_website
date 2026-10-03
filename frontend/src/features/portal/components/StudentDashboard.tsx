@@ -74,8 +74,8 @@ export default function StudentDashboard() {
           {courses.map(course => (
             <div key={course.id} className="group rounded-2xl overflow-hidden bg-[var(--surface-secondary)] border border-[var(--border-primary)] hover:border-[var(--color-brand)] transition-all shadow-lg flex flex-col h-full">
               <div className="aspect-video bg-[var(--bg-tertiary)] relative overflow-hidden">
-                {course.thumbnail_url ? (
-                  <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                {course.posterUrl ? (
+                  <img src={course.posterUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                     <PlayCircle size={48} className="text-zinc-700" />
