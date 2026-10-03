@@ -24,7 +24,7 @@ export default function AdminCourseBuilder() {
   }, [selectedWorkshop]);
 
   async function fetchWorkshops() {
-    const { data } = await supabase.from('Workshop').select('id, title').order('created_at', { ascending: false });
+    const { data } = await supabase.from('Workshop').select('id, title');
     if (data) setWorkshops(data);
   }
 
