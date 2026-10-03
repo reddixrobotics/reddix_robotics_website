@@ -11,8 +11,16 @@ export default function AdminLMS() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
 
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let pass = "Rx-";
+    for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    return pass + "!";
+  };
+
   useEffect(() => {
     fetchData();
+    setPassword(generatePassword());
   }, []);
 
   async function fetchData() {
@@ -47,7 +55,7 @@ export default function AdminLMS() {
 
       setStatus(`Success! Student account created for ${email}`);
       setEmail('');
-      setPassword('');
+      setPassword(generatePassword());
       setSelectedCourse('');
       fetchData(); // Refresh table
     } catch (err: any) {
