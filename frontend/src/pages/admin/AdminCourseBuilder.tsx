@@ -12,7 +12,7 @@ export default function AdminCourseBuilder() {
   // Forms State
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [newLessonData, setNewLessonData] = useState({ moduleId: '', title: '' });
-  const [newMaterialData, setNewMaterialData] = useState({ lessonId: '', title: '', type: 'VIDEO', file: null as File | null, isUploading: false });
+  const [newMaterialData, setNewMaterialData] = useState({ lessonId: '', title: '', type: 'VIDEO_YOUTUBE', file: null as File | null | string, isUploading: false });
 
   useEffect(() => {
     fetchWorkshops();
@@ -97,7 +97,7 @@ export default function AdminCourseBuilder() {
       });
       
       if (!error) {
-        setNewMaterialData({ lessonId: '', title: '', type: 'VIDEO', file: null, isUploading: false });
+        setNewMaterialData({ lessonId: '', title: '', type: 'VIDEO_YOUTUBE', file: null, isUploading: false });
         fetchModules();
       }
     } catch (err) {
@@ -179,13 +179,14 @@ export default function AdminCourseBuilder() {
                           <form onSubmit={(e) => handleAddMaterial(e, lesson.id, lesson.LearningMaterial?.length || 0)} className="bg-[var(--surface-tertiary)] p-4 rounded-lg mt-2 border border-[var(--border-strong)]">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                               <input required type="text" placeholder="Material Title (e.g. Recording 1)" value={newMaterialData.title} onChange={e => setNewMaterialData({...newMaterialData, title: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
-                              <select value={newMaterialData.type} onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none">
-                                <option value="VIDEO">YouTube Video</option>
-                                <option value="PDF">Document (PDF / PowerPoint)</option>
-                              </select>
-                              {newMaterialData.type === 'VIDEO' ? (
-                                <input required type="text" placeholder="Paste YouTube Link here..." value={newMaterialData.file as any || ''} onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
-                              ) : (
+                              <select value={newMaterialData.type} onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value, file: null})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none">
+    <option value="VIDEO_YOUTUBE">YouTube Link</option>
+    <option value="VIDEO">Upload MP4 Video (Direct)</option>
+    <option value="PDF">Document (PDF / PowerPoint)</option>
+  </select>
+                              {newMaterialData.type === 'VIDEO_YOUTUBE' ? (
+    <input required type="text" placeholder="Paste YouTube Link here..." value={newMaterialData.file as any || ''} onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
+  ) : (
                                 <input required type="file" onChange={e => setNewMaterialData({...newMaterialData, file: e.target.files?.[0] || null})} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[var(--color-brand)] file:text-white hover:file:bg-red-700" />
                               )}
                             </div>
