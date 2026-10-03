@@ -30,10 +30,12 @@ export default function StudentDashboard() {
         if (error) throw error;
         
         // Map the relation array correctly based on Supabase return format
-        const enrolledCourses = enrollments?.map((e: any) => ({ ...e.Workshop, course_id: e.course_id })) || [];
+        console.log("Raw Enrollments from DB:", enrollments);
+        const enrolledCourses = enrollments?.filter((e: any) => e.Workshop).map((e: any) => ({ ...e.Workshop, course_id: e.course_id })) || [];
         setCourses(enrolledCourses);
       } catch (err) {
         console.error('Failed to load enrollments:', err);
+        alert('Error loading enrollments: ' + err.message);
       } finally {
         setLoading(false);
       }
