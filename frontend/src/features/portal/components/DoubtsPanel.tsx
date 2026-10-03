@@ -1,22 +1,57 @@
-import React, { useState } from 'react';
-import { Send, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 
 interface DoubtsPanelProps {
   lessonId: string;
 }
 
 export default function DoubtsPanel({ lessonId }: DoubtsPanelProps) {
+  const { user } = useAuth();
   const [doubtText, setDoubtText] = useState('');
   const [doubts, setDoubts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // We will hook this up to Supabase later
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!doubtText.trim()) return;
+  useEffect(() => {
+    fetchDoubts();
+  }, [lessonId]);
+
+  const fetchDoubts = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('Doubt')
+      .select('*')
+      .eq('lesson_id', lessonId)
+      .order('created_at', { ascending: false });
     
-    // Optimistic UI update
-    setDoubts([{ id: Date.now(), text: doubtText, status: 'OPEN', created_at: new Date() }, ...doubts]);
-    setDoubtText('');
+    if (data) setDoubts(data);
+    setIsLoading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!doubtText.trim() || !user?.email) return;
+    
+    const newDoubt = {
+      lesson_id: lessonId,
+      user_email: user.email,
+      question: doubtText,
+      status: 'OPEN'
+    };
+
+    const { data, error } = await supabase
+      .from('Doubt')
+      .insert(newDoubt)
+      .select()
+      .single();
+
+    if (!error && data) {
+      setDoubts([data, ...doubts]);
+      setDoubtText('');
+    } else {
+      alert("Failed to post doubt. Have you run the SQL migration?");
+    }
   };
 
   return (
@@ -26,7 +61,6 @@ export default function DoubtsPanel({ lessonId }: DoubtsPanelProps) {
         Q&A / Doubts
       </h3>
 
-      {/* Submit Doubt Form */}
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="flex gap-4">
           <input 
@@ -45,26 +79,38 @@ export default function DoubtsPanel({ lessonId }: DoubtsPanelProps) {
         </div>
       </form>
 
-      {/* List Doubts */}
       <div className="space-y-4">
-        {doubts.length === 0 ? (
-          <div className="text-center py-8 text-[var(--text-muted)]">
-            No questions asked yet. Be the first to ask!
+        {isLoading ? (
+          <p className="text-[var(--text-secondary)] text-center py-8">Loading doubts...</p>
+        ) : doubts.length === 0 ? (
+          <div className="text-center py-12 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-strong)] border-dashed">
+            <MessageCircle size={40} className="mx-auto text-[var(--text-secondary)]/50 mb-3" />
+            <h4 className="text-[var(--text-primary)] font-bold">No questions yet</h4>
+            <p className="text-[var(--text-secondary)] text-sm mt-1">Be the first to ask a question!</p>
           </div>
         ) : (
-          doubts.map(d => (
-            <div key={d.id} className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-strong)]">
+          doubts.map(doubt => (
+            <div key={doubt.id} className="bg-[var(--bg-primary)] p-5 rounded-xl border border-[var(--border-strong)]">
               <div className="flex justify-between items-start mb-2">
-                <span className="font-bold text-[var(--text-primary)]">You</span>
-                <span className="text-xs text-[var(--text-muted)]">{new Date(d.created_at).toLocaleDateString()}</span>
+                <div>
+                  <span className="font-bold text-[var(--text-primary)] mr-2">{doubt.user_email?.split('@')[0]}</span>
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    {new Date(doubt.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                {doubt.status === 'RESOLVED' && (
+                  <span className="px-2 py-1 bg-green-500/10 text-green-500 text-xs font-bold rounded flex items-center gap-1">
+                    <CheckCircle2 size={12} /> Resolved
+                  </span>
+                )}
               </div>
-              <p className="text-[var(--text-secondary)]">{d.text}</p>
               
-              {/* Fake Admin Reply for visual layout */}
-              {d.status === 'ANSWERED' && (
-                <div className="mt-4 p-4 rounded-lg bg-[var(--color-brand)]/10 border border-[var(--color-brand)]/20">
-                  <span className="font-bold text-[var(--color-brand)] text-sm block mb-1">Instructor Reply</span>
-                  <p className="text-[var(--text-primary)] text-sm">We are processing this question!</p>
+              <p className="text-[var(--text-secondary)] mb-4">{doubt.question}</p>
+              
+              {doubt.answer && (
+                <div className="bg-[var(--surface-tertiary)] p-4 rounded-lg border-l-4 border-[var(--color-brand)]">
+                  <span className="text-xs font-bold text-[var(--color-brand)] mb-1 block">Instructor Reply</span>
+                  <p className="text-[var(--text-primary)] text-sm">{doubt.answer}</p>
                 </div>
               )}
             </div>

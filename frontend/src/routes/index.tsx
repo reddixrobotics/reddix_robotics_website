@@ -88,6 +88,7 @@ const AdminApplications = lazy(() => import('@/pages/admin/AdminApplications'));
 const AdminOrders = lazy(() => import('@/pages/admin/AdminOrders'));
 const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'));
 const AdminMessages = lazy(() => import('@/pages/admin/AdminMessages'));
+const AdminDoubts = lazy(() => import('@/pages/admin/AdminDoubts'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminAdmins = lazy(() => import('@/pages/admin/AdminAdmins'));
 const AdminLMS = lazy(() => import('@/pages/admin/AdminLMS'));
@@ -200,6 +201,7 @@ export const router = createBrowserRouter([
           { path: 'course-builder', element: withSuspense(AdminCourseBuilder) },
           { path: 'admins', element: withSuspense(AdminAdmins) },
           { path: 'messages', element: withSuspense(AdminMessages) },
+          { path: 'doubts', element: withSuspense(AdminDoubts) },
           { path: 'settings', element: withSuspense(AdminSettings) },
           { path: '*', element: withSuspense(AdminPlaceholderPage) },
         ],
