@@ -4,7 +4,7 @@ import { ROUTES } from '@/routes/routePaths';
 import { BookOpen, HelpCircle, User, LogOut } from 'lucide-react';
 
 export default function PortalLayout() {
-  const { user, signOut, loading } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">Loading portal...</div>;
@@ -44,7 +44,7 @@ export default function PortalLayout() {
         </nav>
 
         <div className="p-4 border-t border-[var(--border-primary)] hidden md:block">
-          <button onClick={signOut} className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 font-medium transition-all">
+          <button onClick={logout} className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 font-medium transition-all">
             <LogOut size={20} />
             Log Out
           </button>
