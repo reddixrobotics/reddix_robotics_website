@@ -85,7 +85,7 @@ export default function AdminCourseBuilder() {
     setNewMaterialData(prev => ({ ...prev, isUploading: true }));
     try {
       // For MVP we use the existing upload service (public-media). In production, use secure bucket.
-      const publicUrl = await uploadFile(newMaterialData.file);
+      const publicUrl = newMaterialData.type === 'VIDEO' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
       
       const { error } = await supabase.from('LearningMaterial').insert({
         lesson_id: lessonId,
@@ -179,10 +179,14 @@ export default function AdminCourseBuilder() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                               <input required type="text" placeholder="Material Title (e.g. Recording 1)" value={newMaterialData.title} onChange={e => setNewMaterialData({...newMaterialData, title: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
                               <select value={newMaterialData.type} onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none">
-                                <option value="VIDEO">Video (MP4)</option>
+                                <option value="VIDEO">YouTube Video</option>
                                 <option value="PDF">Document (PDF)</option>
                               </select>
-                              <input required type="file" onChange={e => setNewMaterialData({...newMaterialData, file: e.target.files?.[0] || null})} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[var(--color-brand)] file:text-white hover:file:bg-red-700" />
+                              {newMaterialData.type === 'VIDEO' ? (
+                                <input required type="text" placeholder="Paste YouTube Link here..." value={newMaterialData.file as any || ''} onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
+                              ) : (
+                                <input required type="file" onChange={e => setNewMaterialData({...newMaterialData, file: e.target.files?.[0] || null})} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[var(--color-brand)] file:text-white hover:file:bg-red-700" />
+                              )}
                             </div>
                             <div className="flex gap-2">
                               <button type="submit" disabled={newMaterialData.isUploading} className="px-4 py-2 bg-[var(--color-brand)] text-white text-sm font-bold rounded hover:bg-red-700 disabled:opacity-50">
