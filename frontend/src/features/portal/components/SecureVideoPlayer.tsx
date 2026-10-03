@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import ReactPlayer from 'react-player';
 import { AlertTriangle } from 'lucide-react';
 
 interface SecureVideoPlayerProps {
@@ -11,9 +10,7 @@ interface SecureVideoPlayerProps {
 export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps) {
   const { user } = useAuth();
   const [watermarkPos, setWatermarkPos] = useState({ top: 10, left: 10 });
-  const [hasError, setHasError] = useState(false);
-
-  // Dynamic Watermark
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setWatermarkPos({
@@ -24,8 +21,20 @@ export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps
     return () => clearInterval(interval);
   }, []);
 
-  const isYouTube = url && (url.includes('youtube.com') || url.includes('youtu.be'));
-  const isValidUrl = url && (url.startsWith('http://') || url.startsWith('https://'));
+  const cleanUrl = url ? url.trim() : '';
+  const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
+  const isValidUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
+
+  let youtubeEmbedUrl = '';
+  if (isYouTube) {
+    let videoId = '';
+    if (cleanUrl.includes('v=')) {
+      videoId = cleanUrl.split('v=')[1]?.split('&')[0];
+    } else if (cleanUrl.includes('youtu.be/')) {
+      videoId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+    }
+    youtubeEmbedUrl = `https://www.youtube.com/embed/${videoId}?controls=1&modestbranding=1&rel=0`;
+  }
 
   if (!isValidUrl) {
     return (
@@ -33,7 +42,6 @@ export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps
         <AlertTriangle size={48} className="text-red-500 mb-4" />
         <h3 className="text-xl font-bold">Invalid Video Link</h3>
         <p className="text-zinc-400">The link provided for this video is not a valid URL.</p>
-        <p className="text-zinc-500 text-sm mt-2 text-center px-4 break-all">Provided: {url}</p>
       </div>
     );
   }
@@ -43,38 +51,25 @@ export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps
       className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {hasError ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
-          <AlertTriangle size={48} className="text-red-500 mb-4" />
-          <p className="text-white font-bold">Video failed to load.</p>
-          <p className="text-zinc-400 text-sm mt-1">Make sure the link is correct.</p>
-        </div>
-      ) : null}
-
       {/* 
-        We use native controls because custom React Play buttons get blocked by browser Autoplay policies.
-        Instead, we just put physical shields over the areas where YouTube puts external links!
+        We completely removed react-player because it has bugs with Vite rendering HTML5 players for YouTube links.
+        We now use pure, indestructible native HTML5 and iFrames!
       */}
-      <ReactPlayer 
-        url={url}
-        width="100%"
-        height="100%"
-        controls={true} // Use native controls to avoid Autoplay blocking
-        onError={() => setHasError(true)}
-        config={{
-          youtube: {
-            playerVars: { 
-              modestbranding: 1, 
-              rel: 0, 
-            }
-          },
-          file: {
-            attributes: {
-              controlsList: 'nodownload' // Disables download button for raw MP4s
-            }
-          }
-        }}
-      />
+      {isYouTube ? (
+        <iframe 
+          src={youtubeEmbedUrl}
+          className="w-full h-full border-none"
+          allow="autoplay; fullscreen; encrypted-media"
+          title={title}
+        />
+      ) : (
+        <video 
+          src={cleanUrl}
+          controls
+          controlsList="nodownload"
+          className="w-full h-full outline-none"
+        />
+      )}
 
       {isYouTube && (
         <>
@@ -90,7 +85,7 @@ export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps
         className="absolute pointer-events-none select-none transition-all duration-[6000ms] ease-linear opacity-25 text-white font-black text-lg lg:text-3xl z-30 mix-blend-overlay drop-shadow-lg"
         style={{ top: `${watermarkPos.top}%`, left: `${watermarkPos.left}%` }}
       >
-        {user?.email || 'Reddix Robotics'} {url}
+        {user?.email || 'Reddix Robotics'}
       </div>
     </div>
   );
