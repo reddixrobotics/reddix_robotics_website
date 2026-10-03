@@ -70,6 +70,7 @@ const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardAppl
 
 const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
 const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
+const CoursePlayer = lazy(() => import('@/features/portal/pages/CoursePlayer'));
 
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
@@ -165,6 +166,7 @@ export const router = createBrowserRouter([
         element: withSuspense(PortalLayout),
         children: [
           { index: true, element: withSuspense(StudentDashboard) },
+          { path: 'course/:courseId', element: withSuspense(CoursePlayer) },
         ],
       }
     ]
