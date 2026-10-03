@@ -85,12 +85,13 @@ export default function AdminCourseBuilder() {
     setNewMaterialData(prev => ({ ...prev, isUploading: true }));
     try {
       // For MVP we use the existing upload service (public-media). In production, use secure bucket.
-      const publicUrl = newMaterialData.type === 'VIDEO' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
+      const publicUrl = newMaterialData.type === 'VIDEO_YOUTUBE' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
+        const finalType = newMaterialData.type === 'VIDEO_YOUTUBE' ? 'VIDEO' : newMaterialData.type;
       
       const { error } = await supabase.from('LearningMaterial').insert({
         lesson_id: lessonId,
         title: newMaterialData.title,
-        material_type: newMaterialData.type,
+        material_type: finalType,
         file_path: publicUrl, // Storing the URL
         order_index: currentLength
       });
