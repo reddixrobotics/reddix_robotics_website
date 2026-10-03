@@ -90,7 +90,7 @@ export default function SecureVideoPlayer({ url, title }: SecureVideoPlayerProps
         className="absolute pointer-events-none select-none transition-all duration-[6000ms] ease-linear opacity-25 text-white font-black text-lg lg:text-3xl z-30 mix-blend-overlay drop-shadow-lg"
         style={{ top: `${watermarkPos.top}%`, left: `${watermarkPos.left}%` }}
       >
-        {user?.email || 'Reddix Robotics'}
+        {user?.email || 'Reddix Robotics'} {url}
       </div>
     </div>
   );
