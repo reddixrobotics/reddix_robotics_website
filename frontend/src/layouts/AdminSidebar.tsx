@@ -38,6 +38,7 @@ const systemNav = [
   { name: 'Course Builder', href: '/admin/course-builder', icon: BookOpen },
   { name: 'Customers', href: ROUTES.ADMIN_USERS, icon: UserCircle },
   { name: 'Admins', href: ROUTES.ADMIN_ADMINS, icon: Shield },
+  { name: 'Teachers', href: ROUTES.ADMIN_TEACHERS, icon: Shield },
   { name: 'Messages', href: ROUTES.ADMIN_MESSAGES, icon: MessageSquare },
   { name: 'Settings', href: ROUTES.ADMIN_SETTINGS, icon: Settings },
 ];
@@ -78,7 +79,7 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
     <ul className="space-y-0.5">
       {items.map(item => {
         // Only show Users to SUPER_ADMIN
-        if (item.name === 'Admins' && userRole !== 'SUPER_ADMIN') {
+        if ((item.name === 'Admins' || item.name === 'Teachers') && userRole !== 'SUPER_ADMIN') {
           return null;
         }
 
@@ -164,6 +165,7 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
     </div>
   );
 }
+
 
 
 

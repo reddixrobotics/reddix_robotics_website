@@ -54,6 +54,7 @@ export const ROUTES = {
   ADMIN_APPLICATIONS: '/admin/applications',
   ADMIN_USERS: '/admin/users',
   ADMIN_ADMINS: '/admin/admins',
+  ADMIN_TEACHERS: '/admin/teachers',
   ADMIN_MESSAGES: '/admin/messages',
   ADMIN_SETTINGS: '/admin/settings',
   DESIGN_SYSTEM: '/design-system',
@@ -79,3 +80,4 @@ export function buildPath(
     route,
   );
 }
+

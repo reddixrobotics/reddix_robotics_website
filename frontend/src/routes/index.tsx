@@ -90,6 +90,7 @@ const AdminJourneys = lazy(() => import('@/pages/admin/AdminJourneys'));
 const AdminApplications = lazy(() => import('@/pages/admin/AdminApplications'));
 const AdminOrders = lazy(() => import('@/pages/admin/AdminOrders'));
 const AdminPayments = lazy(() => import('@/pages/admin/AdminPayments'));
+const AdminTeachers = lazy(() => import('@/pages/admin/AdminTeachers'));
 const AdminMessages = lazy(() => import('@/pages/admin/AdminMessages'));
 const AdminDoubts = lazy(() => import('@/pages/admin/AdminDoubts'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
@@ -229,6 +230,7 @@ export const router = createBrowserRouter([
             { path: 'lms', element: withSuspense(AdminLMS) },
           { path: 'course-builder', element: withSuspense(AdminCourseBuilder) },
           { path: 'admins', element: withSuspense(AdminAdmins) },
+          { path: 'teachers', element: withSuspense(AdminTeachers) },
           { path: 'messages', element: withSuspense(AdminMessages) },
           { path: 'doubts', element: withSuspense(AdminDoubts) },
           { path: 'settings', element: withSuspense(AdminSettings) },
@@ -241,6 +243,7 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
 
 
 
