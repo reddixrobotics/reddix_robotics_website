@@ -71,6 +71,7 @@ const DashboardApplications = lazy(() => import('@/pages/dashboard/DashboardAppl
 const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayout'));
 const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
 const CoursePlayer = lazy(() => import('@/features/portal/pages/CoursePlayer'));
+const PortalAccount = lazy(() => import('@/features/portal/pages/PortalAccount'));
 
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
@@ -169,6 +170,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: withSuspense(StudentDashboard) },
           { path: 'courses/:courseId', element: withSuspense(CoursePlayer) },
+          { path: 'account', element: withSuspense(PortalAccount) },
+          { path: '*', element: <div className="p-10 text-center"><h2 className="text-2xl font-bold text-[var(--text-primary)]">LMS Page Not Found</h2></div> },
         ],
       }
     ]

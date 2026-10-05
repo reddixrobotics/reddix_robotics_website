@@ -22,7 +22,7 @@ export default function PortalLayout() {
       {/* Sidebar Navigation */}
       <aside className="w-full md:w-64 bg-[var(--surface-secondary)] border-b md:border-b-0 md:border-r border-[var(--border-primary)] flex-shrink-0 sticky top-0 z-10 h-auto md:h-screen flex flex-col">
         <div className="p-6 border-b border-[var(--border-primary)]">
-          <Link to={ROUTES.HOME} className="flex items-center gap-2">
+          <Link to={ROUTES.PORTAL} className="flex items-center gap-2">
             <span className="text-xl font-black tracking-tight text-[var(--color-brand)]">REDDIX</span>
             <span className="text-xl font-light tracking-widest text-[var(--text-primary)]">LMS</span>
           </Link>
@@ -37,7 +37,7 @@ export default function PortalLayout() {
             <HelpCircle size={20} />
             Doubt Forum
           </Link>
-          <Link to={ROUTES.PROFILE} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)] font-medium transition-all whitespace-nowrap">
+          <Link to="/portal/account" className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)] font-medium transition-all whitespace-nowrap">
             <User size={20} />
             Account
           </Link>
