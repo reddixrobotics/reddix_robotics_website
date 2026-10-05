@@ -46,11 +46,15 @@ export default function LoginForm() {
           const uniqueDevices = new Set(activeSessions.map(s => s.device_identifier));
           // If this is a new device and they already have 2 others
           if (!uniqueDevices.has(deviceId) && uniqueDevices.size >= 2) {
-            alert('Device Limit Exceeded! You are currently logged in on 2 other devices. Please log out from another device to continue.');
-            await supabase.auth.signOut();
-            setStatus('error');
-            setErrorMessage('Device Limit Exceeded.');
-            return;
+            const confirmClear = window.confirm('Device Limit Exceeded! You are currently logged in on 2 other devices (or you previously used Incognito mode).\n\nDo you want to forcefully log out of all other devices to continue here?');
+            if (confirmClear) {
+               await supabase.from('DeviceSession').delete().neq('device_identifier', deviceId);
+            } else {
+               await supabase.auth.signOut();
+               setStatus('error');
+               setErrorMessage('Device Limit Exceeded.');
+               return;
+            }
           }
         }
         
