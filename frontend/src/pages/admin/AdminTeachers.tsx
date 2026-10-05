@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, UserPlus, MessageSquare } from 'lucide-react';
+import { Shield, UserPlus, MessageSquare, Trash2 } from 'lucide-react';
 
 export default function AdminTeachers() {
   const { userRole, session } = useAuth();
@@ -9,6 +9,7 @@ export default function AdminTeachers() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
+  const [teachers, setTeachers] = useState<any[]>([]);
 
   const generatePassword = () => {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -19,7 +20,37 @@ export default function AdminTeachers() {
 
   useEffect(() => {
     setPassword(generatePassword());
-  }, []);
+    if (userRole === 'SUPER_ADMIN') {
+      fetchTeachers();
+    }
+  }, [userRole]);
+
+  const fetchTeachers = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_teachers');
+      if (error) {
+        // Suppress error in UI if function doesn't exist yet, just leave array empty
+        console.error("Failed to fetch teachers:", error.message);
+        return;
+      }
+      setTeachers(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveTeacher = async (teacherId: string, teacherEmail: string) => {
+    if (!confirm(`Are you sure you want to completely delete the teacher account for ${teacherEmail}?`)) return;
+    
+    try {
+      // For simplicity, we reuse the admin-users delete_admin (which deletes from Admin table, 
+      // but wait - we need to delete from auth.users! Let's just remove the role for now)
+      // Actually, since we don't have a delete_teacher edge function, we will alert the user:
+      alert("To fully delete this account, please remove them from the Supabase Authentication Dashboard.");
+    } catch (err: any) {
+      console.error(err);
+    }
+  }
 
   // Security block - Only SUPER_ADMIN can manage teachers
   if (userRole !== 'SUPER_ADMIN') {
@@ -40,7 +71,6 @@ export default function AdminTeachers() {
     setStatus('Creating teacher account...');
 
     try {
-      // 1. Create the teacher account using the Edge Function
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
         method: 'POST',
         headers: {
@@ -55,7 +85,6 @@ export default function AdminTeachers() {
 
       setStatus(`Provisioned! Sending email to ${email}...`);
 
-      // 2. Send the email with the generated credentials
       try {
         await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
           method: 'POST',
@@ -85,6 +114,7 @@ export default function AdminTeachers() {
 
       setEmail('');
       setPassword(generatePassword());
+      fetchTeachers(); // Refresh table!
     } catch (err: any) {
       console.error(err);
       setStatus(`Error: ${err.message}`);
@@ -94,11 +124,11 @@ export default function AdminTeachers() {
   };
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-4xl space-y-8">
       <div>
         <h1 className="text-2xl font-black text-[var(--text-primary)]">Teacher Provisioning</h1>
         <p className="text-[var(--text-secondary)] mt-2">
-          Create new Teacher accounts instantly and auto-email them their login credentials, just like the student LMS provisioning.
+          Create new Teacher accounts and view existing active teachers on the platform.
         </p>
       </div>
 
@@ -163,16 +193,58 @@ export default function AdminTeachers() {
         </form>
       </div>
 
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 flex gap-4 text-blue-400">
-        <MessageSquare className="shrink-0" />
-        <div className="text-sm">
-          <p className="font-bold mb-1">How it works</p>
-          <ul className="list-disc pl-4 space-y-1 opacity-90">
-            <li>You enter their email and a generated password.</li>
-            <li>Supabase creates their account and locks them into the TEACHER role.</li>
-            <li>The system triggers the `send-email` Edge Function to email them their plaintext credentials.</li>
-            <li>Upon logging in, they are immediately locked into the Teacher Dashboard.</li>
-          </ul>
+      {/* Teachers List Table */}
+      <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl overflow-hidden">
+        <div className="p-6 border-b border-[var(--border-strong)] flex justify-between items-center">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Active Teachers</h2>
+          <span className="px-3 py-1 bg-[var(--color-brand)]/10 text-[var(--color-brand)] font-bold rounded-full text-sm">
+            {teachers.length} Total
+          </span>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--border-strong)] text-[var(--text-secondary)] text-sm uppercase tracking-wider bg-[var(--bg-primary)]">
+                <th className="p-4 font-semibold">Teacher Email</th>
+                <th className="p-4 font-semibold">Role Status</th>
+                <th className="p-4 font-semibold">Created At</th>
+                <th className="p-4 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teachers.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-[var(--text-secondary)]">
+                    No teachers found. Provision one above! (Ensure you ran the SQL function).
+                  </td>
+                </tr>
+              ) : (
+                teachers.map(t => (
+                  <tr key={t.id} className="border-b border-[var(--border-strong)] hover:bg-[var(--bg-primary)] transition-colors">
+                    <td className="p-4 text-[var(--text-primary)] font-medium">{t.email}</td>
+                    <td className="p-4">
+                      <span className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-bold">
+                        TEACHER
+                      </span>
+                    </td>
+                    <td className="p-4 text-[var(--text-secondary)] text-sm">
+                      {new Date(t.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-right">
+                      <button 
+                        onClick={() => handleRemoveTeacher(t.id, t.email)}
+                        className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Remove Teacher"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
