@@ -4,6 +4,7 @@ import { ROUTES } from './routePaths';
 import RootLayout from '@/layouts/RootLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import RoleGuard from './RoleGuard';
+import StudentGuard from './StudentGuard';
 
 // ─── Page loading fallback ────────────────────────────────────────────────────────
 
@@ -109,6 +110,10 @@ const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationR
 
 export const router = createBrowserRouter([
   {
+    // StudentGuard: bounces logged-in USER-role students directly to /portal
+    element: <StudentGuard />,
+    children: [
+      {
     path: ROUTES.HOME,
     element: <RootLayout />,
         children: [
@@ -160,7 +165,9 @@ export const router = createBrowserRouter([
             ],
           },
         ]
-      },
+      },   // end RootLayout
+    ],     // end StudentGuard children
+  },       // end StudentGuard
   {
     path: ROUTES.PORTAL,
     element: <RoleGuard allowedRoles={['USER']} />,
