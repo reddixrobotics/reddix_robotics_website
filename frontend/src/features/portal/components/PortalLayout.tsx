@@ -21,10 +21,9 @@ export default function PortalLayout() {
     <div className="min-h-screen flex flex-col md:flex-row bg-[var(--bg-primary)]">
       {/* Sidebar Navigation */}
       <aside className="w-full md:w-64 bg-[var(--surface-secondary)] border-b md:border-b-0 md:border-r border-[var(--border-primary)] flex-shrink-0 sticky top-0 z-10 h-auto md:h-screen flex flex-col">
-        <div className="p-6 border-b border-[var(--border-primary)]">
-          <Link to={ROUTES.PORTAL} className="flex items-center gap-2">
-            <span className="text-xl font-black tracking-tight text-[var(--color-brand)]">REDDIX</span>
-            <span className="text-xl font-light tracking-widest text-[var(--text-primary)]">LMS</span>
+        <div className="p-4 border-b border-[var(--border-primary)]">
+          <Link to={ROUTES.PORTAL} className="flex items-center">
+            <img src="/logo.png" alt="Reddix Robotics" className="h-12 w-auto object-contain" />
           </Link>
         </div>
         
