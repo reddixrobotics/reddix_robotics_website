@@ -49,7 +49,7 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
     if (isAdmin()) {
       return <Navigate to={ROUTES.ADMIN} replace />;
     } else {
-      return <Navigate to={ROUTES.PROFILE} replace />;
+      return <Navigate to={ROUTES.PORTAL} replace />;
     }
   }
 
