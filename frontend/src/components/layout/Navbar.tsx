@@ -536,20 +536,7 @@ export default function Navbar() {
   const { totalItems: cartItems } = useCart();
   const { totalItems: wishlistItems } = useWishlist();
 
-  const navLinks = useMemo(() => {
-    if ((!userRole || userRole === 'USER')) {
-      return [
-        { label: 'Home', href: ROUTES.HOME },
-        { label: 'About', href: ROUTES.ABOUT },
-        { label: 'Contact', href: ROUTES.CONTACT },
-        { label: 'Products', href: ROUTES.PRODUCTS },
-        { label: 'Careers', href: ROUTES.CAREERS },
-        { label: 'Orders', href: ROUTES.ORDERS },
-        { label: 'Applications', href: ROUTES.APPLICATIONS },
-      ];
-    }
-    return NAV_LINKS;
-  }, [userRole]);
+  const navLinks = NAV_LINKS;
 
   // Return focus to hamburger after close
   const closeDrawer = useCallback(() => {
@@ -751,3 +738,4 @@ export default function Navbar() {
     </>
   );
 }
+
