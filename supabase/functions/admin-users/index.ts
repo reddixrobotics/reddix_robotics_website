@@ -31,7 +31,22 @@ serve(async (req) => {
 
     const { action, email, password, role } = await req.json()
 
-    if (action === 'create_admin') {
+    if (action === 'invite_teacher') {
+      // Use Supabase Admin API to invite user via email and assign role
+      const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: { role: 'TEACHER' }
+      });
+      if (error) throw error;
+      
+      // Update app_metadata explicitly just in case
+      if (data.user) {
+         await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
+           app_metadata: { role: 'TEACHER' }
+         });
+      }
+      return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    } 
+    else if (action === 'create_admin') {
       if (role === 'SUPER_ADMIN') {
         return new Response(JSON.stringify({ error: 'Forbidden: Cannot create another SUPER_ADMIN' }), { status: 403, headers: corsHeaders })
       }
@@ -47,10 +62,10 @@ serve(async (req) => {
       if (error) throw error;
 
       return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    } else if (action === 'delete_admin') {
+    } 
+    else if (action === 'delete_admin') {
       const { id } = await req.json()
       
-      // Prevent deleting self or SUPER_ADMIN
       const { data: targetAdmin } = await supabaseAdmin.from('Admin').select('*').eq('id', id).single()
       if (targetAdmin?.role === 'SUPER_ADMIN') {
         return new Response(JSON.stringify({ error: 'Forbidden: Cannot delete a SUPER_ADMIN' }), { status: 403, headers: corsHeaders })
