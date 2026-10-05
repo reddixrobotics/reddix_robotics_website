@@ -107,6 +107,10 @@ const TermsConditionsPage = lazy(() => import('@/pages/policies/TermsConditionsP
 const ShippingPolicyPage = lazy(() => import('@/pages/policies/ShippingPolicyPage'));
 const CancellationRefundPage = lazy(() => import('@/pages/policies/CancellationRefundPage'));
 
+// Teacher Pages
+const TeacherLayout = lazy(() => import('@/layouts/TeacherLayout'));
+const TeacherDoubts = lazy(() => import('@/pages/teacher/TeacherDoubts'));
+
 // ─── Router ───────────────────────────────────────────────────────────────────────
 
 export const router = createBrowserRouter([
@@ -181,6 +185,19 @@ export const router = createBrowserRouter([
           { path: 'account', element: withSuspense(PortalAccount) },
           { path: 'doubts', element: withSuspense(PortalDoubts) },
           { path: '*', element: <div className="p-10 text-center"><h2 className="text-2xl font-bold text-[var(--text-primary)]">LMS Page Not Found</h2></div> },
+        ],
+      }
+    ]
+  },
+  {
+    path: ROUTES.TEACHER,
+    element: <RoleGuard allowedRoles={['TEACHER']} />,
+    children: [
+      {
+        element: withSuspense(TeacherLayout),
+        children: [
+          { index: true, element: withSuspense(TeacherDoubts) },
+          { path: '*', element: <div className="p-10 text-center"><h2 className="text-2xl font-bold text-[var(--text-primary)]">Page Not Found</h2></div> },
         ],
       }
     ]

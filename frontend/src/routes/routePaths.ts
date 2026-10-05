@@ -33,6 +33,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   PROFILE: '/profile',
   PORTAL: '/portal',
+  TEACHER: '/teacher',
   PORTAL_COURSE: '/portal/courses/:id',
   APPLICATIONS: '/profile/applications',
   ORDERS: '/orders',

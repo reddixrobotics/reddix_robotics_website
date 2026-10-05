@@ -76,6 +76,8 @@ export default function LoginForm() {
       navigate(redirectUrl);
     } else if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ORDER_MANAGER' || role === 'CONTENT_MANAGER' || role === 'CAREER_MANAGER') {
       navigate(ROUTES.ADMIN);
+    } else if (role === 'TEACHER') {
+      navigate(ROUTES.TEACHER);
     } else {
       navigate(ROUTES.PORTAL);
     }

@@ -48,6 +48,8 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
     // Redirect to their respective home
     if (isAdmin()) {
       return <Navigate to={ROUTES.ADMIN} replace />;
+    } else if (userRole === 'TEACHER') {
+      return <Navigate to={ROUTES.TEACHER} replace />;
     } else {
       return <Navigate to={ROUTES.PORTAL} replace />;
     }

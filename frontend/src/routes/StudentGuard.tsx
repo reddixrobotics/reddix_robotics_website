@@ -18,5 +18,10 @@ export default function StudentGuard() {
     return <Navigate to={ROUTES.PORTAL} replace />;
   }
 
+  // TEACHER should be redirected to their own portal too
+  if (isAuthenticated && userRole === 'TEACHER') {
+    return <Navigate to={ROUTES.TEACHER} replace />;
+  }
+
   return <Outlet />;
 }
