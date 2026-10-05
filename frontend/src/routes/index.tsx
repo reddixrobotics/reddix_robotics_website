@@ -73,6 +73,7 @@ const PortalLayout = lazy(() => import('@/features/portal/components/PortalLayou
 const StudentDashboard = lazy(() => import('@/features/portal/components/StudentDashboard'));
 const CoursePlayer = lazy(() => import('@/features/portal/pages/CoursePlayer'));
 const PortalAccount = lazy(() => import('@/features/portal/pages/PortalAccount'));
+const PortalDoubts = lazy(() => import('@/features/portal/pages/PortalDoubts'));
 
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'));
@@ -178,6 +179,7 @@ export const router = createBrowserRouter([
           { index: true, element: withSuspense(StudentDashboard) },
           { path: 'courses/:courseId', element: withSuspense(CoursePlayer) },
           { path: 'account', element: withSuspense(PortalAccount) },
+          { path: 'doubts', element: withSuspense(PortalDoubts) },
           { path: '*', element: <div className="p-10 text-center"><h2 className="text-2xl font-bold text-[var(--text-primary)]">LMS Page Not Found</h2></div> },
         ],
       }
@@ -222,6 +224,7 @@ export const router = createBrowserRouter([
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_APPLY, element: withSuspense(Ros2ApplicationPage) },
   { path: ROUTES.WORKSHOP_ROS2_IMMERSION_SUCCESS, element: withSuspense(Ros2SuccessPage) }
 ]);
+
 
 
 

@@ -32,7 +32,7 @@ export default function PortalLayout() {
             <BookOpen size={20} />
             My Courses
           </Link>
-          <Link to="#" className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)] font-medium transition-all whitespace-nowrap">
+          <Link to="/portal/doubts" className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)] font-medium transition-all whitespace-nowrap">
             <HelpCircle size={20} />
             Doubt Forum
           </Link>
@@ -57,3 +57,4 @@ export default function PortalLayout() {
     </div>
   );
 }
+
