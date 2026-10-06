@@ -64,8 +64,8 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (formData.images.length >= 3) {
-      alert('Maximum 3 items allowed.');
+    if (formData.images.length >= 6) {
+      alert('Maximum 6 items allowed.');
       e.target.value = '';
       return;
     }
@@ -109,8 +109,8 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
   };
 
   const handleCropComplete = async (croppedFile: File) => {
-    if (formData.images.length >= 3) {
-      alert('Maximum 3 images allowed.');
+    if (formData.images.length >= 6) {
+      alert('Maximum 6 images allowed.');
       setCropperOpen(false);
       return;
     }
@@ -221,7 +221,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
           />
         </FormField>
 
-        <FormField label="Product Images (1 Min, 3 Max)">
+        <FormField label="Product Images (1 Min, 6 Max)">
           <div className="flex flex-col gap-3">
             {formData.images && formData.images.length > 0 && (
               <div className="flex gap-3 flex-wrap">
@@ -233,7 +233,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isSubmitting }: P
                 ))}
               </div>
             )}
-            {(!formData.images || formData.images.length < 3) && (
+            {(!formData.images || formData.images.length < 6) && (
               <input 
                 type="file" 
                 accept="image/jpeg, image/png, image/jpg, image/webp, video/mp4, video/webm" 
