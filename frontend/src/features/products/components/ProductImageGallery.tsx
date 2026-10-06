@@ -41,7 +41,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
 
       {/* Main Image Container */}
       <div 
-        className="flex-1 min-w-0 w-full relative aspect-[4/3] bg-white rounded-xl overflow-hidden cursor-pointer group shadow-sm"
+        className="flex-1 min-w-0 w-full relative bg-white rounded-xl overflow-hidden cursor-pointer group shadow-sm flex items-center justify-center"
         onClick={() => !isVideo(images[activeImage]) && setIsLightboxOpen(true)}
       >
         <AnimatePresence mode="wait">
@@ -57,7 +57,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-auto bg-black"
             />
           ) : (
             <motion.img
@@ -68,7 +68,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full h-full object-contain"
+              className="w-full h-auto object-contain"
             />
           )}
         </AnimatePresence>
