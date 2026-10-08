@@ -22,7 +22,7 @@ export const uploadFile = async (file: File): Promise<string> => {
   const ext = uploadedFile.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
   
-  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true });
+  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true, contentType: uploadedFile.type || "application/octet-stream" });
   if (error) throw error;
   
   const { data: publicUrl } = supabase.storage.from('public-media').getPublicUrl(data.path);

@@ -15,10 +15,11 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
   
   const isOfficeDoc = url.match(/\.(pptx|ppt|docx|doc|xlsx|xls)(\?.*)?$/i);
   
-  // SWITCHED to Google Docs Viewer because it supports vertical scrolling for PPTX 
-  // without needing a bottom toolbar, solving the slide navigation issue!
+  // SWITCHED to Microsoft Office Web Viewer because Google Docs viewer (gview) 
+  // has a known bug where it randomly fails and forces a "gview" file download.
+  // Microsoft's viewer is native for PPTX/DOCX and much more reliable.
   const embedUrl = isOfficeDoc 
-    ? `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
+    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
     : `${url}#toolbar=0&navpanes=0`;
 
   const toggleFullscreen = () => {
