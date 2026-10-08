@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { uploadFile } from '@/features/admin/services/apiService';
-import { Plus, Video, FileText, ChevronDown, ChevronRight, Upload, Trash2 } from 'lucide-react';
+import { Plus, Video, FileText, ChevronDown, ChevronRight, Upload, Trash2, Edit2 } from 'lucide-react';
 
 export default function AdminCourseBuilder() {
   const [workshops, setWorkshops] = useState<any[]>([]);
@@ -13,6 +13,19 @@ export default function AdminCourseBuilder() {
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [newLessonData, setNewLessonData] = useState({ moduleId: '', title: '' });
   const [newMaterialData, setNewMaterialData] = useState({ lessonId: '', title: '', type: 'VIDEO_YOUTUBE', file: null as File | null | string, isUploading: false });
+
+  const [editingModule, setEditingModule] = useState<{ id: string, title: string } | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{ id: string, title: string } | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<{ id: string, title: string } | null>(null);
+
+  async function handleUpdate(table: string, id: string, title: string) {
+    if (!title.trim()) return;
+    await supabase.from(table).update({ title }).eq('id', id);
+    if (table === 'Module') setEditingModule(null);
+    if (table === 'Lesson') setEditingLesson(null);
+    if (table === 'LearningMaterial') setEditingMaterial(null);
+    fetchModules();
+  }
 
   useEffect(() => {
     fetchWorkshops();
@@ -149,8 +162,19 @@ export default function AdminCourseBuilder() {
             modules.map((mod, mIndex) => (
               <div key={mod.id} className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl overflow-hidden">
                 <div className="bg-[var(--bg-tertiary)] p-4 flex justify-between items-center border-b border-[var(--border-strong)]">
-                  <h2 className="text-lg font-black text-[var(--text-primary)]">Module {mIndex + 1}: {mod.title}</h2>
-                  <button onClick={() => handleDelete('Module', mod.id)} className="text-red-500 hover:text-red-400"><Trash2 size={18} /></button>
+                  {editingModule?.id === mod.id ? (
+                    <div className="flex gap-2 flex-1 mr-4">
+                      <input autoFocus value={editingModule.title} onChange={e => setEditingModule({ ...editingModule, title: e.target.value })} className="flex-1 p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
+                      <button onClick={() => handleUpdate('Module', mod.id, editingModule.title)} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">Save</button>
+                      <button onClick={() => setEditingModule(null)} className="px-3 py-1 bg-gray-500 text-white text-xs font-bold rounded hover:bg-gray-600">Cancel</button>
+                    </div>
+                  ) : (
+                    <h2 className="text-lg font-black text-[var(--text-primary)]">Module {mIndex + 1}: {mod.title}</h2>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setEditingModule({ id: mod.id, title: mod.title })} className="text-[var(--text-secondary)] hover:text-blue-500"><Edit2 size={18} /></button>
+                    <button onClick={() => handleDelete('Module', mod.id)} className="text-red-500 hover:text-red-400"><Trash2 size={18} /></button>
+                  </div>
                 </div>
                 
                 <div className="p-4 space-y-4">
@@ -158,19 +182,41 @@ export default function AdminCourseBuilder() {
                   {mod.Lesson?.map((lesson: any, lIndex: number) => (
                     <div key={lesson.id} className="border border-[var(--border-primary)] rounded-xl bg-[var(--bg-primary)] p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-[var(--text-primary)] text-md">Lesson {lIndex + 1}: {lesson.title}</h3>
-                        <button onClick={() => handleDelete('Lesson', lesson.id)} className="text-red-500/50 hover:text-red-500"><Trash2 size={16} /></button>
+                        {editingLesson?.id === lesson.id ? (
+                          <div className="flex gap-2 flex-1 mr-4">
+                            <input autoFocus value={editingLesson.title} onChange={e => setEditingLesson({ ...editingLesson, title: e.target.value })} className="flex-1 p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
+                            <button onClick={() => handleUpdate('Lesson', lesson.id, editingLesson.title)} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">Save</button>
+                            <button onClick={() => setEditingLesson(null)} className="px-3 py-1 bg-gray-500 text-white text-xs font-bold rounded hover:bg-gray-600">Cancel</button>
+                          </div>
+                        ) : (
+                          <h3 className="font-bold text-[var(--text-primary)] text-md">Lesson {lIndex + 1}: {lesson.title}</h3>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => setEditingLesson({ id: lesson.id, title: lesson.title })} className="text-[var(--text-secondary)] hover:text-blue-500"><Edit2 size={16} /></button>
+                          <button onClick={() => handleDelete('Lesson', lesson.id)} className="text-red-500/50 hover:text-red-500"><Trash2 size={16} /></button>
+                        </div>
                       </div>
 
                       {/* Materials */}
                       <div className="space-y-2 pl-4 border-l-2 border-[var(--border-strong)] mb-4">
                         {lesson.LearningMaterial?.map((mat: any) => (
                           <div key={mat.id} className="flex justify-between items-center bg-[var(--surface-secondary)] p-3 rounded-lg border border-[var(--border-primary)]">
+                            {editingMaterial?.id === mat.id ? (
+                              <div className="flex gap-2 flex-1 mr-4">
+                                <input autoFocus value={editingMaterial.title} onChange={e => setEditingMaterial({ ...editingMaterial, title: e.target.value })} className="flex-1 p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none" />
+                                <button onClick={() => handleUpdate('LearningMaterial', mat.id, editingMaterial.title)} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">Save</button>
+                                <button onClick={() => setEditingMaterial(null)} className="px-3 py-1 bg-gray-500 text-white text-xs font-bold rounded hover:bg-gray-600">Cancel</button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                {mat.material_type === 'VIDEO' ? <Video size={16} className="text-[var(--color-brand)]" /> : <FileText size={16} className="text-blue-500" />}
+                                <span className="text-sm font-medium text-[var(--text-primary)]">{mat.title}</span>
+                              </div>
+                            )}
                             <div className="flex items-center gap-3">
-                              {mat.material_type === 'VIDEO' ? <Video size={16} className="text-[var(--color-brand)]" /> : <FileText size={16} className="text-blue-500" />}
-                              <span className="text-sm font-medium text-[var(--text-primary)]">{mat.title}</span>
+                              <button onClick={() => setEditingMaterial({ id: mat.id, title: mat.title })} className="text-[var(--text-secondary)] hover:text-blue-500"><Edit2 size={14} /></button>
+                              <button onClick={() => handleDelete('LearningMaterial', mat.id)} className="text-red-500/50 hover:text-red-500"><Trash2 size={14} /></button>
                             </div>
-                            <button onClick={() => handleDelete('LearningMaterial', mat.id)} className="text-red-500/50 hover:text-red-500"><Trash2 size={14} /></button>
                           </div>
                         ))}
 
