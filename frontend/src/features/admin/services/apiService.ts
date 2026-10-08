@@ -8,21 +8,29 @@ import { InternshipFormData } from '../components/forms/InternshipForm';
 
 // ─── File Upload Service ───────────────────────────────────────────────────────
 
+import { JobFormData } from '../components/forms/JobForm';
+import { InternshipFormData } from '../components/forms/InternshipForm';
+
 export const uploadFile = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
 
-  // Setting Content-Type to undefined removes the axios instance-level default
-  // ('application/json') for this request only, so the browser auto-generates:
-  // "multipart/form-data; boundary=----WebKitFormBoundaryXXXX"
-  // Without the boundary, multer cannot parse the file parts and returns 400.
   const { supabase } = await import('@/lib/supabase');
   const uploadedFile = formData.get('file') as File;
   if (!uploadedFile) throw new Error("No file provided");
-  const ext = uploadedFile.name.split('.').pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+  const ext = uploadedFile.name.split('.').pop()?.toLowerCase() || '';
+  const fileName = \\-\.\\;
   
-  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true, contentType: uploadedFile.type || "application/octet-stream" });
+  let mimeType = uploadedFile.type;
+  if (!mimeType || mimeType === 'application/octet-stream') {
+    if (ext === 'pdf') mimeType = 'application/pdf';
+    else if (ext === 'pptx') mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    else if (ext === 'ppt') mimeType = 'application/vnd.ms-powerpoint';
+    else if (ext === 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    else mimeType = 'application/octet-stream';
+  }
+
+  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true, contentType: mimeType });
   if (error) throw error;
   
   const { data: publicUrl } = supabase.storage.from('public-media').getPublicUrl(data.path);
@@ -989,6 +997,7 @@ export const paymentService = {
     return data;
   }
 };
+
 
 
 
