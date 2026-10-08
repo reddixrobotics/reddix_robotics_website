@@ -19,7 +19,7 @@ export const uploadFile = async (file: File): Promise<string> => {
   const uploadedFile = formData.get('file') as File;
   if (!uploadedFile) throw new Error("No file provided");
   const ext = uploadedFile.name.split('.').pop()?.toLowerCase() || '';
-  const fileName = \\-\.\\;
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
   
   let mimeType = uploadedFile.type;
   if (!mimeType || mimeType === 'application/octet-stream') {
