@@ -51,6 +51,7 @@ const BlogPage     = lazy(() => import('@/pages/BlogPage'));
 const LoginPage    = lazy(() => import('@/pages/LoginPage'));
 const SignupPage   = lazy(() => import('@/pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
+const UpdatePasswordPage = lazy(() => import('@/pages/UpdatePasswordPage'));
 const JobApplicationPage = lazy(() => import('@/pages/JobApplicationPage'));
 const InternshipApplicationPage = lazy(() => import('@/pages/InternshipApplicationPage'));
 const WorkshopRegistrationPage = lazy(() => import('@/pages/WorkshopRegistrationPage'));
@@ -130,6 +131,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.LOGIN,        element: withSuspense(LoginPage) },
           { path: ROUTES.SIGNUP,       element: <Navigate to={ROUTES.LOGIN} replace /> },
           { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
+            { path: ROUTES.UPDATE_PASSWORD, element: withSuspense(UpdatePasswordPage) },
           { path: ROUTES.CAREERS,      element: withSuspense(CareersPage) },
           { path: ROUTES.PRIVACY_POLICY, element: withSuspense(PrivacyPolicyPage) },
           { path: ROUTES.TERMS_CONDITIONS, element: withSuspense(TermsConditionsPage) },

@@ -31,6 +31,7 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
+  UPDATE_PASSWORD: '/update-password',
   PROFILE: '/profile',
   PORTAL: '/portal',
   TEACHER: '/teacher',
