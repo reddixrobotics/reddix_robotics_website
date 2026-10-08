@@ -68,9 +68,15 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
 
       {type === 'PDF' ? (
         <div className="relative w-full h-full select-none pt-16">
-          {/* Top Right Shield (Blocks Google Docs Pop-Out & PDF Download buttons) */}
+          {/* Top Right Shield (Blocks Chrome Native PDF Download/Print Buttons) */}
           <div className="absolute top-0 right-0 w-64 h-24 bg-transparent z-[9998]"></div>
           
+          {/* Bottom Right Shield (Blocks Microsoft Office Download/Menu/Fullscreen Buttons) */}
+          <div className="absolute bottom-0 right-0 w-48 h-16 bg-transparent z-[9998]" title="Action disabled for security"></div>
+          
+          {/* Bottom Left Shield (Blocks Microsoft Office Logo External Link) */}
+          <div className="absolute bottom-0 left-0 w-32 h-16 bg-transparent z-[9998]" title="Action disabled for security"></div>
+
           <iframe 
             src={embedUrl}
             className="w-full h-full select-none bg-white"
