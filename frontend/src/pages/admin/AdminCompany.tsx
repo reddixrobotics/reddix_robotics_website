@@ -57,7 +57,7 @@ export default function AdminCompany() {
     let active = true;
     (async () => {
         const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase.from('CompanyInformation').select('*').single();
+        const { data, error } = await supabase.from('CompanyInformation').select('*').maybeSingle();
         if (error) throw error;
         return { data };
       })().then(res => {
@@ -96,7 +96,7 @@ export default function AdminCompany() {
 
     try {
       const { supabase } = await import('@/lib/supabase');
-      const { data: existing } = await supabase.from('CompanyInformation').select('id, socialLinks').single();
+      const { data: existing } = await supabase.from('CompanyInformation').select('id, socialLinks').maybeSingle();
       const payload: any = {
         ...formData,
         latitude: formData.latitude !== null ? Number(formData.latitude) : null,

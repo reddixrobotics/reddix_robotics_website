@@ -10,7 +10,7 @@ export default function CompanySection() {
   } | null>(null);
 
   useEffect(() => {
-    supabase.from('CompanyInformation').select('aboutContent, socialLinks').single().then(({ data }) => {
+    supabase.from('CompanyInformation').select('aboutContent, socialLinks').maybeSingle().then(({ data }) => {
       if (data) {
         setCompanyData({
           aboutContent: data.aboutContent || '',
