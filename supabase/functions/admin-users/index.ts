@@ -31,14 +31,25 @@ serve(async (req) => {
 
     const { action, email, password, role } = await req.json()
 
-    if (action === 'invite_teacher') {
-      // Use Supabase Admin API to invite user via email and assign role
+    if (action === 'create_teacher') {
+      // Direct explicit creation of user with a generated password
+      const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email, 
+        password, 
+        email_confirm: true,
+        app_metadata: { role: 'TEACHER' },
+        user_metadata: { role: 'TEACHER' }
+      });
+      if (createError) throw createError;
+      
+      return new Response(JSON.stringify(newAuthUser), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    else if (action === 'invite_teacher') {
       const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: { role: 'TEACHER' }
       });
       if (error) throw error;
       
-      // Update app_metadata explicitly just in case
       if (data.user) {
          await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
            app_metadata: { role: 'TEACHER' }
@@ -50,28 +61,50 @@ serve(async (req) => {
       if (role === 'SUPER_ADMIN') {
         return new Response(JSON.stringify({ error: 'Forbidden: Cannot create another SUPER_ADMIN' }), { status: 403, headers: corsHeaders })
       }
-
-      const passwordHash = await bcrypt.hash(password);
       
-      const { data, error } = await supabaseAdmin.from('Admin').insert({
+      const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
-        passwordHash,
-        role: role || 'ADMIN'
-      }).select().single();
+        password,
+        email_confirm: true,
+        app_metadata: { role: role || 'ADMIN' },
+        user_metadata: { role: role || 'ADMIN' }
+      });
 
-      if (error) throw error;
-
-      return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      if (createError) {
+        // If the user already exists, let's just update their role!
+        if (createError.message.includes('already registered') || createError.message.includes('already exists') || createError.status === 422) {
+           // We need to find the user ID first
+           const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+           const existingUser = users.find((u: any) => u.email === email);
+           
+           if (existingUser) {
+             const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+               app_metadata: { role: role || 'ADMIN' },
+               user_metadata: { role: role || 'ADMIN' },
+               password: password // update password to the new temp password
+             });
+             if (updateError) throw updateError;
+             return new Response(JSON.stringify(updatedUser), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+           }
+        }
+        
+        // If it's some other error, return the specific message so the frontend can show it
+        return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: corsHeaders })
+      }
+      
+      return new Response(JSON.stringify(newAuthUser), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     } 
     else if (action === 'delete_admin') {
       const { id } = await req.json()
       
-      const { data: targetAdmin } = await supabaseAdmin.from('Admin').select('*').eq('id', id).single()
-      if (targetAdmin?.role === 'SUPER_ADMIN') {
+      const { data: targetAdmin, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(id);
+      if (fetchError || !targetAdmin.user) throw fetchError || new Error("User not found");
+      
+      if (targetAdmin.user.app_metadata?.role === 'SUPER_ADMIN') {
         return new Response(JSON.stringify({ error: 'Forbidden: Cannot delete a SUPER_ADMIN' }), { status: 403, headers: corsHeaders })
       }
-
-      const { error } = await supabaseAdmin.from('Admin').delete().eq('id', id);
+      
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }

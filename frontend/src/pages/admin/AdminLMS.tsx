@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserPlus, BookOpen, List } from 'lucide-react';
+import { UserPlus, BookOpen, List, Trash2 } from 'lucide-react';
 
 export default function AdminLMS() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -31,6 +31,22 @@ export default function AdminLMS() {
     const { data: eData } = await supabase.from('lms_student_details').select('*').order('enrolled_at', { ascending: false });
     if (eData) setEnrollments(eData);
   }
+
+  const handleRemoveEnrollment = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this enrollment?")) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('Enrollment').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+      setStatus('Enrollment removed successfully!');
+    } catch (err: any) {
+      console.error(err);
+      setStatus(`Failed to remove: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProvision = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,12 +173,13 @@ export default function AdminLMS() {
                   <th className="p-3 font-semibold">Course Enrolled</th>
                   <th className="p-3 font-semibold">Status</th>
                   <th className="p-3 font-semibold">Enrolled At</th>
+                  <th className="p-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {enrollments.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-[var(--text-muted)]">
+                    <td colSpan={5} className="p-8 text-center text-[var(--text-muted)]">
                       No students enrolled yet. Provision a student to see them here! (If you just enrolled someone, make sure you ran the SQL View script).
                     </td>
                   </tr>
@@ -178,6 +195,15 @@ export default function AdminLMS() {
                       </td>
                       <td className="p-3 text-[var(--text-muted)] text-sm">
                         {new Date(e.enrolled_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => handleRemoveEnrollment(e.enrollment_id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-colors"
+                          title="Remove Enrollment"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </td>
                     </tr>
                   ))
