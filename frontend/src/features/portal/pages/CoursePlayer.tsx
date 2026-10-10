@@ -72,8 +72,20 @@ export default function CoursePlayer() {
     // Fetch Materials for this lesson
     const { data: matData } = await supabase.from('LearningMaterial').select('*').eq('lesson_id', lesson.id).order('order_index');
     if (matData && matData.length > 0) {
+      
+      // Enforce specific order: Video -> PPT -> PDF regardless of database order
+      const getRank = (mat: any) => {
+        const str = (mat.title + ' ' + mat.material_type).toLowerCase();
+        if (str.includes('video')) return 1;
+        if (str.includes('ppt')) return 2;
+        if (str.includes('pdf')) return 3;
+        return 4;
+      };
+      
+      matData.sort((a, b) => getRank(a) - getRank(b));
+
       setMaterials(matData);
-      setActiveMaterial(matData[0]); // Auto-select first material (e.g. the Video)
+      setActiveMaterial(matData[0]); // Auto-select first material (Video if present)
     }
   };
 
