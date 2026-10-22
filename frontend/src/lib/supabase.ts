@@ -22,8 +22,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Safe to use in React components.
  */
 export const supabase: SupabaseClient = createClient(
-  supabaseUrl ?? '',
-  supabaseAnonKey ?? '',
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder',
   {
     auth: {
       autoRefreshToken: true,
