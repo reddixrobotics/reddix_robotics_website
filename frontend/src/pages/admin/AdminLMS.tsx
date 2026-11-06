@@ -28,7 +28,7 @@ export default function AdminLMS() {
     if (cData) setCourses(cData);
 
     // Fetch from the secure view we will ask the admin to create
-    const { data: eData } = await supabase.from('lms_student_details').select('*').order('enrolled_at', { ascending: false });
+    const { data: eData } = await supabase.rpc('get_lms_student_details');
     if (eData) setEnrollments(eData);
   }
 
@@ -52,7 +52,7 @@ export default function AdminLMS() {
     e.preventDefault();
     setLoading(true);
     setStatus('');
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active admin session");
@@ -70,7 +70,7 @@ export default function AdminLMS() {
       if (!res.ok) throw new Error(data.error || 'Failed to create student');
 
       setStatus(`Provisioned! Sending email to ${email}...`);
-      
+
       try {
         await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
           method: 'POST',
@@ -113,7 +113,7 @@ export default function AdminLMS() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <h1 className="text-3xl font-black text-[var(--text-primary)]">LMS Management</h1>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Provisioning Form */}
         <div className="lg:col-span-1 bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-2xl p-6 h-fit">
@@ -121,7 +121,7 @@ export default function AdminLMS() {
             <UserPlus className="text-[var(--color-brand)]" />
             Provision New Student
           </h2>
-          
+
           <form onSubmit={handleProvision} className="space-y-4">
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Student Email</label>
@@ -145,7 +145,7 @@ export default function AdminLMS() {
                 ))}
               </select>
             </div>
-            
+
             <button type="submit" disabled={loading} className="w-full py-3 mt-4 bg-[var(--color-brand)] text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50">
               {loading ? 'Provisioning...' : 'Create Account & Enroll'}
             </button>
