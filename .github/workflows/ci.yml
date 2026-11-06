@@ -54,8 +54,10 @@ jobs:
       - name: Check for Unsafe Destructive Statements
         run: |
           echo "Scanning supabase/migrations for unverified destructive DROP statements..."
-          if grep -rnwi "DROP TABLE" supabase/migrations/ | grep -v "IF EXISTS"; then
+          UNSAFE_DROPS=$(grep -rnwi "DROP TABLE" supabase/migrations/ 2>/dev/null | grep -v "IF EXISTS" || true)
+          if [ -n "$UNSAFE_DROPS" ]; then
             echo "::error::Found unshielded DROP TABLE statement in migration! Use backward-compatible deprecation."
+            echo "$UNSAFE_DROPS"
             exit 1
           fi
           echo "Migration safety check passed."
