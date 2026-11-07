@@ -24,3 +24,5 @@ backend/dist/
 !*.env.example
 !backend/.env.example
 !frontend/.env.example
+
+supabase/.temp/

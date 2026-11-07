@@ -19,6 +19,19 @@ export const uploadFile = async (file: File): Promise<string> => {
   const uploadedFile = formData.get('file') as File;
   if (!uploadedFile) throw new Error("No file provided");
   const ext = uploadedFile.name.split('.').pop()?.toLowerCase() || '';
+
+  // Security Hardening: Whitelist permitted file extensions
+  const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'mp4', 'ppt', 'pptx', 'doc', 'docx'];
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    throw new Error(`File type .${ext} is not allowed for security reasons.`);
+  }
+
+  // Security Hardening: Maximum file size cap (50 MB)
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  if (uploadedFile.size > MAX_FILE_SIZE) {
+    throw new Error("File exceeds the maximum allowed upload size of 50MB.");
+  }
+
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
   
   let mimeType = uploadedFile.type;

@@ -43,12 +43,14 @@ export default function RoleGuard({ allowedRoles }: { allowedRoles: string[] }) 
     return <Navigate to={`${ROUTES.LOGIN}?redirect=${redirectUrl}`} replace />;
   }
 
-  // If authenticated but role doesn't match
-  if (userRole && !allowedRoles.includes(userRole)) {
-    // Redirect to their respective home
+  // Security Hardening: Fail-closed authorization check
+  // If authenticated but role doesn't match or is unassigned
+  const effectiveRole = userRole || 'USER';
+  if (!allowedRoles.includes(effectiveRole)) {
+    // Redirect to their respective authorized area
     if (isAdmin()) {
       return <Navigate to={ROUTES.ADMIN} replace />;
-    } else if (userRole === 'TEACHER') {
+    } else if (effectiveRole === 'TEACHER') {
       return <Navigate to={ROUTES.TEACHER} replace />;
     } else {
       return <Navigate to={ROUTES.PORTAL} replace />;

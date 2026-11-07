@@ -65,8 +65,8 @@ serve(async (req) => {
       .maybeSingle()
 
     let amountInCents = Math.round(Number(order.advanceAmount) * 100)
-    if (amountInCents < 50) amountInCents = 50
-    if (amountInCents > 500000) amountInCents = 500000
+    // Razorpay minimum transaction floor is 100 paise (INR 1.00)
+    if (amountInCents < 100) amountInCents = 100
 
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')

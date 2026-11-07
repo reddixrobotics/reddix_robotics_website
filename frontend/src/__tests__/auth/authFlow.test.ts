@@ -13,6 +13,11 @@ export function isUserTeacher(role: string): boolean {
   return ['SUPER_ADMIN', 'ADMIN', 'TEACHER'].includes(role);
 }
 
+export function isRoleAllowed(userRole: string | null | undefined, allowedRoles: string[]): boolean {
+  const effectiveRole = userRole || 'USER';
+  return allowedRoles.includes(effectiveRole);
+}
+
 describe('Authentication & Role Validation', () => {
   it('returns ANONYMOUS when user is null', () => {
     expect(extractUserRole(null)).toBe('ANONYMOUS');
@@ -49,5 +54,12 @@ describe('Authentication & Role Validation', () => {
     expect(extractUserRole(teacherUser)).toBe('TEACHER');
     expect(isUserTeacher('TEACHER')).toBe(true);
     expect(isUserAdmin('TEACHER')).toBe(false);
+  });
+
+  it('fails closed when role is null or unassigned for admin routes', () => {
+    expect(isRoleAllowed(null, ['ADMIN', 'SUPER_ADMIN'])).toBe(false);
+    expect(isRoleAllowed(undefined, ['ADMIN', 'SUPER_ADMIN'])).toBe(false);
+    expect(isRoleAllowed('ADMIN', ['ADMIN', 'SUPER_ADMIN'])).toBe(true);
+    expect(isRoleAllowed('SUPER_ADMIN', ['ADMIN', 'SUPER_ADMIN'])).toBe(true);
   });
 });
