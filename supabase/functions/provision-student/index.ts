@@ -1,13 +1,25 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowedOrigins = [
+    'https://reddixrobotics.com',
+    'https://www.reddixrobotics.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ]
+  const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : 'https://reddixrobotics.com',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const cors = getCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
     const authHeader = req.headers.get('Authorization')
@@ -24,14 +36,26 @@ serve(async (req) => {
 
     const role = user.app_metadata?.role
     if (role !== 'SUPER_ADMIN' && role !== 'ADMIN') {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
+      return new Response(JSON.stringify({ error: 'Forbidden: Requires ADMIN privileges' }), {
+        status: 403,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
     }
 
     const { email, password, courseId } = await req.json()
+    if (!email || !password) {
+      return new Response(JSON.stringify({ error: 'Missing required credentials: email, password' }), {
+        status: 400,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Create the secure student login
     const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email, password, email_confirm: true, user_metadata: { role: 'USER' }
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { role: 'USER' },
     })
     if (createError) throw createError
 
@@ -41,13 +65,21 @@ serve(async (req) => {
     // Enroll in course
     if (courseId) {
       const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
-        user_id: newAuthUser.user.id, course_id: courseId, status: 'ACTIVE'
+        user_id: newAuthUser.user.id,
+        course_id: courseId,
+        status: 'ACTIVE',
       })
       if (enrollError) throw enrollError
     }
 
-    return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), {
+      status: 200,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
   }
 })
