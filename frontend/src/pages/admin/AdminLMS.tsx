@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserPlus, BookOpen, List, Trash2, Filter, Layers } from 'lucide-react';
+import { UserPlus, BookOpen, List, Trash2, Filter, Layers, ChevronDown } from 'lucide-react';
 
 export default function AdminLMS() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -255,26 +255,30 @@ export default function AdminLMS() {
               Enrolled Students ({filteredEnrollments.length})
             </h2>
 
-            {/* Batch Filter Buttons */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1 flex-nowrap">
-              <span className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1">
-                <Filter size={12} /> Filter Batch:
-              </span>
-              <button
-                onClick={() => setSelectedBatchFilter('ALL')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${selectedBatchFilter === 'ALL' ? 'bg-[var(--color-brand)] text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-strong)]'}`}
-              >
-                All Batches
-              </button>
-              {distinctBatches.map(b => (
-                <button
-                  key={b}
-                  onClick={() => setSelectedBatchFilter(b)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${selectedBatchFilter === b ? 'bg-[var(--color-brand)] text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-strong)]'}`}
+            {/* Batch Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="batchFilterSelect" className="text-xs font-bold text-[var(--text-muted)] flex items-center gap-1.5 whitespace-nowrap">
+                <Filter size={14} className="text-[var(--color-brand)]" /> Filter Batch:
+              </label>
+              <div className="relative">
+                <select
+                  id="batchFilterSelect"
+                  value={selectedBatchFilter}
+                  onChange={e => setSelectedBatchFilter(e.target.value)}
+                  className="appearance-none bg-[var(--bg-primary)] border border-[var(--border-strong)] hover:border-[var(--color-brand)] text-[var(--text-primary)] px-3.5 py-2 pr-8 rounded-xl text-xs font-bold outline-none cursor-pointer transition-colors shadow-sm"
                 >
-                  {b}
-                </button>
-              ))}
+                  <option value="ALL">🌐 All Batches ({enrollments.length})</option>
+                  {distinctBatches.map(b => {
+                    const count = enrollments.filter(e => (e.batch_name || 'Batch 1') === b).length;
+                    return (
+                      <option key={b} value={b}>
+                        📁 {b} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+              </div>
             </div>
           </div>
 
