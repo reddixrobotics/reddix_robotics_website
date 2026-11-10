@@ -50,7 +50,12 @@ export default function AdminCourseBuilder() {
 
   async function fetchWorkshops() {
     const { data } = await supabase.from('Workshop').select('id, title');
-    if (data) setWorkshops(data);
+    if (data) {
+      setWorkshops(data);
+      if (data.length > 0) {
+        setSelectedWorkshop(prev => prev || data[0].id);
+      }
+    }
   }
 
   async function fetchModules() {

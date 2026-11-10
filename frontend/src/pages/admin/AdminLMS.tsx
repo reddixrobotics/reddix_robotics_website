@@ -68,7 +68,7 @@ export default function AdminLMS() {
 
   // Extract distinct batches for filter
   const distinctBatches = useMemo(() => {
-    const batches = new Set<string>();
+    const batches = new Set<string>(['Batch 1', 'Batch 2', 'Batch 3']);
     enrollments.forEach(e => {
       if (e.batch_name) batches.add(e.batch_name);
     });
