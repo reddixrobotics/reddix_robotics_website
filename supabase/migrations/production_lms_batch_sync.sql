@@ -107,3 +107,24 @@ LEFT JOIN "Workshop" w ON e.course_id = w.id;
 
 ALTER VIEW public.lms_student_details OWNER TO postgres;
 GRANT SELECT ON public.lms_student_details TO authenticated, anon, service_role;
+
+
+-- 8. Create DeviceSession table for student multi-device limits
+CREATE TABLE IF NOT EXISTS "DeviceSession" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    "device_identifier" TEXT NOT NULL,
+    "user_agent" TEXT,
+    "is_revoked" BOOLEAN DEFAULT false,
+    "last_active_at" TIMESTAMPTZ DEFAULT now(),
+    "created_at" TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT "DeviceSession_user_device_unique" UNIQUE ("user_id", "device_identifier")
+);
+
+ALTER TABLE "DeviceSession" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "device_session_user_all" ON "DeviceSession";
+CREATE POLICY "device_session_user_all" ON "DeviceSession" 
+FOR ALL TO authenticated 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
