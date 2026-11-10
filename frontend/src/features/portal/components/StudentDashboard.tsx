@@ -88,12 +88,7 @@ export default function StudentDashboard() {
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-[var(--surface-tertiary)] border border-[var(--border-strong)] text-[var(--color-brand)] inline-flex items-center gap-1">
-                    <Layers size={10} />
-                    {course.batch_name}
-                  </span>
-                </div>
+
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2">{course.title}</h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2 flex-grow">{course.description}</p>
                 

@@ -40,7 +40,7 @@ END $$;
 
 -- 3. Ensure Module and LearningMaterial have batch_name
 ALTER TABLE IF EXISTS "Module" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'Batch 1';
-ALTER TABLE IF EXISTS "LearningMaterial" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'ALL';
+ALTER TABLE IF EXISTS "LearningMaterial" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'Batch 1';
 
 -- 4. Set all existing students and modules to 'Batch 1'
 UPDATE "Enrollment" 
@@ -48,6 +48,10 @@ SET "batch_name" = 'Batch 1'
 WHERE "batch_name" IS NULL OR "batch_name" = '' OR "batch_name" = 'ALL';
 
 UPDATE "Module" 
+SET "batch_name" = 'Batch 1' 
+WHERE "batch_name" IS NULL OR "batch_name" = '' OR "batch_name" = 'ALL';
+
+UPDATE "LearningMaterial" 
 SET "batch_name" = 'Batch 1' 
 WHERE "batch_name" IS NULL OR "batch_name" = '' OR "batch_name" = 'ALL';
 

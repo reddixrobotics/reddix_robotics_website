@@ -135,12 +135,11 @@ export default function AdminLMS() {
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #b91c1c;">Welcome to Reddix Robotics!</h2>
-                <p>Your student portal account has been created successfully for <strong>${batchName}</strong>.</p>
+                <p>Your student portal account has been created successfully.</p>
                 <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
                   <p><strong>Login URL:</strong> <a href="https://reddixrobotics.com/login">reddixrobotics.com/login</a></p>
                   <p><strong>Email:</strong> ${email}</p>
-                  <p><strong>Password:</strong> ${password}</p>
-                  <p><strong>Assigned Batch:</strong> ${batchName}</p>
+                  <p><strong>Password:</strong> ${password}</p>
                 </div>
                 <p>Please log in using the credentials above to access your assigned course and recordings.</p>
                 <p>Best regards,<br/>The Reddix Robotics Team</p>
