@@ -117,3 +117,11 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_lms_student_details() TO authenticated;
+
+-- Make Workshop fields optional/flexible
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "date" DROP NOT NULL;
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "time" DROP NOT NULL;
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "duration" DROP NOT NULL;
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "location" DROP NOT NULL;
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "capacity" DROP NOT NULL;
+ALTER TABLE IF EXISTS "Workshop" ALTER COLUMN "date" SET DEFAULT now();
