@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS "Doubt" (
 -- 5. Add batch_name to Enrollment and LearningMaterial
 ALTER TABLE "Enrollment" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'Batch 1';
 ALTER TABLE "LearningMaterial" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'ALL';
+ALTER TABLE "Module" ADD COLUMN IF NOT EXISTS "batch_name" TEXT DEFAULT 'ALL';
 
 -- 6. Enable RLS
 ALTER TABLE "Module" ENABLE ROW LEVEL SECURITY;

@@ -71,12 +71,17 @@ export default function CoursePlayer() {
       .order('order_index');
 
     if (mData) {
-      setModules(mData);
-      if (mData.length > 0) setExpandedModules(new Set([mData[0].id]));
+      const studentBatchNorm = currentBatch.trim().toLowerCase();
+      const filteredModules = mData.filter((m: any) => {
+        const mBatch = (m.batch_name || 'ALL').trim().toLowerCase();
+        return mBatch === 'all' || mBatch === studentBatchNorm;
+      });
+      setModules(filteredModules);
+      if (filteredModules.length > 0) setExpandedModules(new Set([filteredModules[0].id]));
       
       // Auto-select first lesson
-      if (mData.length > 0 && mData[0].Lesson && mData[0].Lesson.length > 0) {
-        handleLessonSelect(mData[0].Lesson[0], currentBatch);
+      if (filteredModules.length > 0 && filteredModules[0].Lesson && filteredModules[0].Lesson.length > 0) {
+        handleLessonSelect(filteredModules[0].Lesson[0], currentBatch);
       }
     }
     setLoading(false);
