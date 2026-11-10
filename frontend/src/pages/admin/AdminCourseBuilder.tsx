@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { uploadFile } from '@/features/admin/services/apiService';
-import { Plus, Video, FileText, Trash2, Edit2, Layers, Eye, FolderPlus, CheckCircle2, ChevronRight, X, ChevronDown } from 'lucide-react';
+import { Plus, Video, FileText, Trash2, Edit2, Layers, Eye, FolderPlus, CheckCircle2, ChevronDown } from 'lucide-react';
 
 export default function AdminCourseBuilder() {
   const [workshops, setWorkshops] = useState<any[]>([]);
@@ -107,7 +107,6 @@ export default function AdminCourseBuilder() {
       });
     });
     return Array.from(batchSet).sort((a, b) => {
-      // Natural sort for Batch 1, Batch 2, Batch 10
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
   }, [modules, customBatches]);
@@ -145,8 +144,8 @@ export default function AdminCourseBuilder() {
   };
 
   // Handle deleting an empty batch
-  const handleDeleteBatch = (batchNameToDelete: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteBatch = (batchNameToDelete: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const hasModules = modules.some(m => (m.batch_name || '').trim().toLowerCase() === batchNameToDelete.trim().toLowerCase());
     if (hasModules) {
       alert(`Cannot delete ${batchNameToDelete} because it contains existing modules.`);
@@ -289,199 +288,146 @@ export default function AdminCourseBuilder() {
       {/* Page Title */}
       <div>
         <h1 className="text-3xl font-black text-[var(--text-primary)]">Workshop Batch & Course Builder</h1>
-        <p className="text-[var(--text-secondary)]">Create dedicated batches for workshops. Each batch has its own independent modules, lessons, and recordings.</p>
+        <p className="text-[var(--text-secondary)]">Manage courses organized by batches. Pick a batch from the dropdown to edit its dedicated modules.</p>
       </div>
 
-      {/* Workshop Selector */}
-      <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-6">
-        <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Select Workshop</label>
-        <select 
-          value={selectedWorkshop} 
-          onChange={e => setSelectedWorkshop(e.target.value)}
-          className="w-full p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none font-bold"
-        >
-          <option value="">-- Choose a Workshop --</option>
-          {workshops.map(w => (
-            <option key={w.id} value={w.id}>{w.title}</option>
-          ))}
-        </select>
-      </div>
+      {/* Workshop and Batch Selectors in Two Clean Side-by-Side Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 1. Workshop Selector */}
+        <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">1. Select Workshop</label>
+            <select 
+              value={selectedWorkshop} 
+              onChange={e => setSelectedWorkshop(e.target.value)}
+              className="w-full p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none font-bold"
+            >
+              <option value="">-- Choose a Workshop --</option>
+              {workshops.map(w => (
+                <option key={w.id} value={w.id}>{w.title}</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] mt-2">
+            Select the workshop whose syllabus you want to manage.
+          </p>
+        </div>
 
-      {selectedWorkshop && (
-        <div className="space-y-6">
-          {/* BATCH SELECTOR & MANAGEMENT SECTION */}
-          <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-strong)] pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--surface-tertiary)] flex items-center justify-center text-[var(--color-brand)] border border-[var(--border-strong)]">
-                  <Layers size={22} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-black text-[var(--text-primary)]">Batches</h2>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-tertiary)] text-[var(--text-muted)] font-bold border border-[var(--border-strong)]">
-                      {availableBatches.length} total
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                    Select a cohort below to view its independent curriculum, or create a new batch.
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons: Dropdown Jump & + Create New Batch */}
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                {/* Fast Dropdown Jump for when there are 10+ batches */}
-                <div className="relative">
-                  <select
-                    value={activeBatch}
-                    onChange={e => setActiveBatch(e.target.value)}
-                    className="appearance-none bg-[var(--bg-primary)] border border-[var(--border-strong)] hover:border-[var(--color-brand)] text-[var(--text-primary)] px-3.5 py-2.5 pr-8 rounded-xl text-xs font-bold outline-none cursor-pointer transition-colors shadow-sm"
-                    title="Jump directly to any batch"
-                  >
-                    <option value="ALL">🌐 All Batches (Overview)</option>
-                    {availableBatches.map(b => {
-                      const count = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === b.trim().toLowerCase()).length;
-                      return (
-                        <option key={b} value={b}>
-                          📁 {b} ({count} {count === 1 ? 'module' : 'modules'})
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-                </div>
-
+        {/* 2. Batch Selector Dropdown */}
+        {selectedWorkshop && (
+          <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-bold text-[var(--text-secondary)]">2. Select Batch Cohort</label>
                 {!showNewBatchInput && (
                   <button
                     type="button"
                     onClick={() => setShowNewBatchInput(true)}
-                    className="px-4 py-2.5 bg-[var(--color-brand)] text-white text-xs font-bold rounded-xl hover:bg-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-brand/20 whitespace-nowrap"
+                    className="text-xs font-bold text-[var(--color-brand)] hover:underline flex items-center gap-1"
                   >
-                    <FolderPlus size={15} />
-                    + New Batch
+                    <FolderPlus size={14} /> + Create New Batch
                   </button>
                 )}
               </div>
-            </div>
 
-            {/* Inline New Batch Creator */}
-            {showNewBatchInput && (
-              <form onSubmit={handleCreateBatch} className="p-4 bg-[var(--bg-primary)] border-2 border-[var(--color-brand)] rounded-xl flex flex-col sm:flex-row gap-3 items-center animate-in fade-in">
-                <div className="flex-1 w-full">
-                  <label className="block text-xs font-bold text-[var(--color-brand)] mb-1">Enter New Batch Name:</label>
+              {!showNewBatchInput ? (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <select 
+                      value={activeBatch} 
+                      onChange={e => setActiveBatch(e.target.value)}
+                      className="w-full p-4 pr-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none font-bold appearance-none cursor-pointer"
+                    >
+                      {availableBatches.map(b => {
+                        const count = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === b.trim().toLowerCase()).length;
+                        return (
+                          <option key={b} value={b}>
+                            📁 {b} — ({count} {count === 1 ? 'module' : 'modules'})
+                          </option>
+                        );
+                      })}
+                      <option value="ALL">🌐 All Batches (Full Overview)</option>
+                    </select>
+                    <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                  </div>
+
+                  {/* Delete empty batch button */}
+                  {activeBatch !== 'ALL' && activeBatch !== 'Batch 1' && currentBatchModules.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteBatch(activeBatch)}
+                      className="px-4 bg-[var(--surface-tertiary)] hover:bg-red-500/20 text-red-400 rounded-xl border border-[var(--border-strong)] transition-colors"
+                      title={`Delete empty ${activeBatch}`}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <form onSubmit={handleCreateBatch} className="flex gap-2 animate-in fade-in">
                   <input
                     autoFocus
                     required
                     type="text"
                     value={newBatchName}
                     onChange={e => setNewBatchName(e.target.value)}
-                    placeholder={`e.g. Batch ${availableBatches.length + 1}, Weekend Cohort, Nov 2026`}
-                    className="w-full p-2.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-strong)] text-[var(--text-primary)] font-bold text-sm outline-none"
+                    placeholder={`e.g. Batch ${availableBatches.length + 1}, Weekend`}
+                    className="flex-1 p-3.5 rounded-xl bg-[var(--bg-primary)] border-2 border-[var(--color-brand)] text-[var(--text-primary)] font-bold text-sm outline-none"
                   />
-                </div>
-                <div className="flex gap-2 self-end sm:self-auto w-full sm:w-auto">
                   <button
                     type="submit"
-                    className="flex-1 sm:flex-none px-5 py-2.5 bg-[var(--color-brand)] text-white text-xs font-bold rounded-lg hover:bg-red-700"
+                    className="px-4 py-3 bg-[var(--color-brand)] text-white text-xs font-bold rounded-xl hover:bg-red-700 whitespace-nowrap"
                   >
-                    Create Batch
+                    Save Batch
                   </button>
                   <button
                     type="button"
                     onClick={() => { setShowNewBatchInput(false); setNewBatchName(''); }}
-                    className="px-4 py-2.5 bg-[var(--surface-secondary)] text-[var(--text-secondary)] text-xs font-bold rounded-lg"
+                    className="px-3 py-3 bg-[var(--surface-tertiary)] text-[var(--text-secondary)] text-xs font-bold rounded-xl"
                   >
                     Cancel
                   </button>
-                </div>
-              </form>
-            )}
-
-            {/* HORIZONTAL SCROLLABLE BATCH PILLS - NEVER BREAKS OR OVERFLOWS MESSILY */}
-            <div className="relative">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar scroll-smooth flex-nowrap">
-                {availableBatches.map(b => {
-                  const count = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === b.trim().toLowerCase()).length;
-                  const isSelected = activeBatch === b;
-
-                  return (
-                    <div
-                      key={b}
-                      onClick={() => setActiveBatch(b)}
-                      className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer whitespace-nowrap flex-shrink-0 select-none ${
-                        isSelected
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-md shadow-brand/20'
-                          : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-strong)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <Layers size={14} className={isSelected ? 'text-white' : 'text-[var(--color-brand)]'} />
-                      <span>{b}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                        isSelected ? 'bg-white/20 text-white' : 'bg-[var(--surface-tertiary)] text-[var(--text-muted)]'
-                      }`}>
-                        {count} {count === 1 ? 'mod' : 'mods'}
-                      </span>
-
-                      {/* Delete empty batch button (only if 0 modules and not Batch 1) */}
-                      {count === 0 && b !== 'Batch 1' && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteBatch(b, e)}
-                          title={`Delete empty ${b}`}
-                          className={`ml-1 p-0.5 rounded hover:bg-black/20 ${isSelected ? 'text-white/80 hover:text-white' : 'text-[var(--text-muted)] hover:text-red-400'}`}
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* All Batches Overview Tab */}
-                <button
-                  type="button"
-                  onClick={() => setActiveBatch('ALL')}
-                  className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex-shrink-0 ${
-                    activeBatch === 'ALL'
-                      ? 'bg-zinc-800 text-white border-zinc-600'
-                      : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-strong)] hover:bg-[var(--surface-hover)]'
-                  }`}
-                >
-                  🌐 All Batches (Overview)
-                </button>
-              </div>
-            </div>
-
-            {/* Active Batch Header Banner */}
-            <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-strong)] text-xs flex items-center justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-2">
-                <Eye size={14} className="text-[var(--color-brand)]" />
-                <span>
-                  Active Cohort: <strong className="text-[var(--text-primary)] font-bold">{activeBatch === 'ALL' ? 'All Batches (Curriculum Overview)' : activeBatch}</strong>
-                </span>
-              </div>
-              {activeBatch !== 'ALL' && (
-                <span className="text-cyan-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Showing only modules belonging to {activeBatch}
-                </span>
+                </form>
               )}
             </div>
 
-            {/* Migration helper for existing unassigned modules */}
-            {unassignedModules.length > 0 && activeBatch !== 'ALL' && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between text-xs text-amber-300">
-                <span>
-                  Found {unassignedModules.length} module(s) created without batch assignment.
-                </span>
-                <button
-                  type="button"
-                  onClick={handleClaimUnassigned}
-                  className="px-3 py-1 bg-amber-500 text-black font-bold rounded-lg hover:bg-amber-400"
-                >
-                  Assign to {activeBatch}
-                </button>
+            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mt-2">
+              <span>Current view: <strong className="text-[var(--text-primary)]">{activeBatch}</strong></span>
+              <span className="text-cyan-400 font-semibold">{currentBatchModules.length} module(s) in this batch</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selectedWorkshop && (
+        <div className="space-y-6">
+          {/* Migration helper for existing unassigned modules */}
+          {unassignedModules.length > 0 && activeBatch !== 'ALL' && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between text-sm text-amber-300 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Layers size={18} className="text-amber-400" />
+                <span>Found {unassignedModules.length} module(s) created without batch assignment.</span>
               </div>
+              <button
+                type="button"
+                onClick={handleClaimUnassigned}
+                className="px-4 py-2 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 text-xs"
+              >
+                Assign to {activeBatch}
+              </button>
+            </div>
+          )}
+
+          {/* Active Batch Banner */}
+          <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-[var(--text-secondary)] shadow-sm">
+            <div className="flex items-center gap-2">
+              <Eye size={16} className="text-[var(--color-brand)]" />
+              <span>Editing Cohort: <strong className="text-[var(--text-primary)] text-base">{activeBatch === 'ALL' ? 'All Batches (Curriculum Overview)' : activeBatch}</strong></span>
+            </div>
+            {activeBatch !== 'ALL' && (
+              <span className="text-cyan-400 font-semibold flex items-center gap-1.5 text-xs">
+                <CheckCircle2 size={14} /> Modules & videos below are isolated to {activeBatch}
+              </span>
             )}
           </div>
 
