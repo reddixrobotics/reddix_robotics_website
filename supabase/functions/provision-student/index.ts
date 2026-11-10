@@ -50,30 +50,47 @@ serve(async (req) => {
       })
     }
 
-    // Create the secure student login
+    // 1. Create or retrieve the secure student login
+    let targetUserId = ''
     const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { role: 'USER' },
     })
-    if (createError) throw createError
 
-    // Lock role to USER
-    await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'USER' } })
-
-    // Enroll in course with batch tag
-    if (courseId) {
-      const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
-        user_id: newAuthUser.user.id,
-        course_id: courseId,
-        batch_name: batchName ? String(batchName).trim() : 'Batch 1',
-        status: 'ACTIVE',
-      })
-      if (enrollError) throw enrollError
+    if (createError) {
+      // If student already exists, find their ID and update password
+      if (createError.message.includes('already registered') || createError.message.includes('already exists') || (createError as any).status === 422) {
+        const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+        const existing = users?.find((u: any) => u.email.toLowerCase() === email.toLowerCase())
+        if (!existing) throw createError
+        targetUserId = existing.id
+        await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+          password,
+          email_confirm: true,
+          app_metadata: { role: 'USER' },
+          user_metadata: { role: 'USER' },
+        })
+      } else {
+        throw createError
+      }
+    } else {
+      targetUserId = newAuthUser.user.id
+      // Lock role to USER
+      await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'USER' } })
     }
 
-    return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), {
+    // 2. Always create/record enrollment so the student immediately appears in LMS Enrolled list
+    const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
+      user_id: targetUserId,
+      course_id: courseId || null,
+      batch_name: batchName ? String(batchName).trim() : 'Batch 1',
+      status: 'ACTIVE',
+    })
+    if (enrollError) throw enrollError
+
+    return new Response(JSON.stringify({ success: true, userId: targetUserId }), {
       status: 200,
       headers: { ...cors, 'Content-Type': 'application/json' },
     })

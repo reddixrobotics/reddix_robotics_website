@@ -26,11 +26,44 @@ export default function AdminLMS() {
   }, []);
 
   async function fetchData() {
-    const { data: cData } = await supabase.from('Workshop').select('*');
-    if (cData) setCourses(cData);
+    try {
+      const { data: cData } = await supabase.from('Workshop').select('*');
+      if (cData) setCourses(cData);
 
-    const { data: eData } = await supabase.rpc('get_lms_student_details');
-    if (eData) setEnrollments(eData);
+      const { data: eData, error: rpcError } = await supabase.rpc('get_lms_student_details');
+      if (!rpcError && eData && eData.length > 0) {
+        setEnrollments(eData);
+        return;
+      }
+
+      // Fallback 1: View
+      const { data: vData, error: vError } = await supabase.from('lms_student_details').select('*');
+      if (!vError && vData && vData.length > 0) {
+        setEnrollments(vData);
+        return;
+      }
+
+      // Fallback 2: Direct query on Enrollment
+      const { data: dirData } = await supabase
+        .from('Enrollment')
+        .select('id, user_id, status, batch_name, created_at, course_id, Workshop(title)')
+        .order('created_at', { ascending: false });
+
+      if (dirData && dirData.length > 0) {
+        setEnrollments(dirData.map((d: any) => ({
+          enrollment_id: d.id,
+          student_email: 'Student (' + (d.user_id?.slice(0, 8) || 'User') + ')',
+          course_title: d.Workshop?.title || 'General Course (Unassigned)',
+          batch_name: d.batch_name || 'Batch 1',
+          status: d.status || 'ACTIVE',
+          enrolled_at: d.created_at
+        })));
+      } else {
+        setEnrollments([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch LMS data:', err);
+    }
   }
 
   // Extract distinct batches for filter
