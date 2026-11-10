@@ -8,7 +8,7 @@ export default function AdminLMS() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [batchName, setBatchName] = useState('Batch 1');
+  const [batchName, setBatchName] = useState('Batch 2');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
