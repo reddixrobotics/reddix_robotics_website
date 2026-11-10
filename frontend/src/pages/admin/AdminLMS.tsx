@@ -256,7 +256,7 @@ export default function AdminLMS() {
             </h2>
 
             {/* Batch Filter Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1 flex-nowrap">
               <span className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1">
                 <Filter size={12} /> Filter Batch:
               </span>
