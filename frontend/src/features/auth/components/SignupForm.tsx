@@ -4,9 +4,11 @@ import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'luci
 import { InputField } from '@/components/ui/Input';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/routes/routePaths';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SignupForm() {
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
   
   // Form State
   const [name, setName] = useState('');
@@ -68,29 +70,35 @@ export default function SignupForm() {
     setStatus('submitting');
     setErrorMessage('');
 
-    // Send API request to backend
-    
+    try {
       const { supabase } = await import('@/lib/supabase');
-      supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: { name, phone }
         }
-      })
-      .then(({ error }) => {
-        if (error) {
-          setStatus('error');
-          setErrorMessage(error.message);
-        } else {
-          setStatus('success');
-          setTimeout(() => navigate(ROUTES.LOGIN), 1500);
-        }
-      })
-      .catch((err) => {
-        setStatus('error');
-        setErrorMessage(err.message || 'An error occurred during registration.');
       });
+
+      if (error) {
+        setStatus('error');
+        setErrorMessage(error.message);
+      } else {
+        setStatus('success');
+        if (data?.session) {
+          try {
+            await checkAuth();
+          } catch {
+            // ignore
+          }
+        }
+        // Redirect directly to website home, keeping user on the main website
+        setTimeout(() => navigate(ROUTES.HOME), 1500);
+      }
+    } catch (err: any) {
+      setStatus('error');
+      setErrorMessage(err.message || 'An error occurred during registration.');
+    }
   };
 
   const getStrengthColor = () => {
@@ -255,7 +263,7 @@ export default function SignupForm() {
         {status === 'success' && (
           <div className="p-3 bg-green-500/10 border border-green-500/50 rounded-lg flex items-center justify-center gap-2 text-green-500 animate-in fade-in zoom-in-95">
             <ShieldCheck size={18} className="text-green-500" />
-            <p className="text-sm font-medium">Account created! Redirecting to login...</p>
+            <p className="text-sm font-medium">Account created! Redirecting to website...</p>
           </div>
         )}
 
@@ -287,4 +295,3 @@ export default function SignupForm() {
     </div>
   );
 }
-

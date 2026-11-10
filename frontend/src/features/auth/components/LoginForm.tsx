@@ -74,13 +74,41 @@ export default function LoginForm() {
     const redirectUrl = searchParams.get('redirect');
     if (redirectUrl) {
       navigate(redirectUrl);
-    } else if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ORDER_MANAGER' || role === 'CONTENT_MANAGER' || role === 'CAREER_MANAGER') {
-      navigate(ROUTES.ADMIN);
-    } else if (role === 'TEACHER') {
-      navigate(ROUTES.TEACHER);
-    } else {
-      navigate(ROUTES.PORTAL);
+      return;
     }
+    
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ORDER_MANAGER' || role === 'CONTENT_MANAGER' || role === 'CAREER_MANAGER') {
+      navigate(ROUTES.ADMIN);
+      return;
+    }
+    
+    if (role === 'TEACHER') {
+      navigate(ROUTES.TEACHER);
+      return;
+    }
+
+    // For regular users: Only redirect to LMS if they are actively enrolled in a workshop by an admin
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: enrollments } = await supabase
+          .from('Enrollment')
+          .select('id')
+          .eq('user_id', user.id)
+          .in('status', ['ACTIVE', 'active'])
+          .limit(1);
+
+        if (enrollments && enrollments.length > 0) {
+          navigate(ROUTES.PORTAL);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not check enrollment on login:', e);
+    }
+
+    // General users without active admin-assigned course: go to website Home
+    navigate(ROUTES.HOME);
   };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {

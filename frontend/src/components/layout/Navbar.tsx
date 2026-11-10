@@ -26,7 +26,8 @@ import {
   AnimatePresence,
   useReducedMotion,
 } from 'framer-motion';
-import { Menu, X, LogIn, UserPlus, Heart, ShoppingCart, User } from 'lucide-react';
+import { Menu, X, LogIn, UserPlus, Heart, ShoppingCart, User, BookOpen } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { useScrolled, useTheme } from '@/hooks';
 import { NAV_LINKS, AUTH_LINKS, BRAND_NAME } from '@/data';
 import { ROUTES } from '@/routes/routePaths';
@@ -149,6 +150,7 @@ interface MobileDrawerProps {
   userRole: string | null;
   logout: () => void;
   navLinks: Array<{ label: string; href: string }>;
+  hasLmsEnrollment?: boolean;
 }
 
 const MobileDrawer = memo(function MobileDrawer({ 
@@ -158,7 +160,8 @@ const MobileDrawer = memo(function MobileDrawer({
   isAuthenticated,
   userRole, 
   logout,
-  navLinks
+  navLinks,
+  hasLmsEnrollment = false
 }: MobileDrawerProps) {
   const { totalItems: cartItems } = useCart();
   const { totalItems: wishlistItems } = useWishlist();
@@ -323,6 +326,30 @@ const MobileDrawer = memo(function MobileDrawer({
 
               {isAuthenticated && (!userRole || userRole === 'USER') && (
                 <>
+                  {hasLmsEnrollment && (
+                    <motion.div variants={reducedItem}>
+                      <NavLink
+                        to={ROUTES.PORTAL}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          cn(
+                            'flex items-center justify-between w-full px-3 py-3',
+                            'rounded-lg text-[0.9375rem] font-medium',
+                            'transition-colors duration-[var(--duration-base)]',
+                            'focus-ring min-h-[44px]',
+                            isActive
+                              ? 'text-[var(--color-brand)] bg-[var(--color-brand-subtle)]'
+                              : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]',
+                          )
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          <BookOpen size={18} />
+                          My Courses
+                        </div>
+                      </NavLink>
+                    </motion.div>
+                  )}
                   <motion.div variants={reducedItem}>
                     <NavLink
                       to={ROUTES.WISHLIST}
@@ -532,7 +559,31 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const hamburgerRef        = useRef<HTMLButtonElement>(null);
   
-  const { isAuthenticated, userRole, logout } = useAuth();
+  const { isAuthenticated, userRole, logout, user, isAdmin } = useAuth();
+  const [hasLmsEnrollment, setHasLmsEnrollment] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setHasLmsEnrollment(false);
+      return;
+    }
+
+    if (isAdmin && isAdmin()) {
+      setHasLmsEnrollment(true);
+      return;
+    }
+
+    supabase
+      .from('Enrollment')
+      .select('id')
+      .eq('user_id', user.id)
+      .in('status', ['ACTIVE', 'active'])
+      .limit(1)
+      .then(({ data, error }) => {
+        setHasLmsEnrollment(Boolean(!error && data && data.length > 0));
+      })
+      .catch(() => setHasLmsEnrollment(false));
+  }, [isAuthenticated, user, isAdmin]);
   const { totalItems: cartItems } = useCart();
   const { totalItems: wishlistItems } = useWishlist();
 
@@ -619,9 +670,11 @@ export default function Navbar() {
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated && (!userRole || userRole === 'USER') && (
               <div className="flex items-center gap-1 mr-2">
-                <Link to={ROUTES.PORTAL} className="flex items-center gap-2 px-3 py-1.5 mr-2 bg-[var(--color-brand)]/10 text-[var(--color-brand)] font-bold rounded-full hover:bg-[var(--color-brand)] hover:text-white transition-all text-sm">
-                  My Courses
-                </Link>
+                {hasLmsEnrollment && (
+                  <Link to={ROUTES.PORTAL} className="flex items-center gap-2 px-3 py-1.5 mr-2 bg-[var(--color-brand)]/10 text-[var(--color-brand)] font-bold rounded-full hover:bg-[var(--color-brand)] hover:text-white transition-all text-sm">
+                    My Courses
+                  </Link>
+                )}
                 <Link
                   to={ROUTES.PROFILE}
                   className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
@@ -702,9 +755,11 @@ export default function Navbar() {
           <div className="flex items-center gap-1 md:hidden">
             {isAuthenticated && (!userRole || userRole === 'USER') && (
               <>
-                <Link to={ROUTES.PORTAL} className="p-1 text-[var(--color-brand)] mr-1" aria-label="My Courses">
-                  <span className="text-[10px] font-bold uppercase border border-[var(--color-brand)] px-2 py-0.5 rounded-full">Courses</span>
-                </Link>
+                {hasLmsEnrollment && (
+                  <Link to={ROUTES.PORTAL} className="p-1 text-[var(--color-brand)] mr-1" aria-label="My Courses">
+                    <span className="text-[10px] font-bold uppercase border border-[var(--color-brand)] px-2 py-0.5 rounded-full">Courses</span>
+                  </Link>
+                )}
                 <Link
                   to={ROUTES.PROFILE}
                 className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--color-brand)] transition-colors focus-ring rounded-full"
@@ -734,6 +789,7 @@ export default function Navbar() {
         userRole={userRole}
         logout={logout}
         navLinks={navLinks}
+        hasLmsEnrollment={hasLmsEnrollment}
       />
     </>
   );

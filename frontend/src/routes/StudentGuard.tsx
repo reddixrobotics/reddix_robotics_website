@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/routes/routePaths';
 
 export default function StudentGuard() {
-  const { isAuthenticated, userRole, loading, isAdmin } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return null; // wait for auth to resolve
@@ -13,14 +13,9 @@ export default function StudentGuard() {
     return <Outlet />;
   }
 
-  // If this is a regular student, kick them to the LMS
-  if (isAuthenticated && userRole === 'USER') {
-    return <Navigate to={ROUTES.PORTAL} replace />;
-  }
-
-  // TEACHER should be redirected to their own portal too
-  if (isAuthenticated && userRole === 'TEACHER') {
-    return <Navigate to={ROUTES.TEACHER} replace />;
+  // If already authenticated and visiting /login or /signup, redirect to the website home
+  if (isAuthenticated && (location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.SIGNUP)) {
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return <Outlet />;
