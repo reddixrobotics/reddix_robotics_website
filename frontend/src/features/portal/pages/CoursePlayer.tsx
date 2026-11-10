@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, Video, FileText, ChevronLeft, ChevronDown, ChevronRight, Lock } from 'lucide-react';
+import { BookOpen, Video, FileText, ChevronLeft, ChevronDown, ChevronRight, Lock, Layers } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
 import SecureDocumentViewer from '../components/SecureDocumentViewer';
 import DoubtsPanel from '../components/DoubtsPanel';
@@ -11,6 +11,7 @@ export default function CoursePlayer() {
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [studentBatch, setStudentBatch] = useState<string>('Batch 1');
   
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [materials, setMaterials] = useState<any[]>([]);
@@ -39,19 +40,43 @@ export default function CoursePlayer() {
 
   async function fetchCourseData() {
     setLoading(true);
-    // Fetch Course
+
+    // 1. Fetch Student's Enrollment to identify their assigned batch
+    let currentBatch = 'Batch 1';
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: enrollment } = await supabase
+        .from('Enrollment')
+        .select('batch_name')
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .eq('status', 'ACTIVE')
+        .maybeSingle();
+
+      if (enrollment?.batch_name) {
+        currentBatch = enrollment.batch_name;
+        setStudentBatch(enrollment.batch_name);
+      }
+    }
+
+    // 2. Fetch Course
     const { data: cData } = await supabase.from('Workshop').select('*').eq('id', courseId).single();
     if (cData) setCourse(cData);
 
-    // Fetch Modules & Lessons
-    const { data: mData } = await supabase.from('Module').select('*, Lesson(*)').eq('course_id', courseId).order('order_index');
+    // 3. Fetch Modules & Lessons
+    const { data: mData } = await supabase
+      .from('Module')
+      .select('*, Lesson(*)')
+      .eq('course_id', courseId)
+      .order('order_index');
+
     if (mData) {
       setModules(mData);
       if (mData.length > 0) setExpandedModules(new Set([mData[0].id]));
       
       // Auto-select first lesson
       if (mData.length > 0 && mData[0].Lesson && mData[0].Lesson.length > 0) {
-        handleLessonSelect(mData[0].Lesson[0]);
+        handleLessonSelect(mData[0].Lesson[0], currentBatch);
       }
     }
     setLoading(false);
@@ -64,15 +89,27 @@ export default function CoursePlayer() {
     setExpandedModules(newSet);
   };
 
-  const handleLessonSelect = async (lesson: any) => {
+  const handleLessonSelect = async (lesson: any, batchOverride?: string) => {
     setActiveLesson(lesson);
     setActiveMaterial(null);
     setMaterials([]);
 
+    const targetBatch = (batchOverride || studentBatch).trim().toLowerCase();
+
     // Fetch Materials for this lesson
-    const { data: matData } = await supabase.from('LearningMaterial').select('*').eq('lesson_id', lesson.id).order('order_index');
+    const { data: matData } = await supabase
+      .from('LearningMaterial')
+      .select('*')
+      .eq('lesson_id', lesson.id)
+      .order('order_index');
+
     if (matData && matData.length > 0) {
-      
+      // Filter materials for this student's specific batch (or universal 'ALL' materials)
+      const accessibleMaterials = matData.filter((mat: any) => {
+        if (!mat.batch_name || mat.batch_name === 'ALL') return true;
+        return mat.batch_name.trim().toLowerCase() === targetBatch;
+      });
+
       // Enforce specific order: Video -> PPT -> PDF regardless of database order
       const getRank = (mat: any) => {
         const str = (mat.title + ' ' + mat.material_type).toLowerCase();
@@ -82,10 +119,12 @@ export default function CoursePlayer() {
         return 4;
       };
       
-      matData.sort((a, b) => getRank(a) - getRank(b));
+      accessibleMaterials.sort((a, b) => getRank(a) - getRank(b));
 
-      setMaterials(matData);
-      setActiveMaterial(matData[0]); // Auto-select first material (Video if present)
+      setMaterials(accessibleMaterials);
+      if (accessibleMaterials.length > 0) {
+        setActiveMaterial(accessibleMaterials[0]); // Auto-select first material
+      }
     }
   };
 
@@ -101,7 +140,13 @@ export default function CoursePlayer() {
           <Link to="/portal" className="text-sm font-bold text-[var(--color-brand)] flex items-center gap-2 hover:underline mb-4">
             <ChevronLeft size={16} /> Back to Dashboard
           </Link>
-          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">{course.title}</h2>
+          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight mb-2">{course.title}</h2>
+          
+          {/* Student Batch Indicator */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--surface-tertiary)] border border-[var(--border-strong)] text-xs font-semibold text-[var(--text-secondary)]">
+            <Layers size={12} className="text-[var(--color-brand)]" />
+            <span>Enrolled: {studentBatch}</span>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
@@ -152,7 +197,7 @@ export default function CoursePlayer() {
             {/* Material Tabs */}
             {materials.length > 0 ? (
               <>
-                <div className="flex gap-2 border-b border-[var(--border-strong)] pb-2">
+                <div className="flex gap-2 border-b border-[var(--border-strong)] pb-2 flex-wrap">
                   {materials.map(mat => (
                     <button
                       key={mat.id}
@@ -171,18 +216,20 @@ export default function CoursePlayer() {
 
                 {/* Secure Material Viewer */}
                 <div className="mt-4">
-                  {activeMaterial.material_type === 'VIDEO' ? (
-                    <SecureVideoPlayer url={activeMaterial.file_path} title={activeMaterial.title} />
-                  ) : (
-                    <SecureDocumentViewer url={activeMaterial.file_path} type={activeMaterial.material_type} title={activeMaterial.title} />
+                  {activeMaterial && (
+                    activeMaterial.material_type === 'VIDEO' ? (
+                      <SecureVideoPlayer url={activeMaterial.file_path} title={activeMaterial.title} />
+                    ) : (
+                      <SecureDocumentViewer url={activeMaterial.file_path} type={activeMaterial.material_type} title={activeMaterial.title} />
+                    )
                   )}
                 </div>
               </>
             ) : (
               <div className="p-12 text-center border border-dashed border-[var(--border-strong)] rounded-2xl bg-[var(--surface-secondary)] text-[var(--text-muted)] flex flex-col items-center">
                 <Lock size={48} className="mb-4 text-[var(--border-strong)]" />
-                <p className="font-bold text-lg">No content uploaded yet.</p>
-                <p>The instructor has not uploaded videos or notes for this lesson.</p>
+                <p className="font-bold text-lg">No content uploaded yet for this lesson.</p>
+                <p>The instructor has not released recordings or notes for this lesson yet.</p>
               </div>
             )}
 

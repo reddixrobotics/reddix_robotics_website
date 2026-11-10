@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PlayCircle } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { PlayCircle, Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { ROUTES, buildPath } from '@/routes/routePaths';
 
 export default function StudentDashboard() {
@@ -18,6 +18,7 @@ export default function StudentDashboard() {
             id,
             status,
             course_id,
+            batch_name,
             Workshop (
               id,
               title,
@@ -29,13 +30,14 @@ export default function StudentDashboard() {
           
         if (error) throw error;
         
-        // Map the relation array correctly based on Supabase return format
-        console.log("Raw Enrollments from DB:", enrollments);
-        const enrolledCourses = enrollments?.filter((e: any) => e.Workshop).map((e: any) => ({ ...e.Workshop, course_id: e.course_id })) || [];
+        const enrolledCourses = enrollments?.filter((e: any) => e.Workshop).map((e: any) => ({
+          ...e.Workshop,
+          course_id: e.course_id,
+          batch_name: e.batch_name || 'Batch 1'
+        })) || [];
         setCourses(enrolledCourses);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load enrollments:', err);
-        alert('Error loading enrollments: ' + err.message);
       } finally {
         setLoading(false);
       }
@@ -86,6 +88,12 @@ export default function StudentDashboard() {
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-[var(--surface-tertiary)] border border-[var(--border-strong)] text-[var(--color-brand)] inline-flex items-center gap-1">
+                    <Layers size={10} />
+                    {course.batch_name}
+                  </span>
+                </div>
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2">{course.title}</h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2 flex-grow">{course.description}</p>
                 

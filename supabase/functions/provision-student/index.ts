@@ -42,7 +42,7 @@ serve(async (req) => {
       })
     }
 
-    const { email, password, courseId } = await req.json()
+    const { email, password, courseId, batchName } = await req.json()
     if (!email || !password) {
       return new Response(JSON.stringify({ error: 'Missing required credentials: email, password' }), {
         status: 400,
@@ -62,11 +62,12 @@ serve(async (req) => {
     // Lock role to USER
     await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'USER' } })
 
-    // Enroll in course
+    // Enroll in course with batch tag
     if (courseId) {
       const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
         user_id: newAuthUser.user.id,
         course_id: courseId,
+        batch_name: batchName ? String(batchName).trim() : 'Batch 1',
         status: 'ACTIVE',
       })
       if (enrollError) throw enrollError
