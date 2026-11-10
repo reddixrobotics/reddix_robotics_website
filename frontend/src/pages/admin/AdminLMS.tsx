@@ -137,7 +137,7 @@ export default function AdminLMS() {
                 <h2 style="color: #b91c1c;">Welcome to Reddix Robotics!</h2>
                 <p>Your student portal account has been created successfully.</p>
                 <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                  <p><strong>Login URL:</strong> <a href="https://reddixrobotics.com/login">reddixrobotics.com/login</a></p>
+                  <p><strong>Login URL:</strong> <a href="https://reddixrobotics.com/login?redirect=%2Fportal">reddixrobotics.com/login</a></p>
                   <p><strong>Email:</strong> ${email}</p>
                   <p><strong>Password:</strong> ${password}</p>
                 </div>

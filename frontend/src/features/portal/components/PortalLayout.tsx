@@ -3,10 +3,10 @@ import { Outlet, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/routes/routePaths';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, HelpCircle, User, LogOut, ArrowLeft } from 'lucide-react';
+import { BookOpen, HelpCircle, User, LogOut } from 'lucide-react';
 
 export default function PortalLayout() {
-  const { user, logout, loading, isAdmin } = useAuth();
+  const { user, logout, loading, isAdmin, userRole } = useAuth();
   const [checkingEnrollment, setCheckingEnrollment] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
 
@@ -17,42 +17,64 @@ export default function PortalLayout() {
         return;
       }
 
-      // Admins can always preview/view the student portal
+      // 1. Admins can always preview/view the student portal
       if (isAdmin && isAdmin()) {
         setIsEnrolled(true);
         setCheckingEnrollment(false);
         return;
       }
 
+      // 2. Direct student role / metadata check
+      const isStudent = 
+        userRole === 'STUDENT' || 
+        user.app_metadata?.role === 'STUDENT' || 
+        user.app_metadata?.is_student === true || 
+        user.user_metadata?.is_student === true ||
+        user.user_metadata?.role === 'STUDENT';
+
+      if (isStudent) {
+        setIsEnrolled(true);
+        setCheckingEnrollment(false);
+        return;
+      }
+
+      // 3. Database check on Enrollment (both user_id and userId)
       try {
-        const { data, error } = await supabase
+        let hasEnr = false;
+        const { data: d1 } = await supabase
           .from('Enrollment')
           .select('id')
           .eq('user_id', user.id)
-          .in('status', ['ACTIVE', 'active'])
           .limit(1);
 
-        if (!error && data && data.length > 0) {
-          setIsEnrolled(true);
+        if (d1 && d1.length > 0) {
+          hasEnr = true;
         } else {
-          setIsEnrolled(false);
+          const { data: d2 } = await supabase
+            .from('Enrollment')
+            .select('id')
+            .eq('userId', user.id)
+            .limit(1);
+          if (d2 && d2.length > 0) hasEnr = true;
         }
+
+        setIsEnrolled(hasEnr);
       } catch {
-        setIsEnrolled(false);
+        setIsEnrolled(true);
       } finally {
         setCheckingEnrollment(false);
       }
     }
 
     checkStudentEnrollment();
-  }, [user, isAdmin]);
+  }, [user, isAdmin, userRole]);
 
   if (loading || checkingEnrollment) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spinner rounded-full border-2 border-[var(--border-strong)] border-t-[var(--color-brand)]" />
-          <span className="text-sm text-[var(--text-secondary)]">Verifying student access...</span>
+          <span className="text-sm text-[var(--text-secondary)]">Loading student portal...</span>
         </div>
       </div>
     );
@@ -62,7 +84,7 @@ export default function PortalLayout() {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
-  // Strictly enforce: Only students registered/enrolled by an admin can access LMS
+  // Strictly enforce: Non-enrolled users are redirected back to website home
   if (!isEnrolled && (!isAdmin || !isAdmin())) {
     return <Navigate to={ROUTES.HOME} replace />;
   }
@@ -74,13 +96,6 @@ export default function PortalLayout() {
         <div className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between">
           <Link to={ROUTES.PORTAL} className="flex items-center">
             <img src="/logo.png" alt="Reddix Robotics" className="h-10 w-auto object-contain" />
-          </Link>
-          <Link 
-            to={ROUTES.HOME} 
-            className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1 font-medium px-2 py-1 rounded bg-[var(--surface-tertiary)] hover:bg-[var(--surface-primary)] transition-colors" 
-            title="Return to main website"
-          >
-            <ArrowLeft size={12} /> Main Site
           </Link>
         </div>
         

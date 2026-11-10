@@ -29,7 +29,7 @@ export default function LoginForm() {
     // DEVICE LIMIT CHECK (Phase 2 Security)
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && (!role || role === 'USER')) {
+      if (user && (!role || role === 'USER' || role === 'STUDENT')) {
         let deviceId = localStorage.getItem('redx_device_id');
         if (!deviceId) {
           deviceId = crypto.randomUUID();
@@ -80,34 +80,57 @@ export default function LoginForm() {
     if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ORDER_MANAGER' || role === 'CONTENT_MANAGER' || role === 'CAREER_MANAGER') {
       navigate(ROUTES.ADMIN);
       return;
-    }
+    } 
     
     if (role === 'TEACHER') {
       navigate(ROUTES.TEACHER);
       return;
     }
 
-    // For regular users: Only redirect to LMS if they are actively enrolled in a workshop by an admin
+    // Check if user is an LMS student (via metadata or enrollment)
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: enrollments } = await supabase
+        const isStudent = 
+          role === 'STUDENT' || 
+          user.app_metadata?.role === 'STUDENT' || 
+          user.app_metadata?.is_student === true || 
+          user.user_metadata?.is_student === true ||
+          user.user_metadata?.role === 'STUDENT';
+
+        if (isStudent) {
+          navigate(ROUTES.PORTAL);
+          return;
+        }
+
+        // Database check on Enrollment (supports both user_id and userId)
+        const { data: e1, error: err1 } = await supabase
           .from('Enrollment')
           .select('id')
           .eq('user_id', user.id)
-          .in('status', ['ACTIVE', 'active'])
           .limit(1);
 
-        if (enrollments && enrollments.length > 0) {
+        if (!err1 && e1 && e1.length > 0) {
+          navigate(ROUTES.PORTAL);
+          return;
+        }
+
+        const { data: e2, error: err2 } = await supabase
+          .from('Enrollment')
+          .select('id')
+          .eq('userId', user.id)
+          .limit(1);
+
+        if (!err2 && e2 && e2.length > 0) {
           navigate(ROUTES.PORTAL);
           return;
         }
       }
     } catch (e) {
-      console.warn('Could not check enrollment on login:', e);
+      console.warn('Could not check student status on login:', e);
     }
 
-    // General users without active admin-assigned course: go to website Home
+    // Default for general users without active course enrollment: go to website Home
     navigate(ROUTES.HOME);
   };
 

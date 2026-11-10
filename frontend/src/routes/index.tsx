@@ -178,7 +178,7 @@ export const router = createBrowserRouter([
   },       // end StudentGuard
   {
     path: ROUTES.PORTAL,
-    element: <RoleGuard allowedRoles={['USER', 'ADMIN', 'SUPER_ADMIN']} />,
+    element: <RoleGuard allowedRoles={['USER', 'STUDENT', 'ADMIN', 'SUPER_ADMIN']} />,
     children: [
       {
         element: withSuspense(PortalLayout),

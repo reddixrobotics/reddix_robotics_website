@@ -12,7 +12,11 @@ export default function StudentDashboard() {
     async function loadEnrollments() {
       try {
         // Because of RLS, this will only return enrollments for the logged in user
-        const { data: enrollments, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        let enrollments: any = null;
+        const { data: e1, error: err1 } = await supabase
           .from('Enrollment')
           .select(`
             id,
@@ -26,7 +30,28 @@ export default function StudentDashboard() {
               posterUrl
             )
           `)
-          .eq('status', 'ACTIVE');
+          .eq('user_id', user.id);
+
+        if (!err1 && e1 && e1.length > 0) {
+          enrollments = e1;
+        } else {
+          const { data: e2 } = await supabase
+            .from('Enrollment')
+            .select(`
+              id,
+              status,
+              course_id,
+              batch_name,
+              Workshop (
+                id,
+                title,
+                description,
+                posterUrl
+              )
+            `)
+            .eq('userId', user.id);
+          enrollments = e2;
+        }
           
         if (error) throw error;
         

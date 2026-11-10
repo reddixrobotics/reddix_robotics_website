@@ -45,13 +45,25 @@ export default function CoursePlayer() {
     let currentBatch = 'Batch 1';
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data: enrollment } = await supabase
+      let enrollment = null;
+      const { data: e1 } = await supabase
         .from('Enrollment')
         .select('batch_name')
         .eq('course_id', courseId)
         .eq('user_id', user.id)
-        .in('status', ['ACTIVE', 'active'])
         .maybeSingle();
+
+      if (e1?.batch_name) {
+        enrollment = e1;
+      } else {
+        const { data: e2 } = await supabase
+          .from('Enrollment')
+          .select('batch_name')
+          .eq('course_id', courseId)
+          .eq('userId', user.id)
+          .maybeSingle();
+        if (e2?.batch_name) enrollment = e2;
+      }
 
       if (enrollment?.batch_name) {
         currentBatch = enrollment.batch_name.trim();

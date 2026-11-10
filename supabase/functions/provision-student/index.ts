@@ -56,7 +56,7 @@ serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { role: 'USER' },
+      user_metadata: { role: 'STUDENT', is_student: true },
     })
 
     if (createError) {
@@ -69,7 +69,7 @@ serve(async (req) => {
         await supabaseAdmin.auth.admin.updateUserById(existing.id, {
           password,
           email_confirm: true,
-          app_metadata: { role: 'USER' },
+          app_metadata: { role: 'STUDENT', is_student: true },
           user_metadata: { role: 'USER' },
         })
       } else {
@@ -78,7 +78,7 @@ serve(async (req) => {
     } else {
       targetUserId = newAuthUser.user.id
       // Lock role to USER
-      await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'USER' } })
+      await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'STUDENT', is_student: true }, user_metadata: { role: 'STUDENT', is_student: true } })
     }
 
     // 2. Always create/record enrollment so the student immediately appears in LMS Enrolled list
