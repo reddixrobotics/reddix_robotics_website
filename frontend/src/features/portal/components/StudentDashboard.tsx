@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PlayCircle, Layers } from 'lucide-react';
+import { PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES, buildPath } from '@/routes/routePaths';
 
@@ -11,56 +11,89 @@ export default function StudentDashboard() {
   useEffect(() => {
     async function loadEnrollments() {
       try {
-        // Because of RLS, this will only return enrollments for the logged in user
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        let enrollments: any = null;
+        // 1. Fetch catalog of workshops first
+        const { data: allWorkshops } = await supabase
+          .from('Workshop')
+          .select('id, title, description, posterUrl');
+        const defaultWorkshop = (allWorkshops && allWorkshops.length > 0) ? allWorkshops[0] : null;
+
+        // 2. Fetch user's enrollments (trying user_id, fallback to userId)
+        let userEnrollments: any[] = [];
+        
         const { data: e1, error: err1 } = await supabase
           .from('Enrollment')
-          .select(`
-            id,
-            status,
-            course_id,
-            batch_name,
-            Workshop (
-              id,
-              title,
-              description,
-              posterUrl
-            )
-          `)
+          .select('id, status, course_id, batch_name')
           .eq('user_id', user.id);
 
         if (!err1 && e1 && e1.length > 0) {
-          enrollments = e1;
+          userEnrollments = e1;
         } else {
-          const { data: e2 } = await supabase
+          const { data: e2, error: err2 } = await supabase
             .from('Enrollment')
-            .select(`
-              id,
-              status,
-              course_id,
-              batch_name,
-              Workshop (
-                id,
-                title,
-                description,
-                posterUrl
-              )
-            `)
+            .select('id, status, course_id, batch_name')
             .eq('userId', user.id);
-          enrollments = e2;
+          if (!err2 && e2 && e2.length > 0) {
+            userEnrollments = e2;
+          }
         }
-          
-        if (error) throw error;
-        
-        const enrolledCourses = enrollments?.filter((e: any) => e.Workshop).map((e: any) => ({
-          ...e.Workshop,
-          course_id: e.course_id,
-          batch_name: e.batch_name || 'Batch 1'
-        })) || [];
-        setCourses(enrolledCourses);
+
+        // 3. Fallback to lms_student_details view if direct queries returned nothing
+        if (userEnrollments.length === 0 && user.email) {
+          try {
+            const { data: vData } = await supabase
+              .from('lms_student_details')
+              .select('*')
+              .ilike('student_email', user.email);
+
+            if (vData && vData.length > 0) {
+              userEnrollments = vData.map((v: any) => ({
+                id: v.enrollment_id,
+                course_id: v.workshop_id || v.course_id,
+                batch_name: v.batch_name || 'Batch 1',
+                status: v.status || 'ACTIVE'
+              }));
+            }
+          } catch {
+            // ignore view error
+          }
+        }
+
+        // 4. If user is tagged as STUDENT or has an unlinked enrollment, ensure default workshop is attached
+        const isStudentRole = 
+          user.app_metadata?.role === 'STUDENT' || 
+          user.app_metadata?.is_student === true ||
+          user.user_metadata?.is_student === true ||
+          user.user_metadata?.role === 'STUDENT';
+
+        if (userEnrollments.length === 0 && isStudentRole && defaultWorkshop) {
+          userEnrollments = [{
+            id: 'default-student-enrollment',
+            course_id: defaultWorkshop.id,
+            batch_name: 'Batch 1',
+            status: 'ACTIVE'
+          }];
+        }
+
+        // 5. Build accessible courses list
+        const activeCourses = userEnrollments.map((enr: any) => {
+          const matchedWorkshop = allWorkshops?.find((w: any) => w.id === enr.course_id) || defaultWorkshop || {
+            id: enr.course_id || 'default-course',
+            title: 'ROS 2 & Robotics Curriculum',
+            description: 'Comprehensive curriculum with video recordings and PDF notes.',
+            posterUrl: ''
+          };
+
+          return {
+            ...matchedWorkshop,
+            course_id: enr.course_id || matchedWorkshop.id,
+            batch_name: enr.batch_name || 'Batch 1'
+          };
+        });
+
+        setCourses(activeCourses);
       } catch (err: any) {
         console.error('Failed to load enrollments:', err);
       } finally {
@@ -113,7 +146,6 @@ export default function StudentDashboard() {
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">
-
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2">{course.title}</h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2 flex-grow">{course.description}</p>
                 

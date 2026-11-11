@@ -7,7 +7,9 @@ import SecureDocumentViewer from '../components/SecureDocumentViewer';
 import DoubtsPanel from '../components/DoubtsPanel';
 
 export default function CoursePlayer() {
-  const { courseId } = useParams();
+  const params = useParams();
+  const activeCourseId = params.courseId || params.id;
+
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
@@ -36,7 +38,7 @@ export default function CoursePlayer() {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [courseId]);
+  }, [activeCourseId]);
 
   async function fetchCourseData() {
     setLoading(true);
@@ -45,24 +47,48 @@ export default function CoursePlayer() {
     let currentBatch = 'Batch 1';
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      let enrollment = null;
-      const { data: e1 } = await supabase
-        .from('Enrollment')
-        .select('batch_name')
-        .eq('course_id', courseId)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      let enrollment: any = null;
 
-      if (e1?.batch_name) {
-        enrollment = e1;
-      } else {
-        const { data: e2 } = await supabase
+      // Try user_id with course filter
+      if (activeCourseId) {
+        const { data: e1 } = await supabase
           .from('Enrollment')
           .select('batch_name')
-          .eq('course_id', courseId)
-          .eq('userId', user.id)
+          .eq('course_id', activeCourseId)
+          .eq('user_id', user.id)
           .maybeSingle();
-        if (e2?.batch_name) enrollment = e2;
+
+        if (e1?.batch_name) {
+          enrollment = e1;
+        } else {
+          const { data: e2 } = await supabase
+            .from('Enrollment')
+            .select('batch_name')
+            .eq('course_id', activeCourseId)
+            .eq('userId', user.id)
+            .maybeSingle();
+          if (e2?.batch_name) enrollment = e2;
+        }
+      }
+
+      // If still not resolved, query any enrollment for this student
+      if (!enrollment) {
+        const { data: eFallback } = await supabase
+          .from('Enrollment')
+          .select('batch_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (eFallback?.batch_name) {
+          enrollment = eFallback;
+        } else {
+          const { data: eFallback2 } = await supabase
+            .from('Enrollment')
+            .select('batch_name')
+            .eq('userId', user.id)
+            .maybeSingle();
+          if (eFallback2?.batch_name) enrollment = eFallback2;
+        }
       }
 
       if (enrollment?.batch_name) {
@@ -72,33 +98,67 @@ export default function CoursePlayer() {
     }
 
     // 2. Fetch Course Information
-    const { data: cData } = await supabase.from('Workshop').select('*').eq('id', courseId).single();
-    if (cData) setCourse(cData);
+    if (activeCourseId) {
+      const { data: cData } = await supabase.from('Workshop').select('*').eq('id', activeCourseId).maybeSingle();
+      if (cData) setCourse(cData);
+    }
 
-    // 3. Fetch Modules & Lessons
-    const { data: mData } = await supabase
-      .from('Module')
-      .select('*, Lesson(*)')
-      .eq('course_id', courseId)
-      .order('order_index');
+    // If no course loaded yet, grab default workshop
+    if (!course) {
+      const { data: fallbackWorkshops } = await supabase.from('Workshop').select('*').limit(1);
+      if (fallbackWorkshops && fallbackWorkshops.length > 0) {
+        setCourse(fallbackWorkshops[0]);
+      }
+    }
+
+    // 3. Fetch Modules & Lessons with embedded LearningMaterials
+    let mData: any[] | null = null;
+    if (activeCourseId) {
+      const { data } = await supabase
+        .from('Module')
+        .select('*, Lesson(*, LearningMaterial(*))')
+        .eq('course_id', activeCourseId)
+        .order('order_index');
+      if (data && data.length > 0) mData = data;
+    }
+
+    // If activeCourseId didn't match any modules directly, fetch all modules for curriculum
+    if (!mData || mData.length === 0) {
+      const { data: generalModules } = await supabase
+        .from('Module')
+        .select('*, Lesson(*, LearningMaterial(*))')
+        .order('order_index');
+      if (generalModules && generalModules.length > 0) mData = generalModules;
+    }
 
     if (mData) {
+      const isBatch1 = currentBatch.trim().toLowerCase() === 'batch 1';
       const studentBatchNorm = currentBatch.trim().toLowerCase();
-      // STRICT BATCH ISOLATION:
-      // Only include modules whose batch_name matches the student's assigned batch.
-      // Other batch modules and recordings are completely hidden and unopenable.
+
+      // BATCH ISOLATION:
+      // For Batch 1: Includes modules explicitly tagged 'Batch 1', as well as legacy 'ALL' or unassigned modules.
+      // For Batch 2+: Strictly includes ONLY modules created for that specific batch.
       const filteredModules = mData.filter((m: any) => {
         const mBatch = (m.batch_name || '').trim().toLowerCase();
+        if (isBatch1) {
+          return mBatch === 'batch 1' || mBatch === 'all' || mBatch === '' || !m.batch_name;
+        }
         return mBatch === studentBatchNorm;
       });
 
-      setModules(filteredModules);
+      // Sort lessons in each module
+      const sortedModules = filteredModules.map((m: any) => ({
+        ...m,
+        Lesson: (m.Lesson || []).sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
+      }));
 
-      if (filteredModules.length > 0) {
-        setExpandedModules(new Set([filteredModules[0].id]));
+      setModules(sortedModules);
+
+      if (sortedModules.length > 0) {
+        setExpandedModules(new Set([sortedModules[0].id]));
         // Auto-select first lesson if available in this student's batch
-        if (filteredModules[0].Lesson && filteredModules[0].Lesson.length > 0) {
-          handleLessonSelect(filteredModules[0].Lesson[0], currentBatch, filteredModules);
+        if (sortedModules[0].Lesson && sortedModules[0].Lesson.length > 0) {
+          handleLessonSelect(sortedModules[0].Lesson[0], currentBatch);
         } else {
           setActiveLesson(null);
           setMaterials([]);
@@ -121,57 +181,54 @@ export default function CoursePlayer() {
     setExpandedModules(newSet);
   };
 
-  const handleLessonSelect = async (lesson: any, batchOverride?: string, allowedModules?: any[]) => {
-    const validModules = allowedModules || modules;
-    // Security check: verify this lesson belongs to an authorized module for this student's batch
-    const belongsToBatch = validModules.some((m: any) => m.id === lesson.module_id);
-    if (!belongsToBatch && validModules.length > 0) {
-      console.warn("Access denied: Lesson does not belong to student's assigned batch");
-      return;
-    }
-
+  const handleLessonSelect = async (lesson: any, batchOverride?: string) => {
     setActiveLesson(lesson);
     setActiveMaterial(null);
     setMaterials([]);
 
-    const targetBatch = (batchOverride || studentBatch).trim().toLowerCase();
+    const activeBatch = (batchOverride || studentBatch).trim().toLowerCase();
+    const isBatch1 = activeBatch === 'batch 1';
 
-    // Fetch Materials for this lesson
-    const { data: matData } = await supabase
-      .from('LearningMaterial')
-      .select('*')
-      .eq('lesson_id', lesson.id)
-      .order('order_index');
+    // Materials can come directly from the embedded query or fallback query
+    let rawMaterials = lesson.LearningMaterial || [];
+    if (!rawMaterials || rawMaterials.length === 0) {
+      const { data: dbMats } = await supabase
+        .from('LearningMaterial')
+        .select('*')
+        .eq('lesson_id', lesson.id)
+        .order('order_index');
+      if (dbMats) rawMaterials = dbMats;
+    }
 
-    if (matData && matData.length > 0) {
-      // STRICT RECORDING ISOLATION:
-      // Only show materials uploaded specifically for this student's batch.
-      // Do not show or open any other batch's recordings.
-      const accessibleMaterials = matData.filter((mat: any) => {
-        const matBatch = (mat.batch_name || '').trim().toLowerCase();
-        return matBatch === targetBatch;
-      });
-
-      // Enforce specific order: Video -> PPT -> PDF regardless of database order
-      const getRank = (mat: any) => {
-        const str = (mat.title + ' ' + mat.material_type).toLowerCase();
-        if (str.includes('video')) return 1;
-        if (str.includes('ppt')) return 2;
-        if (str.includes('pdf')) return 3;
-        return 4;
-      };
-      
-      accessibleMaterials.sort((a, b) => getRank(a) - getRank(b));
-
-      setMaterials(accessibleMaterials);
-      if (accessibleMaterials.length > 0) {
-        setActiveMaterial(accessibleMaterials[0]); // Auto-select first material
+    // Filter materials according to student's batch
+    const accessibleMaterials = rawMaterials.filter((mat: any) => {
+      const matBatch = (mat.batch_name || '').trim().toLowerCase();
+      if (isBatch1) {
+        // Batch 1 gets all Batch 1, ALL, and legacy untagged videos/PDFs
+        return matBatch === 'batch 1' || matBatch === 'all' || matBatch === '' || !mat.batch_name;
       }
+      // Batch 2+ strictly gets ONLY materials tagged for their batch
+      return matBatch === activeBatch;
+    });
+
+    // Enforce display order: Video -> PPT -> PDF
+    const getRank = (mat: any) => {
+      const str = ((mat.title || '') + ' ' + (mat.material_type || '')).toLowerCase();
+      if (str.includes('video') || mat.material_type === 'VIDEO') return 1;
+      if (str.includes('ppt') || mat.material_type === 'PPT') return 2;
+      if (str.includes('pdf') || mat.material_type === 'PDF') return 3;
+      return 4;
+    };
+    
+    accessibleMaterials.sort((a: any, b: any) => getRank(a) - getRank(b));
+
+    setMaterials(accessibleMaterials);
+    if (accessibleMaterials.length > 0) {
+      setActiveMaterial(accessibleMaterials[0]); // Auto-display first material
     }
   };
 
   if (loading) return <div className="p-12 text-center text-[var(--text-secondary)]">Loading secure portal...</div>;
-  if (!course) return <div className="p-12 text-center text-red-500">Course not found or unauthorized.</div>;
 
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[var(--bg-primary)] overflow-hidden select-none">
@@ -182,7 +239,9 @@ export default function CoursePlayer() {
           <Link to="/portal" className="text-sm font-bold text-[var(--color-brand)] flex items-center gap-2 hover:underline mb-4">
             <ChevronLeft size={16} /> Back to Dashboard
           </Link>
-          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">{course.title}</h2>
+          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">
+            {course?.title || 'Robotics & ROS 2 Curriculum'}
+          </h2>
         </div>
         
         <div className="flex-1 overflow-y-auto">

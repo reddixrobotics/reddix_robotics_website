@@ -58,6 +58,20 @@ export default function PortalLayout() {
           if (d2 && d2.length > 0) hasEnr = true;
         }
 
+        // 4. Fallback check on lms_student_details view by email
+        if (!hasEnr && user.email) {
+          try {
+            const { data: vData } = await supabase
+              .from('lms_student_details')
+              .select('enrollment_id')
+              .ilike('student_email', user.email)
+              .limit(1);
+            if (vData && vData.length > 0) hasEnr = true;
+          } catch {
+            // ignore view error
+          }
+        }
+
         setIsEnrolled(hasEnr);
       } catch {
         setIsEnrolled(true);
