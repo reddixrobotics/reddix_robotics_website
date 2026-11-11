@@ -70,15 +70,21 @@ export default function AdminLMS() {
   const distinctBatches = useMemo(() => {
     const batches = new Set<string>(['Batch 1', 'Batch 2', 'Batch 3']);
     enrollments.forEach(e => {
-      if (e.batch_name) batches.add(e.batch_name);
+      if (e.batch_name && e.batch_name.trim()) batches.add(e.batch_name.trim());
     });
     return Array.from(batches).sort();
   }, [enrollments]);
 
+  const batchOptions = useMemo(() => {
+    const set = new Set<string>(['Batch 1', 'Batch 2', 'Batch 3', ...distinctBatches]);
+    return Array.from(set).sort();
+  }, [distinctBatches]);
+
   // Filter enrollments by selected batch
   const filteredEnrollments = useMemo(() => {
     if (selectedBatchFilter === 'ALL') return enrollments;
-    return enrollments.filter(e => (e.batch_name || 'Batch 1') === selectedBatchFilter);
+    const filterNorm = selectedBatchFilter.trim().toLowerCase();
+    return enrollments.filter(e => (e.batch_name || 'Batch 1').trim().toLowerCase() === filterNorm);
   }, [enrollments, selectedBatchFilter]);
 
   const handleRemoveEnrollment = async (id: string) => {
@@ -371,20 +377,34 @@ export default function AdminLMS() {
                       <td className="p-3 text-[var(--text-primary)] font-medium">{e.student_email}</td>
                       <td className="p-3 text-[var(--text-secondary)] text-sm">{e.course_title}</td>
                       <td className="p-3">
-                        <div className="flex items-center gap-1.5">
-                          <Layers size={13} className="text-cyan-400 shrink-0" />
+                        <div className="relative inline-flex items-center">
+                          <Layers size={13} className="absolute left-2.5 text-cyan-400 pointer-events-none" />
                           <select
                             value={e.batch_name || 'Batch 1'}
-                            onChange={(evt) => handleUpdateBatch(e.enrollment_id, evt.target.value)}
-                            className="bg-[var(--bg-primary)] border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 px-2 py-1 rounded-lg text-xs font-bold outline-none cursor-pointer transition-colors"
-                            title="Click to change student batch"
+                            onChange={(evt) => {
+                              const val = evt.target.value;
+                              if (val === '__NEW__') {
+                                const custom = window.prompt('Enter new batch name (e.g. Batch 4, Dec 2026):');
+                                if (custom && custom.trim()) {
+                                  handleUpdateBatch(e.enrollment_id, custom.trim());
+                                }
+                              } else {
+                                handleUpdateBatch(e.enrollment_id, val);
+                              }
+                            }}
+                            className="appearance-none bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 font-bold text-xs pl-7 pr-7 py-1.5 rounded-lg cursor-pointer transition-all outline-none shadow-sm"
+                            title="Click to move this student to another batch"
                           >
-                            {Array.from(new Set(['Batch 1', 'Batch 2', 'Batch 3', e.batch_name].filter(Boolean))).map(b => (
-                              <option key={b} value={b} className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">
+                            {batchOptions.map(b => (
+                              <option key={b} value={b} className="bg-[#18181b] text-white">
                                 {b}
                               </option>
                             ))}
+                            <option value="__NEW__" className="bg-[#18181b] text-cyan-300 font-bold">
+                              ➕ Move to New Batch...
+                            </option>
                           </select>
+                          <ChevronDown size={12} className="absolute right-2 text-cyan-400 pointer-events-none" />
                         </div>
                       </td>
                       <td className="p-3">
