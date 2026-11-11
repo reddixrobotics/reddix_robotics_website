@@ -237,32 +237,49 @@ export default function AdminCourseBuilder() {
     
     setNewMaterialData(prev => ({ ...prev, isUploading: true }));
     try {
-      const publicUrl = newMaterialData.type === 'VIDEO_YOUTUBE' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
-      const finalType = newMaterialData.type === 'VIDEO_YOUTUBE' ? 'VIDEO' : newMaterialData.type;
+      const isFile = newMaterialData.type !== 'VIDEO_YOUTUBE';
+      const publicUrl = isFile ? await uploadFile(newMaterialData.file as File) : String(newMaterialData.file).trim();
+      const finalType = (newMaterialData.type === 'VIDEO_YOUTUBE' || newMaterialData.type === 'VIDEO_FILE') ? 'VIDEO' : newMaterialData.type;
       const chosenBatch = newMaterialData.batchName || (activeBatch === 'ALL' ? 'ALL' : activeBatch);
 
-      const { error } = await supabase.from('LearningMaterial').insert({
+      let { error } = await supabase.from('LearningMaterial').insert({
         lesson_id: lessonId,
-        title: newMaterialData.title,
+        title: newMaterialData.title.trim(),
         material_type: finalType,
-        batch_name: targetBatch,
+        batch_name: chosenBatch,
         file_path: publicUrl,
         order_index: currentLength
       });
+
+      if (error && error.message?.includes('batch_name')) {
+        const res = await supabase.from('LearningMaterial').insert({
+          lesson_id: lessonId,
+          title: newMaterialData.title.trim(),
+          material_type: finalType,
+          file_path: publicUrl,
+          order_index: currentLength
+        });
+        error = res.error;
+      }
       
       if (!error) {
         setNewMaterialData({
           lessonId: '',
           title: '',
           type: 'VIDEO_YOUTUBE',
+          batchName: '',
           file: null,
           isUploading: false
         });
-        fetchModules();
+        await fetchModules();
+      } else {
+        console.error('Insert error:', error);
+        alert('Upload failed: ' + error.message);
+        setNewMaterialData(prev => ({ ...prev, isUploading: false }));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Upload failed. Try again.');
+      alert('Upload failed: ' + (err.message || 'Please check the file or link and try again.'));
       setNewMaterialData(prev => ({ ...prev, isUploading: false }));
     }
   }
@@ -579,16 +596,17 @@ export default function AdminCourseBuilder() {
                               <div className="flex flex-wrap gap-2">
                                 <select 
                                   value={newMaterialData.type} 
-                                  onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value})}
+                                  onChange={e => setNewMaterialData({...newMaterialData, type: e.target.value, file: null})}
                                   className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none"
                                 >
-                                  <option value="VIDEO_YOUTUBE">YouTube Video</option>
+                                  <option value="VIDEO_YOUTUBE">Video Link (YouTube / Drive / MP4)</option>
+                                  <option value="VIDEO_FILE">Upload Video File (.mp4)</option>
                                   <option value="DOCUMENT_PDF">PDF Document</option>
                                   <option value="DOCUMENT_PPT">Presentation (PPT)</option>
                                 </select>
 
                                 <select
-                                  value={newMaterialData.batchName || (activeBatch === 'ALL' ? 'Batch 1' : activeBatch)}
+                                  value={newMaterialData.batchName || (activeBatch === 'ALL' ? 'ALL' : activeBatch)}
                                   onChange={e => setNewMaterialData({ ...newMaterialData, batchName: e.target.value })}
                                   className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none font-bold text-cyan-400"
                                   title="Target Batch"
