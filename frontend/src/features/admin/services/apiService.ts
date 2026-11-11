@@ -468,6 +468,21 @@ export const projectService = {
 
 // ─── Workshops Service ─────────────────────────────────────────────────────────
 
+function extractApplyUrlFromWorkshop(w: any): string {
+  if (w.applyUrl && typeof w.applyUrl === 'string' && w.applyUrl.trim()) return w.applyUrl.trim();
+  if (w.apply_url && typeof w.apply_url === 'string' && w.apply_url.trim()) return w.apply_url.trim();
+  if (w.externalUrl && typeof w.externalUrl === 'string') {
+    if (w.externalUrl.includes('apply=')) {
+      const match = w.externalUrl.match(/[?&]apply=([^&]+)/);
+      if (match && match[1]) return decodeURIComponent(match[1]).trim();
+    }
+    if (w.externalUrl.includes('docs.google.com/forms')) {
+      return w.externalUrl.trim();
+    }
+  }
+  return '';
+}
+
 export const workshopService = {
   async getAll(): Promise<WorkshopFormData[]> {
     const { data, error } = await supabase.from('Workshop').select('*').order('createdAt', { ascending: false });
@@ -481,7 +496,7 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
-      applyUrl: w.applyUrl || w.apply_url || '',
+      applyUrl: extractApplyUrlFromWorkshop(w),
       status: w.status,
     }));
   },
@@ -498,13 +513,13 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
-      applyUrl: w.applyUrl || w.apply_url || '',
+      applyUrl: extractApplyUrlFromWorkshop(w),
       status: w.status,
     };
   },
 
   async create(item: Omit<WorkshopFormData, 'id'>): Promise<WorkshopFormData> {
-    const payload = {
+    const payload: any = {
       id: `w_${Date.now()}`,
       title: item.title,
       description: item.description,
@@ -514,14 +529,20 @@ export const workshopService = {
       location: item.location,
       posterUrl: item.posterUrl,
       externalUrl: item.externalUrl,
-      applyUrl: item.applyUrl,
       status: item.status || 'PUBLISHED',
       capacity: 50,
-        updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    const { data, error } = await supabase.from('Workshop').insert(payload).select().single();
-    if (error) throw error;
-    return this.getById(data.id) as Promise<WorkshopFormData>;
+    if (item.applyUrl) {
+      payload.applyUrl = item.applyUrl;
+    }
+    let res = await supabase.from('Workshop').insert(payload).select().single();
+    if (res.error && (res.error.code === 'PGRST204' || res.error.message?.includes('applyUrl'))) {
+      delete payload.applyUrl;
+      res = await supabase.from('Workshop').insert(payload).select().single();
+    }
+    if (res.error) throw res.error;
+    return this.getById(res.data.id) as Promise<WorkshopFormData>;
   },
 
   async update(id: string | number, updates: Partial<WorkshopFormData>): Promise<WorkshopFormData> {
@@ -530,7 +551,7 @@ export const workshopService = {
     if (updates.description !== undefined) payload.description = updates.description;
     if (updates.date !== undefined) payload.date = updates.date ? new Date(updates.date).toISOString() : new Date().toISOString();
     if (updates.duration !== undefined) payload.duration = updates.duration;
-      if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.status !== undefined) payload.status = updates.status;
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.posterUrl !== undefined) payload.posterUrl = updates.posterUrl;
     if (updates.externalUrl !== undefined) payload.externalUrl = updates.externalUrl;
@@ -539,7 +560,15 @@ export const workshopService = {
     if (Object.keys(payload).length > 0) {
       payload.updatedAt = new Date().toISOString();
       const { error } = await supabase.from('Workshop').update(payload).eq('id', id);
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST204' || error.message?.includes('applyUrl')) {
+          delete payload.applyUrl;
+          const { error: retryError } = await supabase.from('Workshop').update(payload).eq('id', id);
+          if (retryError) throw retryError;
+        } else {
+          throw error;
+        }
+      }
     }
     return this.getById(id) as Promise<WorkshopFormData>;
   },

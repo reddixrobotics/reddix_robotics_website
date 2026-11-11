@@ -26,6 +26,18 @@ interface WorkshopFormProps {
   isSubmitting: boolean;
 }
 
+function parseApplyUrl(url?: string): string {
+  if (!url) return '';
+  if (url.includes('apply=')) {
+    const match = url.match(/[?&]apply=([^&]+)/);
+    if (match && match[1]) return decodeURIComponent(match[1]).trim();
+  }
+  if (url.includes('docs.google.com/forms')) {
+    return url.trim();
+  }
+  return '';
+}
+
 export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: WorkshopFormProps) {
   const [formData, setFormData] = useState<WorkshopFormData>({
     title: '',
@@ -39,7 +51,10 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     status: 'PUBLISHED'
   });
 
-  const [ros2ApplyUrl, setRos2ApplyUrl] = useState<string>(DEFAULT_ROS2_APPLY_URL);
+  const [destinationType, setDestinationType] = useState<'ROS2' | 'CUSTOM'>('ROS2');
+  const [ros2ApplyUrl, setRos2ApplyUrl] = useState<string>(() => {
+    return (typeof window !== 'undefined' && localStorage.getItem('ros2_apply_url')) || DEFAULT_ROS2_APPLY_URL;
+  });
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   
@@ -49,14 +64,27 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
 
   useEffect(() => {
     if (initialData) {
+      const isRos2 = 
+        !initialData.externalUrl || 
+        initialData.externalUrl.startsWith('/workshops/ros2-industry-immersion') ||
+        (initialData.title || '').toLowerCase().includes('ros2');
+
+      setDestinationType(isRos2 ? 'ROS2' : 'CUSTOM');
+
+      const extractedApply = 
+        parseApplyUrl(initialData.externalUrl) || 
+        (initialData.applyUrl && initialData.applyUrl.trim()) ||
+        (typeof window !== 'undefined' ? localStorage.getItem('ros2_apply_url') : '') ||
+        DEFAULT_ROS2_APPLY_URL;
+
+      setRos2ApplyUrl(extractedApply);
+
       setFormData({
         ...initialData,
         status: initialData.status || 'PUBLISHED',
-        externalUrl: initialData.externalUrl || '/workshops/ros2-industry-immersion'
+        externalUrl: initialData.externalUrl || '/workshops/ros2-industry-immersion',
+        applyUrl: extractedApply
       });
-      if (initialData.applyUrl) {
-        setRos2ApplyUrl(initialData.applyUrl);
-      }
     }
   }, [initialData]);
 
@@ -71,10 +99,14 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           .maybeSingle();
 
         if (!error && data?.mediaUrl && data.mediaUrl.trim()) {
-          setRos2ApplyUrl(data.mediaUrl.trim());
+          const trimmed = data.mediaUrl.trim();
+          setRos2ApplyUrl(trimmed);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('ros2_apply_url', trimmed);
+          }
         }
       } catch (err) {
-        console.warn('Could not load present ROS 2 apply URL:', err);
+        console.warn('Could not load present ROS 2 apply URL from WorkshopMedia:', err);
       }
     }
     loadPresentLink();
@@ -83,13 +115,22 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If destination is ROS 2, persist the application link to WorkshopMedia immediately
-    if (formData.externalUrl === '/workshops/ros2-industry-immersion') {
+    const cleanApplyUrl = ros2ApplyUrl.trim();
+
+    if (destinationType === 'ROS2') {
+      // Store in localStorage immediately
+      if (cleanApplyUrl && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('ros2_apply_url', cleanApplyUrl);
+        } catch {}
+      }
+
+      // Also try to persist to WorkshopMedia
       try {
         await supabase.from('WorkshopMedia').upsert({
           sectionKey: 'ros2_apply_url',
           title: 'ROS 2 Application Form Link',
-          mediaUrl: ros2ApplyUrl.trim(),
+          mediaUrl: cleanApplyUrl,
           mediaType: 'link',
           isActive: true,
           updatedAt: new Date().toISOString()
@@ -97,12 +138,23 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       } catch (err) {
         console.warn('Failed to upsert ROS 2 apply link to WorkshopMedia:', err);
       }
-    }
 
-    onSubmit({
-      ...formData,
-      applyUrl: ros2ApplyUrl.trim()
-    });
+      const targetExternalUrl = cleanApplyUrl 
+        ? `/workshops/ros2-industry-immersion?apply=${encodeURIComponent(cleanApplyUrl)}`
+        : '/workshops/ros2-industry-immersion';
+
+      onSubmit({
+        ...formData,
+        externalUrl: targetExternalUrl,
+        applyUrl: cleanApplyUrl
+      });
+    } else {
+      onSubmit({
+        ...formData,
+        externalUrl: formData.externalUrl || '',
+        applyUrl: formData.externalUrl || ''
+      });
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,8 +187,6 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     }
   };
 
-  const isRos2Destination = formData.externalUrl === '/workshops/ros2-industry-immersion';
-
   return (
     <>
       <AdminForm onSubmit={handleSubmit} onCancel={onCancel} isSubmitting={isSubmitting || uploading}>
@@ -146,16 +196,16 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           </FormField>
           <FormField label="Status">
             <select className={InputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
-              <option value="PUBLISHED">Published (Open)</option>
+              <option value="PUBLISHED">Published</option>
               <option value="COMING_SOON">Coming Soon</option>
-              <option value="DRAFT">Draft</option>
+              <option value="CLOSED">Closed</option>
             </select>
           </FormField>
         </FormRow>
 
         <FormRow>
           <FormField label="Date (Optional)">
-            <input type="date" className={InputClass} value={formData.date || ""} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+            <input type="date" className={InputClass} value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
           </FormField>
           <FormField label="Duration (e.g., '3 Days', '90 Minutes')">
             <input required type="text" className={InputClass} value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} />
@@ -169,10 +219,15 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           <FormField label="Button Destination">
             <select 
               className={InputClass} 
-              value={isRos2Destination ? 'ROS2' : 'CUSTOM'}
+              value={destinationType}
               onChange={e => {
-                if (e.target.value === 'ROS2') {
-                  setFormData({ ...formData, externalUrl: '/workshops/ros2-industry-immersion' });
+                const nextType = e.target.value as 'ROS2' | 'CUSTOM';
+                setDestinationType(nextType);
+                if (nextType === 'ROS2') {
+                  const target = ros2ApplyUrl.trim() 
+                    ? `/workshops/ros2-industry-immersion?apply=${encodeURIComponent(ros2ApplyUrl.trim())}` 
+                    : '/workshops/ros2-industry-immersion';
+                  setFormData({ ...formData, externalUrl: target });
                 } else {
                   setFormData({ ...formData, externalUrl: '' });
                 }
@@ -185,7 +240,7 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
         </FormRow>
         
         {/* Present Link with Edit Option */}
-        {isRos2Destination ? (
+        {destinationType === 'ROS2' ? (
           <FormRow>
             <FormField label="ROS 2 Application Form Link (Present Apply URL)">
               <div className="space-y-1.5">
@@ -194,7 +249,15 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
                     type="url" 
                     className={InputClass} 
                     value={ros2ApplyUrl} 
-                    onChange={e => setRos2ApplyUrl(e.target.value)} 
+                    onChange={e => {
+                      const val = e.target.value;
+                      setRos2ApplyUrl(val);
+                      if (val.trim() && typeof window !== 'undefined') {
+                        try {
+                          localStorage.setItem('ros2_apply_url', val.trim());
+                        } catch {}
+                      }
+                    }} 
                     placeholder="https://docs.google.com/forms/d/..."
                     required
                   />

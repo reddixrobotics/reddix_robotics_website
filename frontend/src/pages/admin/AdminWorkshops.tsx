@@ -38,7 +38,10 @@ export default function AdminWorkshops() {
         await workshopService.create(formData);
       }
       setIsModalOpen(false);
-      loadData();
+      await loadData();
+    } catch (err: any) {
+      console.error("Failed to save workshop:", err);
+      alert("Error saving workshop: " + (err.message || "Please check your inputs and try again."));
     } finally {
       setIsSubmitting(false);
     }

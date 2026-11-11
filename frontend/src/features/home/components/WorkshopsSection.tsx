@@ -125,6 +125,8 @@ export default function WorkshopsSection() {
                           onClick={() => {
                             if (workshop.externalUrl && workshop.externalUrl.startsWith('http')) {
                               window.open(workshop.externalUrl, '_blank');
+                            } else if (workshop.externalUrl && workshop.externalUrl.startsWith('/')) {
+                              navigate(workshop.externalUrl);
                             } else {
                               navigate('/careers?tab=workshops');
                             }
