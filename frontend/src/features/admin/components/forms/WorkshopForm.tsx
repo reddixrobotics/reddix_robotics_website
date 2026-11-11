@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { AdminForm, FormField, FormRow, InputClass, TextareaClass } from '../ui/AdminForm';
 import { uploadFile } from '../../services/apiService';
-import { Upload, RefreshCw } from 'lucide-react';
+import { Upload, RefreshCw, ExternalLink } from 'lucide-react';
 import { ImageCropperModal } from '../ui/ImageCropperModal';
+import { supabase } from '@/lib/supabase';
+import { DEFAULT_ROS2_APPLY_URL } from '@/hooks/useRos2ApplyUrl';
 
 export interface WorkshopFormData {
   id?: string;
@@ -13,6 +15,7 @@ export interface WorkshopFormData {
   location: string;
   posterUrl?: string;
   externalUrl?: string;
+  applyUrl?: string;
   status?: string;
 }
 
@@ -31,10 +34,12 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     duration: '',
     location: '',
     posterUrl: '',
-    externalUrl: '',
+    externalUrl: '/workshops/ros2-industry-immersion',
+    applyUrl: DEFAULT_ROS2_APPLY_URL,
     status: 'PUBLISHED'
   });
-  
+
+  const [ros2ApplyUrl, setRos2ApplyUrl] = useState<string>(DEFAULT_ROS2_APPLY_URL);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   
@@ -46,21 +51,64 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     if (initialData) {
       setFormData({
         ...initialData,
-        status: initialData.status || 'PUBLISHED'
+        status: initialData.status || 'PUBLISHED',
+        externalUrl: initialData.externalUrl || '/workshops/ros2-industry-immersion'
       });
+      if (initialData.applyUrl) {
+        setRos2ApplyUrl(initialData.applyUrl);
+      }
     }
   }, [initialData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load present ROS 2 application link from WorkshopMedia or default
+  useEffect(() => {
+    async function loadPresentLink() {
+      try {
+        const { data, error } = await supabase
+          .from('WorkshopMedia')
+          .select('mediaUrl')
+          .eq('sectionKey', 'ros2_apply_url')
+          .maybeSingle();
+
+        if (!error && data?.mediaUrl && data.mediaUrl.trim()) {
+          setRos2ApplyUrl(data.mediaUrl.trim());
+        }
+      } catch (err) {
+        console.warn('Could not load present ROS 2 apply URL:', err);
+      }
+    }
+    loadPresentLink();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // If destination is ROS 2, persist the application link to WorkshopMedia immediately
+    if (formData.externalUrl === '/workshops/ros2-industry-immersion') {
+      try {
+        await supabase.from('WorkshopMedia').upsert({
+          sectionKey: 'ros2_apply_url',
+          title: 'ROS 2 Application Form Link',
+          mediaUrl: ros2ApplyUrl.trim(),
+          mediaType: 'link',
+          isActive: true,
+          updatedAt: new Date().toISOString()
+        }, { onConflict: 'sectionKey' });
+      } catch (err) {
+        console.warn('Failed to upsert ROS 2 apply link to WorkshopMedia:', err);
+      }
+    }
+
+    onSubmit({
+      ...formData,
+      applyUrl: ros2ApplyUrl.trim()
+    });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Read file as data URL to pass to cropper
     const reader = new FileReader();
     reader.onload = () => {
       setCurrentImageSrc(reader.result as string);
@@ -68,7 +116,6 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
     };
     reader.readAsDataURL(file);
     
-    // Reset input so the same file can be selected again if needed
     if (fileRef.current) {
       fileRef.current.value = '';
     }
@@ -87,6 +134,8 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
       setUploading(false);
     }
   };
+
+  const isRos2Destination = formData.externalUrl === '/workshops/ros2-industry-immersion';
 
   return (
     <>
@@ -120,7 +169,7 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           <FormField label="Button Destination">
             <select 
               className={InputClass} 
-              value={formData.externalUrl === '/workshops/ros2-industry-immersion' ? 'ROS2' : 'CUSTOM'}
+              value={isRos2Destination ? 'ROS2' : 'CUSTOM'}
               onChange={e => {
                 if (e.target.value === 'ROS2') {
                   setFormData({ ...formData, externalUrl: '/workshops/ros2-industry-immersion' });
@@ -135,7 +184,39 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
           </FormField>
         </FormRow>
         
-        {formData.externalUrl !== '/workshops/ros2-industry-immersion' && (
+        {/* Present Link with Edit Option */}
+        {isRos2Destination ? (
+          <FormRow>
+            <FormField label="ROS 2 Application Form Link (Present Apply URL)">
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <input 
+                    type="url" 
+                    className={InputClass} 
+                    value={ros2ApplyUrl} 
+                    onChange={e => setRos2ApplyUrl(e.target.value)} 
+                    placeholder="https://docs.google.com/forms/d/..."
+                    required
+                  />
+                  {ros2ApplyUrl && (
+                    <a 
+                      href={ros2ApplyUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-strong)] rounded-md hover:bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--color-brand)] shrink-0"
+                      title="Open and test current link"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Present form link shown above. When visitors click &quot;Apply Now&quot; on the ROS 2 page, this link opens. You can edit it here anytime.
+                </p>
+              </div>
+            </FormField>
+          </FormRow>
+        ) : (
           <FormRow>
             <FormField label="Custom Link URL">
               <input 
@@ -144,6 +225,7 @@ export function WorkshopForm({ initialData, onSubmit, onCancel, isSubmitting }: 
                 value={formData.externalUrl || ''} 
                 onChange={e => setFormData({ ...formData, externalUrl: e.target.value })} 
                 placeholder="https://docs.google.com/forms/..."
+                required
               />
             </FormField>
           </FormRow>

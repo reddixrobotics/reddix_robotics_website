@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { useWorkshopMedia } from '@/hooks/useWorkshopMedia';
 import { cn } from '@/utils';
+import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
 const GOOGLE_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
@@ -10,6 +11,7 @@ const GOOGLE_FORM_URL =
 export function WorkshopHero() {
   const { getMedia } = useWorkshopMedia();
   const heroMedia = getMedia('hero');
+  const { applyUrl } = useRos2ApplyUrl();
 
   const scrollToProgram = useCallback(() => {
     const el = document.getElementById('program');
@@ -76,7 +78,7 @@ export function WorkshopHero() {
           className="flex flex-col sm:flex-row gap-4 mt-12"
         >
           <a
-            href={GOOGLE_FORM_URL}
+            href={applyUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-[#c1121f] text-white font-bold text-base hover:bg-[#a00f1a] transition-all duration-200 active:scale-[0.97] shadow-[0_0_20px_rgba(193,18,31,0.3)]"

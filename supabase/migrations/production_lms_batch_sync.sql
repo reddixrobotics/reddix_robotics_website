@@ -132,3 +132,37 @@ CREATE POLICY "device_session_user_all" ON "DeviceSession"
 FOR ALL TO authenticated 
 USING (auth.uid() = user_id) 
 WITH CHECK (auth.uid() = user_id);
+
+
+-- 9. Add applyUrl to Workshop and seed ros2_apply_url in WorkshopMedia
+ALTER TABLE IF EXISTS "Workshop" ADD COLUMN IF NOT EXISTS "applyUrl" TEXT;
+
+CREATE TABLE IF NOT EXISTS "WorkshopMedia" (
+    "sectionKey" TEXT PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "mediaUrl" TEXT,
+    "posterUrl" TEXT,
+    "mediaType" TEXT NOT NULL DEFAULT 'video',
+    "altText" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "displayOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE IF EXISTS "WorkshopMedia" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "workshopmedia_public_select" ON "WorkshopMedia";
+CREATE POLICY "workshopmedia_public_select" ON "WorkshopMedia"
+FOR SELECT TO anon, authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "workshopmedia_admin_all" ON "WorkshopMedia";
+CREATE POLICY "workshopmedia_admin_all" ON "WorkshopMedia"
+FOR ALL TO authenticated
+USING (true)
+WITH CHECK (true);
+
+INSERT INTO "WorkshopMedia" ("sectionKey", "title", "mediaUrl", "mediaType", "isActive", "updatedAt")
+VALUES ('ros2_apply_url', 'ROS 2 Application Form Link', 'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header', 'link', true, now())
+ON CONFLICT ("sectionKey") DO NOTHING;

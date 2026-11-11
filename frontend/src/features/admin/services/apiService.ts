@@ -481,7 +481,8 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
-        status: w.status,
+      applyUrl: w.applyUrl || w.apply_url || '',
+      status: w.status,
     }));
   },
 
@@ -497,7 +498,8 @@ export const workshopService = {
       location: w.location,
       posterUrl: w.posterUrl,
       externalUrl: w.externalUrl,
-        status: w.status,
+      applyUrl: w.applyUrl || w.apply_url || '',
+      status: w.status,
     };
   },
 
@@ -512,7 +514,8 @@ export const workshopService = {
       location: item.location,
       posterUrl: item.posterUrl,
       externalUrl: item.externalUrl,
-        status: item.status || 'PUBLISHED',
+      applyUrl: item.applyUrl,
+      status: item.status || 'PUBLISHED',
       capacity: 50,
         updatedAt: new Date().toISOString(),
     };
@@ -531,6 +534,7 @@ export const workshopService = {
     if (updates.location !== undefined) payload.location = updates.location;
     if (updates.posterUrl !== undefined) payload.posterUrl = updates.posterUrl;
     if (updates.externalUrl !== undefined) payload.externalUrl = updates.externalUrl;
+    if (updates.applyUrl !== undefined) payload.applyUrl = updates.applyUrl;
     
     if (Object.keys(payload).length > 0) {
       payload.updatedAt = new Date().toISOString();

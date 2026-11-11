@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
 const GOOGLE_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
@@ -8,6 +9,7 @@ const GOOGLE_FORM_URL =
 export function WorkshopFinalCTA() {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
+  const { applyUrl } = useRos2ApplyUrl();
 
   return (
     <section ref={ref} className="relative py-32 md:py-48 bg-black text-white overflow-hidden text-center">
@@ -33,7 +35,7 @@ export function WorkshopFinalCTA() {
           
           <div className="mt-14 flex justify-center">
             <a
-              href={GOOGLE_FORM_URL}
+              href={applyUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-8 py-5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white font-black text-lg md:text-xl tracking-wide shadow-[0_0_40px_rgba(var(--color-brand-rgb),0.4)] hover:shadow-[0_0_60px_rgba(var(--color-brand-rgb),0.6)] transition-all duration-300 hover:scale-105 active:scale-95"

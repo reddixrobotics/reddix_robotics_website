@@ -9,6 +9,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/utils';
+import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
 const GOOGLE_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
@@ -88,6 +89,7 @@ interface MobileDrawerProps {
   shouldReduceMotion: boolean;
   onScroll: (id: string) => void;
   activeId: string;
+  applyUrl: string;
 }
 
 const MobileDrawer = memo(function MobileDrawer({ open, onClose, shouldReduceMotion, onScroll, activeId }: MobileDrawerProps) {
@@ -182,7 +184,7 @@ const MobileDrawer = memo(function MobileDrawer({ open, onClose, shouldReduceMot
             <div className="mx-5 my-2 h-px bg-[var(--border-subtle)]" aria-hidden="true" />
             {/* CTA */}
             <div className="px-5 pt-4 pb-6 mt-auto flex flex-col gap-3">
-              <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer" onClick={onClose}
+              <a href={applyUrl} target="_blank" rel="noopener noreferrer" onClick={onClose}
                 className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white font-bold text-sm tracking-wide shadow-lg transition-all duration-200 active:scale-[0.98]">
                 Apply Now <ChevronRight size={16} />
               </a>
@@ -216,6 +218,7 @@ HamburgerButton.displayName = 'HamburgerButton';
 export function WorkshopNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { applyUrl } = useRos2ApplyUrl();
   const [activeId, setActiveId] = useState('');
   const shouldReduceMotion = useReducedMotion() ?? false;
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -297,7 +300,9 @@ export function WorkshopNavbar() {
           </div>
         </div>
       </header>
-      <MobileDrawer open={drawerOpen} onClose={closeDrawer} shouldReduceMotion={shouldReduceMotion} onScroll={scrollToSection} activeId={activeId} />
+      <MobileDrawer open={drawerOpen} onClose={closeDrawer} shouldReduceMotion={shouldReduceMotion} onScroll={scrollToSection} activeId={activeId}
+        applyUrl={applyUrl}
+      />
     </>
   );
 }
