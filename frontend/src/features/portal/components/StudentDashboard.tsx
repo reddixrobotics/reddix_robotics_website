@@ -25,8 +25,9 @@ export default function StudentDashboard() {
         
         const { data: e1, error: err1 } = await supabase
           .from('Enrollment')
-          .select('id, status, course_id, batch_name')
-          .eq('user_id', user.id);
+          .select('id, status, course_id, batch_name, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
         if (!err1 && e1 && e1.length > 0) {
           userEnrollments = e1;
@@ -77,8 +78,11 @@ export default function StudentDashboard() {
           }];
         }
 
-        // 5. Build accessible courses list
-        const activeCourses = userEnrollments.map((enr: any) => {
+        // 5. Build accessible courses list (deduplicate by course id, keeping most recent batch)
+        const seenCourseIds = new Set<string>();
+        const activeCourses: any[] = [];
+
+        for (const enr of userEnrollments) {
           const matchedWorkshop = allWorkshops?.find((w: any) => w.id === enr.course_id) || defaultWorkshop || {
             id: enr.course_id || 'default-course',
             title: 'ROS 2 & Robotics Curriculum',
@@ -86,12 +90,16 @@ export default function StudentDashboard() {
             posterUrl: ''
           };
 
-          return {
-            ...matchedWorkshop,
-            course_id: enr.course_id || matchedWorkshop.id,
-            batch_name: enr.batch_name || 'Batch 1'
-          };
-        });
+          const cid = enr.course_id || matchedWorkshop.id;
+          if (!seenCourseIds.has(cid)) {
+            seenCourseIds.add(cid);
+            activeCourses.push({
+              ...matchedWorkshop,
+              course_id: cid,
+              batch_name: enr.batch_name || 'Batch 1'
+            });
+          }
+        }
 
         setCourses(activeCourses);
       } catch (err: any) {

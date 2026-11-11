@@ -81,14 +81,31 @@ serve(async (req) => {
       await supabaseAdmin.auth.admin.updateUserById(newAuthUser.user.id, { app_metadata: { role: 'STUDENT', is_student: true }, user_metadata: { role: 'STUDENT', is_student: true } })
     }
 
-    // 2. Always create/record enrollment so the student immediately appears in LMS Enrolled list
-    const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
-      user_id: targetUserId,
-      course_id: courseId || null,
-      batch_name: batchName ? String(batchName).trim() : 'Batch 1',
-      status: 'ACTIVE',
-    })
-    if (enrollError) throw enrollError
+    // 2. Always create or update enrollment so the student is assigned to the exact requested batch
+    const targetBatch = batchName ? String(batchName).trim() : 'Batch 1'
+    const { data: existingEnr } = await supabaseAdmin
+      .from('Enrollment')
+      .select('id')
+      .eq('user_id', targetUserId)
+
+    if (existingEnr && existingEnr.length > 0) {
+      await supabaseAdmin
+        .from('Enrollment')
+        .update({
+          course_id: courseId || null,
+          batch_name: targetBatch,
+          status: 'ACTIVE',
+        })
+        .eq('user_id', targetUserId)
+    } else {
+      const { error: enrollError } = await supabaseAdmin.from('Enrollment').insert({
+        user_id: targetUserId,
+        course_id: courseId || null,
+        batch_name: targetBatch,
+        status: 'ACTIVE',
+      })
+      if (enrollError) throw enrollError
+    }
 
     return new Response(JSON.stringify({ success: true, userId: targetUserId }), {
       status: 200,

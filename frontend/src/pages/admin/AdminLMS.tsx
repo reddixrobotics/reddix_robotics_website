@@ -97,6 +97,24 @@ export default function AdminLMS() {
     }
   };
 
+  const handleUpdateBatch = async (enrollmentId: string, newBatch: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('Enrollment')
+        .update({ batch_name: newBatch })
+        .eq('id', enrollmentId);
+      if (error) throw error;
+      setStatus(`Successfully updated student to ${newBatch}!`);
+      await fetchData();
+    } catch (err: any) {
+      console.error('Failed to change batch:', err);
+      alert('Failed to update student batch: ' + (err.message || 'Error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleProvision = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -123,7 +141,54 @@ export default function AdminLMS() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create student');
 
-      setStatus(`Provisioned for ${batchName}! Sending welcome email to ${email}...`);
+      const targetUserId = data.userId || data.user?.id;
+      const targetBatch = batchName.trim() || 'Batch 1';
+
+      // Guarantee batch_name directly in Supabase table
+      try {
+        if (targetUserId) {
+          const { data: existingEnr } = await supabase
+            .from('Enrollment')
+            .select('id')
+            .eq('user_id', targetUserId);
+
+          if (existingEnr && existingEnr.length > 0) {
+            await supabase
+              .from('Enrollment')
+              .update({
+                batch_name: targetBatch,
+                course_id: selectedCourse || null,
+                status: 'ACTIVE'
+              })
+              .eq('user_id', targetUserId);
+          } else {
+            await supabase.from('Enrollment').insert({
+              user_id: targetUserId,
+              course_id: selectedCourse || null,
+              batch_name: targetBatch,
+              status: 'ACTIVE'
+            });
+          }
+        } else {
+          // If no targetUserId in response, update latest enrollment created
+          const { data: latestEnrs } = await supabase
+            .from('Enrollment')
+            .select('id')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (latestEnrs && latestEnrs.length > 0) {
+            await supabase
+              .from('Enrollment')
+              .update({ batch_name: targetBatch })
+              .eq('id', latestEnrs[0].id);
+          }
+        }
+      } catch (enrErr) {
+        console.warn('Direct enrollment sync note:', enrErr);
+      }
+
+      setStatus(`Provisioned for ${targetBatch}! Sending welcome email to ${email}...`);
 
       try {
         await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
@@ -139,7 +204,7 @@ export default function AdminLMS() {
                 <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
                   <p><strong>Login URL:</strong> <a href="https://reddixrobotics.com/login?redirect=%2Fportal">reddixrobotics.com/login</a></p>
                   <p><strong>Email:</strong> ${email}</p>
-                  <p><strong>Password:</strong> ${password}</p>
+                  <p><strong>Password:</strong> ${password}</p>
                 </div>
                 <p>Please log in using the credentials above to access your assigned course and recordings.</p>
                 <p>Best regards,<br/>The Reddix Robotics Team</p>
@@ -306,10 +371,21 @@ export default function AdminLMS() {
                       <td className="p-3 text-[var(--text-primary)] font-medium">{e.student_email}</td>
                       <td className="p-3 text-[var(--text-secondary)] text-sm">{e.course_title}</td>
                       <td className="p-3">
-                        <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1">
-                          <Layers size={11} />
-                          {e.batch_name || 'Batch 1'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Layers size={13} className="text-cyan-400 shrink-0" />
+                          <select
+                            value={e.batch_name || 'Batch 1'}
+                            onChange={(evt) => handleUpdateBatch(e.enrollment_id, evt.target.value)}
+                            className="bg-[var(--bg-primary)] border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 px-2 py-1 rounded-lg text-xs font-bold outline-none cursor-pointer transition-colors"
+                            title="Click to change student batch"
+                          >
+                            {Array.from(new Set(['Batch 1', 'Batch 2', 'Batch 3', e.batch_name].filter(Boolean))).map(b => (
+                              <option key={b} value={b} className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">
+                                {b}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                       <td className="p-3">
                         <span className="bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full text-xs font-bold">

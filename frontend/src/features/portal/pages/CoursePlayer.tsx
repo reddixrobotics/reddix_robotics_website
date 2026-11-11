@@ -47,54 +47,68 @@ export default function CoursePlayer() {
     let currentBatch = 'Batch 1';
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      let enrollment: any = null;
+      let resolvedBatch = '';
 
-      // Try user_id with course filter
-      if (activeCourseId) {
-        const { data: e1 } = await supabase
+      // Try user_id with course filter or latest enrollment
+      try {
+        const { data: enrs1 } = await supabase
           .from('Enrollment')
-          .select('batch_name')
-          .eq('course_id', activeCourseId)
+          .select('batch_name, course_id, created_at')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false });
 
-        if (e1?.batch_name) {
-          enrollment = e1;
-        } else {
-          const { data: e2 } = await supabase
+        if (enrs1 && enrs1.length > 0) {
+          const match = activeCourseId 
+            ? enrs1.find((e: any) => e.course_id === activeCourseId && e.batch_name)
+            : null;
+          const chosen = match || enrs1.find((e: any) => e.batch_name) || enrs1[0];
+          if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+        }
+      } catch {
+        // ignore
+      }
+
+      // Try camelCase userId fallback
+      if (!resolvedBatch) {
+        try {
+          const { data: enrs2 } = await supabase
             .from('Enrollment')
-            .select('batch_name')
-            .eq('course_id', activeCourseId)
-            .eq('userId', user.id)
-            .maybeSingle();
-          if (e2?.batch_name) enrollment = e2;
+            .select('batch_name, course_id')
+            .eq('userId', user.id);
+
+          if (enrs2 && enrs2.length > 0) {
+            const match = activeCourseId 
+              ? enrs2.find((e: any) => e.course_id === activeCourseId && e.batch_name)
+              : null;
+            const chosen = match || enrs2.find((e: any) => e.batch_name) || enrs2[0];
+            if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+          }
+        } catch {
+          // ignore
         }
       }
 
-      // If still not resolved, query any enrollment for this student
-      if (!enrollment) {
-        const { data: eFallback } = await supabase
-          .from('Enrollment')
-          .select('batch_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (eFallback?.batch_name) {
-          enrollment = eFallback;
-        } else {
-          const { data: eFallback2 } = await supabase
-            .from('Enrollment')
+      // Try lms_student_details view by email
+      if (!resolvedBatch && user.email) {
+        try {
+          const { data: vData } = await supabase
+            .from('lms_student_details')
             .select('batch_name')
-            .eq('userId', user.id)
-            .maybeSingle();
-          if (eFallback2?.batch_name) enrollment = eFallback2;
+            .ilike('student_email', user.email)
+            .limit(1);
+
+          if (vData && vData.length > 0 && vData[0].batch_name) {
+            resolvedBatch = vData[0].batch_name.trim();
+          }
+        } catch {
+          // ignore
         }
       }
 
-      if (enrollment?.batch_name) {
-        currentBatch = enrollment.batch_name.trim();
-        setStudentBatch(currentBatch);
+      if (resolvedBatch) {
+        currentBatch = resolvedBatch;
       }
+      setStudentBatch(currentBatch);
     }
 
     // 2. Fetch Course Information
