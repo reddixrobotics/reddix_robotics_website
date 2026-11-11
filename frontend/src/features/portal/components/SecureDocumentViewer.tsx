@@ -13,14 +13,36 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  const isOfficeDoc = url.match(/\.(pptx|ppt|docx|doc|xlsx|xls)(\?.*)?$/i);
-  
-  // SWITCHED to Microsoft Office Web Viewer because Google Docs viewer (gview) 
-  // has a known bug where it randomly fails and forces a "gview" file download.
-  // Microsoft's viewer is native for PPTX/DOCX and much more reliable.
-  const embedUrl = isOfficeDoc 
-    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
-    : `${url}#toolbar=0&navpanes=0`;
+  const getEmbedUrl = (rawUrl: string, docType: string) => {
+    if (!rawUrl) return '';
+    const cleanUrl = rawUrl.trim();
+
+    // 1. Google Drive view link -> embed preview
+    if (cleanUrl.includes('drive.google.com/file/d/')) {
+      return cleanUrl.replace(/\/view(\?.*)?$/i, '/preview');
+    }
+    // 2. Google Slides link -> embed presentation
+    if (cleanUrl.includes('docs.google.com/presentation/d/')) {
+      return cleanUrl.replace(/\/edit(\?.*)?$/i, '/embed');
+    }
+    // 3. Google Docs link -> embed preview
+    if (cleanUrl.includes('docs.google.com/document/d/')) {
+      return cleanUrl.replace(/\/edit(\?.*)?$/i, '/preview');
+    }
+
+    // 4. Office Documents (PPT, PPTX, DOCX, DOC, XLSX, XLS)
+    const isOfficeDoc = cleanUrl.match(/\.(pptx|ppt|docx|doc|xlsx|xls)(\?.*)?$/i);
+    const isPptType = (docType || '').toUpperCase().includes('PPT');
+
+    if (isOfficeDoc || isPptType) {
+      return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanUrl)}`;
+    }
+
+    // 5. PDF or general document: suppress Chrome/viewer toolbar & navigation buttons
+    return `${cleanUrl}#toolbar=0&navpanes=0`;
+  };
+
+  const embedUrl = getEmbedUrl(url, type);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -66,7 +88,7 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
         ))}
       </div>
 
-      {type === 'PDF' ? (
+      {url ? (
         <div className="relative w-full h-full select-none pt-16">
           {/* Top Right Shield (Blocks Chrome Native PDF Download/Print Buttons) */}
           <div className="absolute top-0 right-0 w-64 h-24 bg-transparent z-[9998]"></div>
@@ -84,14 +106,10 @@ export default function SecureDocumentViewer({ url, type, title }: SecureDocumen
           />
         </div>
       ) : (
-        <div className="w-full h-full p-8 overflow-y-auto select-none pt-20">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[var(--border-strong)]">
-            <FileText className="text-[var(--color-brand)]" size={24} />
-            <h3 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h3>
-          </div>
-          <div className="prose dark:prose-invert max-w-none text-[var(--text-secondary)]">
-            <p>This document is securely encrypted.</p>
-          </div>
+        <div className="w-full h-full p-8 overflow-y-auto select-none pt-20 flex flex-col items-center justify-center text-center">
+          <FileText className="text-[var(--text-muted)] mb-3" size={48} />
+          <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{title}</h3>
+          <p className="text-sm text-[var(--text-secondary)]">No document attachment available.</p>
         </div>
       )}
     </div>
