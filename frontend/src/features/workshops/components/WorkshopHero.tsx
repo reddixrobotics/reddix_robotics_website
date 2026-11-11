@@ -5,8 +5,6 @@ import { useWorkshopMedia } from '@/hooks/useWorkshopMedia';
 import { cn } from '@/utils';
 import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
-const GOOGLE_FORM_URL =
-  'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
 
 export function WorkshopHero() {
   const { getMedia } = useWorkshopMedia();

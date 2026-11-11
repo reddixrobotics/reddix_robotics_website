@@ -3,8 +3,6 @@ import { motion, useInView } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
-const GOOGLE_FORM_URL =
-  'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
 
 export function WorkshopFinalCTA() {
   const ref = useRef<HTMLElement>(null);

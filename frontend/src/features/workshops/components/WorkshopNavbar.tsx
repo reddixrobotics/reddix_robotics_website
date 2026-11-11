@@ -11,8 +11,6 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/utils';
 import { useRos2ApplyUrl } from '@/hooks/useRos2ApplyUrl';
 
-const GOOGLE_FORM_URL =
-  'https://docs.google.com/forms/d/e/1FAIpQLSfOHo7D9BNF0ZeL7CAQTIMxhq_XQyWgo6oczNFk3QNXi5ifxQ/viewform?usp=header';
 
 const NAV_SECTIONS = [
   { label: 'Program', id: 'program' },
@@ -289,7 +287,7 @@ export function WorkshopNavbar() {
           {/* Desktop CTA */}
           <div className="hidden items-center gap-3 md:flex">
             <Link to="/" className="text-[0.8125rem] font-medium px-3 py-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-200">← Home</Link>
-            <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer"
+            <a href={applyUrl} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white font-semibold text-sm shadow-md transition-all duration-200 active:scale-[0.97]">
               Apply Now <ChevronRight size={15} />
             </a>
