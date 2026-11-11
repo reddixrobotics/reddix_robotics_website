@@ -22,6 +22,7 @@ export default function AdminCourseBuilder() {
     lessonId: '',
     title: '',
     type: 'VIDEO_YOUTUBE',
+    batchName: '',
     file: null as File | null | string,
     isUploading: false
   });
@@ -164,11 +165,13 @@ export default function AdminCourseBuilder() {
     }
   };
 
-  // Filter modules: EACH BATCH HAS ITS OWN MODULES
+  // Filter modules: show batch-specific modules if available, or all course modules so lessons can be populated
   const currentBatchModules = useMemo(() => {
     if (activeBatch === 'ALL') return modules;
     const target = activeBatch.trim().toLowerCase();
-    return modules.filter(m => (m.batch_name || '').trim().toLowerCase() === target);
+    const batchSpecific = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === target);
+    if (batchSpecific.length > 0) return batchSpecific;
+    return modules;
   }, [modules, activeBatch]);
 
   // Check for legacy unassigned modules
@@ -236,7 +239,7 @@ export default function AdminCourseBuilder() {
     try {
       const publicUrl = newMaterialData.type === 'VIDEO_YOUTUBE' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
       const finalType = newMaterialData.type === 'VIDEO_YOUTUBE' ? 'VIDEO' : newMaterialData.type;
-      const targetBatch = activeBatch === 'ALL' ? 'Batch 1' : activeBatch;
+      const targetBatch = newMaterialData.batchName || (activeBatch === 'ALL' ? 'Batch 1' : activeBatch);
 
       const { error } = await supabase.from('LearningMaterial').insert({
         lesson_id: lessonId,
@@ -518,9 +521,22 @@ export default function AdminCourseBuilder() {
                                 <div className="flex items-center gap-2 flex-1">
                                   {mat.material_type === 'VIDEO' ? <Video size={16} className="text-red-500" /> : <FileText size={16} className="text-blue-500" />}
                                   {editingMaterial?.id === mat.id ? (
-                                    <div className="flex gap-2 flex-1">
-                                      <input autoFocus value={editingMaterial.title} onChange={e => setEditingMaterial({ ...editingMaterial, title: e.target.value })} className="p-1 bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded text-xs flex-1" />
-                                      <button onClick={() => handleUpdate('LearningMaterial', mat.id, editingMaterial.title, mat.batch_name)} className="px-2 py-0.5 bg-green-600 text-white text-xs font-bold rounded">Save</button>
+                                    <div className="flex gap-2 flex-1 flex-wrap">
+                                      <input autoFocus value={editingMaterial.title} onChange={e => setEditingMaterial({ ...editingMaterial, title: e.target.value })} className="p-1 bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded text-xs flex-1 min-w-[150px]" />
+                                      <select
+                                        value={editingMaterial.batchName || mat.batch_name || 'Batch 1'}
+                                        onChange={e => setEditingMaterial({ ...editingMaterial, batchName: e.target.value })}
+                                        className="p-1 bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded text-xs font-bold text-cyan-400"
+                                      >
+                                        <option value="ALL">🌐 All Batches</option>
+                                        <option value="Batch 1">📁 Batch 1</option>
+                                        <option value="Batch 2">📁 Batch 2</option>
+                                        <option value="Batch 3">📁 Batch 3</option>
+                                        {customBatches.map(b => (
+                                          <option key={b} value={b}>📁 {b}</option>
+                                        ))}
+                                      </select>
+                                      <button onClick={() => handleUpdate('LearningMaterial', mat.id, editingMaterial.title, editingMaterial.batchName || mat.batch_name)} className="px-2 py-0.5 bg-green-600 text-white text-xs font-bold rounded">Save</button>
                                       <button onClick={() => setEditingMaterial(null)} className="px-2 py-0.5 bg-gray-500 text-white text-xs font-bold rounded">Cancel</button>
                                     </div>
                                   ) : (
@@ -528,6 +544,9 @@ export default function AdminCourseBuilder() {
                                       <a href={mat.file_path} target="_blank" rel="noreferrer" className="hover:underline font-medium text-[var(--text-primary)]">
                                         {mat.title}
                                       </a>
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                        {mat.batch_name || 'ALL'}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
@@ -560,6 +579,21 @@ export default function AdminCourseBuilder() {
                                   <option value="VIDEO_YOUTUBE">YouTube Video</option>
                                   <option value="DOCUMENT_PDF">PDF Document</option>
                                   <option value="DOCUMENT_PPT">Presentation (PPT)</option>
+                                </select>
+
+                                <select
+                                  value={newMaterialData.batchName || (activeBatch === 'ALL' ? 'Batch 1' : activeBatch)}
+                                  onChange={e => setNewMaterialData({ ...newMaterialData, batchName: e.target.value })}
+                                  className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none font-bold text-cyan-400"
+                                  title="Target Batch"
+                                >
+                                  <option value="ALL">🌐 All Batches (Common)</option>
+                                  <option value="Batch 1">📁 Batch 1</option>
+                                  <option value="Batch 2">📁 Batch 2</option>
+                                  <option value="Batch 3">📁 Batch 3</option>
+                                  {customBatches.map(b => (
+                                    <option key={b} value={b}>📁 {b}</option>
+                                  ))}
                                 </select>
 
                                 {newMaterialData.type === 'VIDEO_YOUTUBE' ? (

@@ -149,15 +149,15 @@ export default function CoursePlayer() {
       const isBatch1 = currentBatch.trim().toLowerCase() === 'batch 1';
       const studentBatchNorm = currentBatch.trim().toLowerCase();
 
-      // BATCH ISOLATION:
-      // For Batch 1: Includes modules explicitly tagged 'Batch 1', as well as legacy 'ALL' or unassigned modules.
-      // For Batch 2+: Strictly includes ONLY modules created for that specific batch.
+      // BATCH & CURRICULUM ACCESS:
+      // All enrolled students in this course can view the course curriculum & lessons.
+      // If a module is specifically tagged for the student's batch, or tagged 'ALL' / 'Batch 1' (main curriculum), it is visible.
       const filteredModules = mData.filter((m: any) => {
         const mBatch = (m.batch_name || '').trim().toLowerCase();
-        if (isBatch1) {
-          return mBatch === 'batch 1' || mBatch === 'all' || mBatch === '' || !m.batch_name;
-        }
-        return mBatch === studentBatchNorm;
+        if (!mBatch || mBatch === 'all') return true;
+        if (mBatch === studentBatchNorm) return true;
+        if (mBatch === 'batch 1') return true; // Standard course curriculum
+        return false;
       });
 
       // Sort lessons in each module
@@ -214,15 +214,39 @@ export default function CoursePlayer() {
       if (dbMats) rawMaterials = dbMats;
     }
 
-    // Filter materials according to student's batch
+    // Filter materials according to student's batch:
+    // - PDFs, PPTs, and study notes are part of the course curriculum and visible to all students
+    // - Video recordings are isolated: students only see their batch's recordings (or shared/ALL videos)
     const accessibleMaterials = rawMaterials.filter((mat: any) => {
       const matBatch = (mat.batch_name || '').trim().toLowerCase();
+      const isVideo = mat.material_type === 'VIDEO';
+
+      // 1. Non-video materials (PDFs, PPTs, documents, notes):
+      // Always visible across all batches so students can study!
+      if (!isVideo) {
+        return true;
+      }
+
+      // 2. Video materials (Recordings):
       if (isBatch1) {
-        // Batch 1 gets all Batch 1, ALL, and legacy untagged videos/PDFs
+        // Batch 1 sees Batch 1 videos, shared/ALL videos, and untagged videos
         return matBatch === 'batch 1' || matBatch === 'all' || matBatch === '' || !mat.batch_name;
       }
-      // Batch 2+ strictly gets ONLY materials tagged for their batch
-      return matBatch === activeBatch;
+
+      // Batch 2+:
+      // If there is any video in this lesson specifically tagged for their batch (e.g. 'batch 2'),
+      // strictly show ONLY their batch video(s) and any shared 'ALL' videos.
+      const hasMyBatchVideo = rawMaterials.some((m: any) => 
+        m.material_type === 'VIDEO' && (m.batch_name || '').trim().toLowerCase() === activeBatch
+      );
+
+      if (hasMyBatchVideo) {
+        return matBatch === activeBatch || matBatch === 'all' || matBatch === '' || !mat.batch_name;
+      }
+
+      // If no Batch 2-specific video has been recorded/uploaded yet for this lesson:
+      // Show the course video (so the lesson is not empty) until the admin uploads Batch 2's recording
+      return true;
     });
 
     // Enforce display order: Video -> PPT -> PDF
