@@ -48,27 +48,45 @@ export default function CoursePlayer() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       let resolvedBatch = '';
+      const userEmail = (user.email || '').trim().toLowerCase();
 
-      // Try user_id with course filter or latest enrollment
+      // Priority 1: Call SECURITY DEFINER RPC get_lms_student_details (bypasses RLS)
       try {
-        const { data: enrs1 } = await supabase
-          .from('Enrollment')
-          .select('batch_name, course_id, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (enrs1 && enrs1.length > 0) {
-          const match = activeCourseId 
-            ? enrs1.find((e: any) => e.course_id === activeCourseId && e.batch_name)
-            : null;
-          const chosen = match || enrs1.find((e: any) => e.batch_name) || enrs1[0];
-          if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+        const { data: rpcData } = await supabase.rpc('get_lms_student_details');
+        if (rpcData && rpcData.length > 0) {
+          const studentEntry = rpcData.find((r: any) => 
+            (r.student_email || '').trim().toLowerCase() === userEmail
+          );
+          if (studentEntry?.batch_name) {
+            resolvedBatch = studentEntry.batch_name.trim();
+          }
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.error('RPC get_lms_student_details error:', err);
       }
 
-      // Try camelCase userId fallback
+      // Priority 2: Direct user_id enrollment lookup
+      if (!resolvedBatch) {
+        try {
+          const { data: enrs1 } = await supabase
+            .from('Enrollment')
+            .select('batch_name, course_id, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (enrs1 && enrs1.length > 0) {
+            const match = activeCourseId 
+              ? enrs1.find((e: any) => e.course_id === activeCourseId && e.batch_name)
+              : null;
+            const chosen = match || enrs1.find((e: any) => e.batch_name) || enrs1[0];
+            if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Priority 3: Try camelCase userId fallback
       if (!resolvedBatch) {
         try {
           const { data: enrs2 } = await supabase
@@ -88,21 +106,10 @@ export default function CoursePlayer() {
         }
       }
 
-      // Try lms_student_details view by email
-      if (!resolvedBatch && user.email) {
-        try {
-          const { data: vData } = await supabase
-            .from('lms_student_details')
-            .select('batch_name')
-            .ilike('student_email', user.email)
-            .limit(1);
-
-          if (vData && vData.length > 0 && vData[0].batch_name) {
-            resolvedBatch = vData[0].batch_name.trim();
-          }
-        } catch {
-          // ignore
-        }
+      // Priority 4: Metadata fallback
+      if (!resolvedBatch) {
+        const metaBatch = user.user_metadata?.batch_name || user.app_metadata?.batch_name;
+        if (metaBatch) resolvedBatch = String(metaBatch).trim();
       }
 
       if (resolvedBatch) {
@@ -126,28 +133,42 @@ export default function CoursePlayer() {
     }
 
     // 3. Fetch Modules & Lessons with embedded LearningMaterials
+    const studentBatchNorm = currentBatch.trim().toLowerCase();
     let mData: any[] | null = null;
+
     if (activeCourseId) {
       const { data } = await supabase
         .from('Module')
         .select('*, Lesson(*, LearningMaterial(*))')
         .eq('course_id', activeCourseId)
         .order('order_index');
-      if (data && data.length > 0) mData = data;
+      if (data && data.length > 0) {
+        mData = data;
+      }
     }
 
-    // If activeCourseId didn't match any modules directly, fetch all modules for curriculum
-    if (!mData || mData.length === 0) {
-      const { data: generalModules } = await supabase
-        .from('Module')
-        .select('*, Lesson(*, LearningMaterial(*))')
-        .order('order_index');
-      if (generalModules && generalModules.length > 0) mData = generalModules;
+    // Also fetch general/all modules
+    const { data: generalModules } = await supabase
+      .from('Module')
+      .select('*, Lesson(*, LearningMaterial(*))')
+      .order('order_index');
+
+    if (generalModules && generalModules.length > 0) {
+      if (!mData || mData.length === 0) {
+        mData = generalModules;
+      } else {
+        // If current course mData does not have modules for this student's batch, but generalModules does:
+        const hasBatchInCourse = mData.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
+        const hasBatchInGeneral = generalModules.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
+        if (!hasBatchInCourse && hasBatchInGeneral) {
+          const batchSpecific = generalModules.filter((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
+          mData = [...batchSpecific, ...mData];
+        }
+      }
     }
 
     if (mData) {
-      const isBatch1 = currentBatch.trim().toLowerCase() === 'batch 1';
-      const studentBatchNorm = currentBatch.trim().toLowerCase();
+      const isBatch1 = studentBatchNorm === 'batch 1';
 
       // Check if there are modules specifically created/tagged for this student's batch
       const hasBatchSpecificModules = mData.some((m: any) => {
@@ -156,12 +177,12 @@ export default function CoursePlayer() {
       });
 
       // Filter modules:
-      // If batch-specific modules exist for this batch, show only those + ALL.
+      // If batch-specific modules exist for this batch (e.g. Batch 2), strictly show those (+ ALL).
       // Otherwise, show standard course curriculum modules (Batch 1 / ALL) so curriculum structure is visible.
       const filteredModules = mData.filter((m: any) => {
         const mBatch = (m.batch_name || '').trim().toLowerCase();
         if (hasBatchSpecificModules) {
-          return mBatch === studentBatchNorm || mBatch === 'all' || !mBatch;
+          return mBatch === studentBatchNorm || mBatch === 'all';
         }
         return !mBatch || mBatch === 'all' || mBatch === 'batch 1' || mBatch === studentBatchNorm;
       });
