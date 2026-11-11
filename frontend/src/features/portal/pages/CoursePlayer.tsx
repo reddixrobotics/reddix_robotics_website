@@ -149,15 +149,21 @@ export default function CoursePlayer() {
       const isBatch1 = currentBatch.trim().toLowerCase() === 'batch 1';
       const studentBatchNorm = currentBatch.trim().toLowerCase();
 
-      // BATCH & CURRICULUM ACCESS:
-      // All enrolled students in this course can view the course curriculum & lessons.
-      // If a module is specifically tagged for the student's batch, or tagged 'ALL' / 'Batch 1' (main curriculum), it is visible.
+      // Check if there are modules specifically created/tagged for this student's batch
+      const hasBatchSpecificModules = mData.some((m: any) => {
+        const b = (m.batch_name || '').trim().toLowerCase();
+        return b === studentBatchNorm;
+      });
+
+      // Filter modules:
+      // If batch-specific modules exist for this batch, show only those + ALL.
+      // Otherwise, show standard course curriculum modules (Batch 1 / ALL) so curriculum structure is visible.
       const filteredModules = mData.filter((m: any) => {
         const mBatch = (m.batch_name || '').trim().toLowerCase();
-        if (!mBatch || mBatch === 'all') return true;
-        if (mBatch === studentBatchNorm) return true;
-        if (mBatch === 'batch 1') return true; // Standard course curriculum
-        return false;
+        if (hasBatchSpecificModules) {
+          return mBatch === studentBatchNorm || mBatch === 'all' || !mBatch;
+        }
+        return !mBatch || mBatch === 'all' || mBatch === 'batch 1' || mBatch === studentBatchNorm;
       });
 
       // Sort lessons in each module
@@ -215,38 +221,27 @@ export default function CoursePlayer() {
     }
 
     // Filter materials according to student's batch:
-    // - PDFs, PPTs, and study notes are part of the course curriculum and visible to all students
-    // - Video recordings are isolated: students only see their batch's recordings (or shared/ALL videos)
+    // STRICT BATCH ISOLATION:
+    // - Batch 2 students ONLY see materials tagged for Batch 2 or ALL (Common).
+    //   They MUST NEVER see Batch 1 recordings or Batch 1 PDFs!
+    // - Batch 1 students ONLY see materials tagged for Batch 1 or ALL (Common).
+    //   They MUST NEVER see Batch 2 recordings or Batch 2 PDFs!
     const accessibleMaterials = rawMaterials.filter((mat: any) => {
       const matBatch = (mat.batch_name || '').trim().toLowerCase();
-      const isVideo = mat.material_type === 'VIDEO';
 
-      // 1. Non-video materials (PDFs, PPTs, documents, notes):
-      // Always visible across all batches so students can study!
-      if (!isVideo) {
+      // 1. Common / Shared materials (tagged 'ALL' or 'Common') are visible across all batches
+      if (matBatch === 'all' || matBatch === 'common') {
         return true;
       }
 
-      // 2. Video materials (Recordings):
+      // 2. If student is in Batch 1:
       if (isBatch1) {
-        // Batch 1 sees Batch 1 videos, shared/ALL videos, and untagged videos
-        return matBatch === 'batch 1' || matBatch === 'all' || matBatch === '' || !mat.batch_name;
+        return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
       }
 
-      // Batch 2+:
-      // If there is any video in this lesson specifically tagged for their batch (e.g. 'batch 2'),
-      // strictly show ONLY their batch video(s) and any shared 'ALL' videos.
-      const hasMyBatchVideo = rawMaterials.some((m: any) => 
-        m.material_type === 'VIDEO' && (m.batch_name || '').trim().toLowerCase() === activeBatch
-      );
-
-      if (hasMyBatchVideo) {
-        return matBatch === activeBatch || matBatch === 'all' || matBatch === '' || !mat.batch_name;
-      }
-
-      // If no Batch 2-specific video has been recorded/uploaded yet for this lesson:
-      // Show the course video (so the lesson is not empty) until the admin uploads Batch 2's recording
-      return true;
+      // 3. If student is in Batch 2 or any other batch cohort:
+      // Strictly match their assigned batch! Batch 1 materials are NEVER shown.
+      return matBatch === activeBatch;
     });
 
     // Enforce display order: Video -> PPT -> PDF
@@ -372,7 +367,7 @@ export default function CoursePlayer() {
               <div className="p-12 text-center border border-dashed border-[var(--border-strong)] rounded-2xl bg-[var(--surface-secondary)] text-[var(--text-muted)] flex flex-col items-center">
                 <Lock size={48} className="mb-4 text-[var(--border-strong)]" />
                 <p className="font-bold text-lg">No content released yet for this lesson.</p>
-                <p>Recordings and class notes will appear here once uploaded by your instructor.</p>
+                <p className="text-sm mt-1">Recordings and class notes for your cohort will appear here once uploaded by your instructor.</p>
               </div>
             )}
 

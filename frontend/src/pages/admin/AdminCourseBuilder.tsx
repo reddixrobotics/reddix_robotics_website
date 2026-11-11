@@ -239,7 +239,7 @@ export default function AdminCourseBuilder() {
     try {
       const publicUrl = newMaterialData.type === 'VIDEO_YOUTUBE' ? (newMaterialData.file as any) : await uploadFile(newMaterialData.file as File);
       const finalType = newMaterialData.type === 'VIDEO_YOUTUBE' ? 'VIDEO' : newMaterialData.type;
-      const targetBatch = newMaterialData.batchName || (activeBatch === 'ALL' ? 'Batch 1' : activeBatch);
+      const chosenBatch = newMaterialData.batchName || (activeBatch === 'ALL' ? 'ALL' : activeBatch);
 
       const { error } = await supabase.from('LearningMaterial').insert({
         lesson_id: lessonId,
@@ -491,7 +491,13 @@ export default function AdminCourseBuilder() {
                 <div className="p-4 space-y-4">
                   {/* Lessons */}
                   {mod.Lesson?.map((lesson: any, li: number) => {
-                    const visibleMaterials = lesson.LearningMaterial || [];
+                    // In Admin builder: filter materials by activeBatch tab
+                    const visibleMaterials = (lesson.LearningMaterial || []).filter((mat: any) => {
+                      if (activeBatch === 'ALL') return true;
+                      const matBatch = (mat.batch_name || '').trim().toLowerCase();
+                      const target = activeBatch.trim().toLowerCase();
+                      return matBatch === target || matBatch === 'all';
+                    });
 
                     return (
                       <div key={lesson.id} className="bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded-xl p-4">
@@ -514,7 +520,7 @@ export default function AdminCourseBuilder() {
                         {/* Learning Materials List */}
                         <div className="space-y-2 pl-4 border-l-2 border-[var(--border-strong)]">
                           {visibleMaterials.length === 0 ? (
-                            <div className="text-xs text-[var(--text-muted)] italic">No videos or materials in this lesson yet.</div>
+                            <div className="text-xs text-[var(--text-muted)] italic">No videos or materials in this lesson for {activeBatch === 'ALL' ? 'any batch' : activeBatch} yet.</div>
                           ) : (
                             visibleMaterials.map((mat: any) => (
                               <div key={mat.id} className="flex justify-between items-center p-2 rounded bg-[var(--surface-secondary)] text-sm">
