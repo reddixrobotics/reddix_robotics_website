@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { BookOpen, Video, FileText, ChevronLeft, ChevronDown, ChevronRight, Lock } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
@@ -8,12 +8,18 @@ import DoubtsPanel from '../components/DoubtsPanel';
 
 export default function CoursePlayer() {
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const activeCourseId = params.courseId || params.id;
 
   const [course, setCourse] = useState<any>(null);
+  const [rawModules, setRawModules] = useState<any[]>([]);
   const [modules, setModules] = useState<any[]>([]);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-  const [studentBatch, setStudentBatch] = useState<string>('Batch 1');
+  const [availableBatches, setAvailableBatches] = useState<string[]>(['Batch 1', 'Batch 2', 'Batch 3']);
+  const [studentBatch, setStudentBatch] = useState<string>(() => {
+    return searchParams.get('batch') || (location.state as any)?.batch || 'Batch 1';
+  });
   
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [materials, setMaterials] = useState<any[]>([]);
@@ -43,80 +49,64 @@ export default function CoursePlayer() {
   async function fetchCourseData() {
     setLoading(true);
 
-    // 1. Fetch Student's Enrollment to identify their assigned batch
-    let currentBatch = 'Batch 1';
+    // 1. Resolve student's batch with multi-source priority
+    const urlBatch = searchParams.get('batch') || (location.state as any)?.batch;
+    let currentBatch = urlBatch ? String(urlBatch).trim() : '';
+
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      let resolvedBatch = '';
+    if (user && !currentBatch) {
       const userEmail = (user.email || '').trim().toLowerCase();
 
-      // Priority 1: Call SECURITY DEFINER RPC get_lms_student_details (bypasses RLS)
-      try {
-        const { data: rpcData } = await supabase.rpc('get_lms_student_details');
-        if (rpcData && rpcData.length > 0) {
-          const studentEntry = rpcData.find((r: any) => 
-            (r.student_email || '').trim().toLowerCase() === userEmail
-          );
-          if (studentEntry?.batch_name) {
-            resolvedBatch = studentEntry.batch_name.trim();
-          }
-        }
-      } catch (err) {
-        console.error('RPC get_lms_student_details error:', err);
+      // Check metadata
+      const metaBatch = user.user_metadata?.batch_name || user.app_metadata?.batch_name;
+      if (metaBatch) {
+        currentBatch = String(metaBatch).trim();
       }
 
-      // Priority 2: Direct user_id enrollment lookup
-      if (!resolvedBatch) {
+      // Check direct Enrollment
+      if (!currentBatch) {
         try {
-          const { data: enrs1 } = await supabase
+          const { data: enrs } = await supabase
             .from('Enrollment')
             .select('batch_name, course_id, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
-          if (enrs1 && enrs1.length > 0) {
+          if (enrs && enrs.length > 0) {
             const match = activeCourseId 
-              ? enrs1.find((e: any) => e.course_id === activeCourseId && e.batch_name)
+              ? enrs.find((e: any) => e.course_id === activeCourseId && e.batch_name)
               : null;
-            const chosen = match || enrs1.find((e: any) => e.batch_name) || enrs1[0];
-            if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+            const chosen = match || enrs.find((e: any) => e.batch_name) || enrs[0];
+            if (chosen?.batch_name) currentBatch = chosen.batch_name.trim();
           }
         } catch {
           // ignore
         }
       }
 
-      // Priority 3: Try camelCase userId fallback
-      if (!resolvedBatch) {
+      // Check RPC fallback
+      if (!currentBatch) {
         try {
-          const { data: enrs2 } = await supabase
-            .from('Enrollment')
-            .select('batch_name, course_id')
-            .eq('userId', user.id);
-
-          if (enrs2 && enrs2.length > 0) {
-            const match = activeCourseId 
-              ? enrs2.find((e: any) => e.course_id === activeCourseId && e.batch_name)
-              : null;
-            const chosen = match || enrs2.find((e: any) => e.batch_name) || enrs2[0];
-            if (chosen?.batch_name) resolvedBatch = chosen.batch_name.trim();
+          const { data: rpcData } = await supabase.rpc('get_lms_student_details');
+          if (rpcData && rpcData.length > 0) {
+            const studentEntry = rpcData.find((r: any) => 
+              (r.student_email || '').trim().toLowerCase() === userEmail
+            );
+            if (studentEntry?.batch_name) {
+              currentBatch = studentEntry.batch_name.trim();
+            }
           }
         } catch {
           // ignore
         }
       }
-
-      // Priority 4: Metadata fallback
-      if (!resolvedBatch) {
-        const metaBatch = user.user_metadata?.batch_name || user.app_metadata?.batch_name;
-        if (metaBatch) resolvedBatch = String(metaBatch).trim();
-      }
-
-      if (resolvedBatch) {
-        currentBatch = resolvedBatch;
-      }
-      setStudentBatch(currentBatch);
     }
+
+    if (!currentBatch) {
+      currentBatch = 'Batch 1';
+    }
+
+    setStudentBatch(currentBatch);
 
     // 2. Fetch Course Information
     if (activeCourseId) {
@@ -133,7 +123,6 @@ export default function CoursePlayer() {
     }
 
     // 3. Fetch Modules & Lessons with embedded LearningMaterials
-    const studentBatchNorm = currentBatch.trim().toLowerCase();
     let mData: any[] | null = null;
 
     if (activeCourseId) {
@@ -157,63 +146,100 @@ export default function CoursePlayer() {
       if (!mData || mData.length === 0) {
         mData = generalModules;
       } else {
-        // If current course mData does not have modules for this student's batch, but generalModules does:
-        const hasBatchInCourse = mData.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
-        const hasBatchInGeneral = generalModules.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
+        const studentNorm = currentBatch.trim().toLowerCase();
+        const hasBatchInCourse = mData.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentNorm);
+        const hasBatchInGeneral = generalModules.some((m: any) => (m.batch_name || '').trim().toLowerCase() === studentNorm);
         if (!hasBatchInCourse && hasBatchInGeneral) {
-          const batchSpecific = generalModules.filter((m: any) => (m.batch_name || '').trim().toLowerCase() === studentBatchNorm);
+          const batchSpecific = generalModules.filter((m: any) => (m.batch_name || '').trim().toLowerCase() === studentNorm);
           mData = [...batchSpecific, ...mData];
         }
       }
     }
 
     if (mData) {
-      const isBatch1 = studentBatchNorm === 'batch 1';
-
-      // Check if there are modules specifically created/tagged for this student's batch
-      const hasBatchSpecificModules = mData.some((m: any) => {
-        const b = (m.batch_name || '').trim().toLowerCase();
-        return b === studentBatchNorm;
+      // Discover all batches present
+      const discovered = new Set<string>(['Batch 1', 'Batch 2', 'Batch 3']);
+      if (currentBatch) discovered.add(currentBatch);
+      mData.forEach((m: any) => {
+        if (m.batch_name && m.batch_name !== 'ALL' && m.batch_name !== 'Common') discovered.add(m.batch_name.trim());
+        m.Lesson?.forEach((l: any) => {
+          l.LearningMaterial?.forEach((mat: any) => {
+            if (mat.batch_name && mat.batch_name !== 'ALL' && mat.batch_name !== 'Common') discovered.add(mat.batch_name.trim());
+          });
+        });
       });
+      setAvailableBatches(Array.from(discovered).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
+      setRawModules(mData);
 
-      // Filter modules:
-      // If batch-specific modules exist for this batch (e.g. Batch 2), strictly show those (+ ALL).
-      // Otherwise, show standard course curriculum modules (Batch 1 / ALL) so curriculum structure is visible.
-      const filteredModules = mData.filter((m: any) => {
-        const mBatch = (m.batch_name || '').trim().toLowerCase();
-        if (hasBatchSpecificModules) {
-          return mBatch === studentBatchNorm || mBatch === 'all';
+      applyModuleFilter(mData, currentBatch, true);
+    }
+    setLoading(false);
+  }
+
+  // Filter modules according to the active batch
+  const applyModuleFilter = (allMods: any[], targetBatch: string, initialLoad: boolean = false) => {
+    const studentBatchNorm = targetBatch.trim().toLowerCase();
+
+    // Check if there are modules specifically created/tagged for this student's batch
+    const hasBatchSpecificModules = allMods.some((m: any) => {
+      const b = (m.batch_name || '').trim().toLowerCase();
+      return b === studentBatchNorm;
+    });
+
+    const filteredModules = allMods.filter((m: any) => {
+      const mBatch = (m.batch_name || '').trim().toLowerCase();
+      if (mBatch === studentBatchNorm || mBatch === 'all' || mBatch === 'common') {
+        return true;
+      }
+      if (mBatch && mBatch !== 'batch 1' && mBatch !== studentBatchNorm) {
+        return false;
+      }
+      if (!hasBatchSpecificModules && (!mBatch || mBatch === 'batch 1')) {
+        return true;
+      }
+      return false;
+    });
+
+    const sortedModules = filteredModules.map((m: any) => ({
+      ...m,
+      Lesson: (m.Lesson || []).sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
+    }));
+
+    setModules(sortedModules);
+
+    if (sortedModules.length > 0) {
+      setExpandedModules(new Set([sortedModules[0].id]));
+      let targetLesson: any = null;
+      if (!initialLoad && activeLesson) {
+        for (const mod of sortedModules) {
+          targetLesson = mod.Lesson?.find((l: any) => l.id === activeLesson.id);
+          if (targetLesson) break;
         }
-        return !mBatch || mBatch === 'all' || mBatch === 'batch 1' || mBatch === studentBatchNorm;
-      });
+      }
+      if (!targetLesson && sortedModules[0].Lesson && sortedModules[0].Lesson.length > 0) {
+        targetLesson = sortedModules[0].Lesson[0];
+      }
 
-      // Sort lessons in each module
-      const sortedModules = filteredModules.map((m: any) => ({
-        ...m,
-        Lesson: (m.Lesson || []).sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
-      }));
-
-      setModules(sortedModules);
-
-      if (sortedModules.length > 0) {
-        setExpandedModules(new Set([sortedModules[0].id]));
-        // Auto-select first lesson if available in this student's batch
-        if (sortedModules[0].Lesson && sortedModules[0].Lesson.length > 0) {
-          handleLessonSelect(sortedModules[0].Lesson[0], currentBatch);
-        } else {
-          setActiveLesson(null);
-          setMaterials([]);
-          setActiveMaterial(null);
-        }
+      if (targetLesson) {
+        handleLessonSelect(targetLesson, targetBatch);
       } else {
-        setExpandedModules(new Set());
         setActiveLesson(null);
         setMaterials([]);
         setActiveMaterial(null);
       }
+    } else {
+      setExpandedModules(new Set());
+      setActiveLesson(null);
+      setMaterials([]);
+      setActiveMaterial(null);
     }
-    setLoading(false);
-  }
+  };
+
+  const handleBatchChange = (newBatch: string) => {
+    setStudentBatch(newBatch);
+    setSearchParams({ batch: newBatch });
+    applyModuleFilter(rawModules, newBatch, false);
+  };
 
   const toggleModule = (modId: string) => {
     const newSet = new Set(expandedModules);
@@ -296,6 +322,30 @@ export default function CoursePlayer() {
           <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">
             {course?.title || 'Robotics & ROS 2 Curriculum'}
           </h2>
+          
+          {/* Interactive Cohort Selector */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                Active Cohort:
+              </span>
+            </div>
+            <div className="relative">
+              <select
+                value={studentBatch}
+                onChange={(e) => handleBatchChange(e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 font-bold text-xs pl-3 pr-8 py-2 rounded-xl outline-none cursor-pointer transition-colors shadow-sm appearance-none"
+                title="Switch cohort to view batch-specific materials"
+              >
+                {availableBatches.map(b => (
+                  <option key={b} value={b} className="bg-[#18181b] text-white">
+                    📁 {b}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 pointer-events-none" />
+            </div>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
@@ -387,8 +437,10 @@ export default function CoursePlayer() {
             ) : (
               <div className="p-12 text-center border border-dashed border-[var(--border-strong)] rounded-2xl bg-[var(--surface-secondary)] text-[var(--text-muted)] flex flex-col items-center">
                 <Lock size={48} className="mb-4 text-[var(--border-strong)]" />
-                <p className="font-bold text-lg">No content released yet for this lesson.</p>
-                <p className="text-sm mt-1">Recordings and class notes for your cohort will appear here once uploaded by your instructor.</p>
+                <p className="font-bold text-lg text-[var(--text-primary)]">No content released yet for {studentBatch}</p>
+                <p className="text-sm mt-1 max-w-md text-[var(--text-secondary)]">
+                  Recordings and class notes for your cohort ({studentBatch}) will appear here once uploaded by your instructor.
+                </p>
               </div>
             )}
 

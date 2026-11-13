@@ -154,10 +154,19 @@ export default function StudentDashboard() {
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    📁 {course.batch_name || 'Batch 1'}
+                  </span>
+                </div>
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2">{course.title}</h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2 flex-grow">{course.description}</p>
                 
-                <Link to={buildPath(ROUTES.PORTAL_COURSE, { id: course.id })} className="w-full py-2.5 bg-[var(--surface-tertiary)] hover:bg-[var(--color-brand)] text-[var(--text-primary)] hover:text-white text-center font-bold rounded-lg transition-colors border border-[var(--border-strong)] hover:border-[var(--color-brand)]">
+                <Link 
+                  to={`${buildPath(ROUTES.PORTAL_COURSE, { id: course.id })}?batch=${encodeURIComponent(course.batch_name || 'Batch 1')}`} 
+                  state={{ batch: course.batch_name || 'Batch 1' }}
+                  className="w-full py-2.5 bg-[var(--surface-tertiary)] hover:bg-[var(--color-brand)] text-[var(--text-primary)] hover:text-white text-center font-bold rounded-lg transition-colors border border-[var(--border-strong)] hover:border-[var(--color-brand)]"
+                >
                   Continue Learning
                 </Link>
               </div>

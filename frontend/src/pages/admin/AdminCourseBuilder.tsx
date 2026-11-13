@@ -89,19 +89,19 @@ export default function AdminCourseBuilder() {
 
   // Combine batches discovered from modules with custom batches created by user
   const availableBatches = useMemo(() => {
-    const batchSet = new Set<string>(['Batch 1']);
+    const batchSet = new Set<string>(['Batch 1', 'Batch 2', 'Batch 3']);
     // Batches from custom state
     customBatches.forEach(b => {
       if (b && b !== 'ALL') batchSet.add(b.trim());
     });
     // Batches from existing modules
     modules.forEach(m => {
-      if (m.batch_name && m.batch_name !== 'ALL') {
+      if (m.batch_name && m.batch_name !== 'ALL' && m.batch_name !== 'Common') {
         batchSet.add(m.batch_name.trim());
       }
       m.Lesson?.forEach((l: any) => {
         l.LearningMaterial?.forEach((mat: any) => {
-          if (mat.batch_name && mat.batch_name !== 'ALL') {
+          if (mat.batch_name && mat.batch_name !== 'ALL' && mat.batch_name !== 'Common') {
             batchSet.add(mat.batch_name.trim());
           }
         });
@@ -165,18 +165,27 @@ export default function AdminCourseBuilder() {
     }
   };
 
-  // Filter modules: show batch-specific modules if available, or all course modules so lessons can be populated
+  // Filter modules: show batch-specific modules or common curriculum modules (ALL / Common)
+  // If none match specifically, show course modules so lessons can be populated with batch materials
   const currentBatchModules = useMemo(() => {
     if (activeBatch === 'ALL') return modules;
     const target = activeBatch.trim().toLowerCase();
-    const batchSpecific = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === target);
-    if (batchSpecific.length > 0) return batchSpecific;
+    const matching = modules.filter(m => {
+      const b = (m.batch_name || '').trim().toLowerCase();
+      return b === target || b === 'all' || b === 'common';
+    });
+    if (matching.length > 0) return matching;
     return modules;
   }, [modules, activeBatch]);
 
   // Check for legacy unassigned modules
   const unassignedModules = useMemo(() => {
-    return modules.filter(m => !m.batch_name || m.batch_name === 'ALL');
+    return modules.filter(m => !m.batch_name);
+  }, [modules]);
+
+  // Check if modules are currently locked to 'Batch 1'
+  const hasBatch1OnlyModules = useMemo(() => {
+    return modules.length > 0 && modules.some(m => (m.batch_name || '').trim().toLowerCase() === 'batch 1');
   }, [modules]);
 
   // Quick fix: claim legacy unassigned modules into the active batch
@@ -187,12 +196,23 @@ export default function AdminCourseBuilder() {
     fetchModules();
   };
 
+  // One-click: Make curriculum universal across all batches
+  const handleMakeCurriculumUniversal = async () => {
+    if (!confirm('This will make all current course modules part of the shared curriculum (ALL) so students in Batch 1, Batch 2, Batch 3, etc. can all access the syllabus lessons. Videos and recordings will stay isolated to their assigned batches. Continue?')) return;
+    setLoading(true);
+    for (const m of modules) {
+      await supabase.from('Module').update({ batch_name: 'ALL' }).eq('id', m.id);
+    }
+    await fetchModules();
+    setLoading(false);
+  };
+
   // Add Module to the active batch
   async function handleAddModule(e: React.FormEvent) {
     e.preventDefault();
     if (!newModuleTitle.trim()) return;
 
-    const targetBatch = activeBatch === 'ALL' ? 'Batch 1' : activeBatch;
+    const targetBatch = activeBatch;
 
     let res = await supabase.from('Module').insert({
       course_id: selectedWorkshop,
@@ -438,6 +458,23 @@ export default function AdminCourseBuilder() {
             </div>
           )}
 
+          {/* Quick Action: Share Curriculum Across All Batches */}
+          {hasBatch1OnlyModules && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-blue-300 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Layers size={18} className="text-blue-400 flex-shrink-0" />
+                <span>Modules are currently marked as Batch 1. Make this curriculum shared across <strong>all cohorts</strong> (Batch 1, 2, 3...) so all students see the course syllabus?</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleMakeCurriculumUniversal}
+                className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 text-xs whitespace-nowrap shadow-sm"
+              >
+                🌐 Make Curriculum Universal
+              </button>
+            </div>
+          )}
+
           {/* Active Batch Banner */}
           <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-[var(--text-secondary)] shadow-sm">
             <div className="flex items-center gap-2">
@@ -481,10 +518,11 @@ export default function AdminCourseBuilder() {
                       <select
                         value={editingModule.batchName || activeBatch}
                         onChange={e => setEditingModule({ ...editingModule, batchName: e.target.value })}
-                        className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-xs font-bold"
+                        className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-xs font-bold text-cyan-400"
                       >
+                        <option value="ALL">🌐 All Batches (Common Curriculum)</option>
                         {availableBatches.map(b => (
-                          <option key={b} value={b}>{b}</option>
+                          <option key={b} value={b}>📁 {b}</option>
                         ))}
                       </select>
                       <button onClick={() => handleUpdate('Module', mod.id, editingModule.title, editingModule.batchName)} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">Save</button>
@@ -495,7 +533,7 @@ export default function AdminCourseBuilder() {
                       <h2 className="font-bold text-lg text-[var(--text-primary)]">Module {i + 1}: {mod.title}</h2>
                       <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-[var(--bg-primary)] border border-cyan-500/30 text-cyan-400 inline-flex items-center gap-1">
                         <Layers size={10} />
-                        {mod.batch_name || activeBatch}
+                        {mod.batch_name === 'ALL' || !mod.batch_name ? '🌐 Universal Curriculum' : `📁 ${mod.batch_name}`}
                       </span>
                     </div>
                   )}
@@ -508,12 +546,22 @@ export default function AdminCourseBuilder() {
                 <div className="p-4 space-y-4">
                   {/* Lessons */}
                   {mod.Lesson?.map((lesson: any, li: number) => {
-                    // In Admin builder: filter materials by activeBatch tab
+                    // In Admin builder: filter materials by activeBatch tab with strict batch isolation
                     const visibleMaterials = (lesson.LearningMaterial || []).filter((mat: any) => {
                       if (activeBatch === 'ALL') return true;
                       const matBatch = (mat.batch_name || '').trim().toLowerCase();
                       const target = activeBatch.trim().toLowerCase();
-                      return matBatch === target || matBatch === 'all';
+                      
+                      // Common materials are visible across all batch tabs
+                      if (matBatch === 'all' || matBatch === 'common') return true;
+
+                      // For Batch 1, also include legacy materials where batch_name was null/empty
+                      if (target === 'batch 1') {
+                        return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
+                      }
+
+                      // For Batch 2, Batch 3, etc., strictly match their assigned cohort
+                      return matBatch === target;
                     });
 
                     return (
@@ -551,11 +599,8 @@ export default function AdminCourseBuilder() {
                                         onChange={e => setEditingMaterial({ ...editingMaterial, batchName: e.target.value })}
                                         className="p-1 bg-[var(--bg-primary)] border border-[var(--border-strong)] rounded text-xs font-bold text-cyan-400"
                                       >
-                                        <option value="ALL">🌐 All Batches</option>
-                                        <option value="Batch 1">📁 Batch 1</option>
-                                        <option value="Batch 2">📁 Batch 2</option>
-                                        <option value="Batch 3">📁 Batch 3</option>
-                                        {customBatches.map(b => (
+                                        <option value="ALL">🌐 All Batches (Common)</option>
+                                        {availableBatches.map(b => (
                                           <option key={b} value={b}>📁 {b}</option>
                                         ))}
                                       </select>
@@ -612,10 +657,7 @@ export default function AdminCourseBuilder() {
                                   title="Target Batch"
                                 >
                                   <option value="ALL">🌐 All Batches (Common)</option>
-                                  <option value="Batch 1">📁 Batch 1</option>
-                                  <option value="Batch 2">📁 Batch 2</option>
-                                  <option value="Batch 3">📁 Batch 3</option>
-                                  {customBatches.map(b => (
+                                  {availableBatches.map(b => (
                                     <option key={b} value={b}>📁 {b}</option>
                                   ))}
                                 </select>

@@ -68,6 +68,7 @@ DROP FUNCTION IF EXISTS public.get_lms_student_details();
 CREATE OR REPLACE FUNCTION public.get_lms_student_details()
 RETURNS TABLE (
   enrollment_id uuid,
+  user_id uuid,
   student_email text,
   course_title text,
   batch_name text,
@@ -82,14 +83,16 @@ BEGIN
   RETURN QUERY
   SELECT 
     e.id AS enrollment_id,
-    COALESCE(u.email, 'Student')::text AS student_email,
+    u.id AS user_id,
+    u.email::text AS student_email,
     COALESCE(w.title, 'General Course (Unassigned)')::text AS course_title,
     COALESCE(e.batch_name, 'Batch 1')::text AS batch_name,
     COALESCE(e.status, 'ACTIVE')::text AS status,
     COALESCE(e.created_at, u.created_at, now()) AS enrolled_at
   FROM "Enrollment" e
-  LEFT JOIN auth.users u ON e.user_id = u.id
+  JOIN auth.users u ON e.user_id = u.id
   LEFT JOIN "Workshop" w ON e.course_id = w.id
+  WHERE u.email IS NOT NULL AND trim(u.email) != ''
   ORDER BY COALESCE(e.created_at, u.created_at, now()) DESC;
 END;
 $$;
@@ -97,20 +100,80 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_lms_student_details() TO authenticated, anon, service_role;
 
 -- 7. Create/Replace View for direct queries
-CREATE OR REPLACE VIEW public.lms_student_details AS
+DROP VIEW IF EXISTS public.lms_student_details CASCADE;
+
+CREATE VIEW public.lms_student_details AS
 SELECT 
   e.id AS enrollment_id,
-  COALESCE(u.email, 'Student')::text AS student_email,
+  u.id AS user_id,
+  u.email::text AS student_email,
   COALESCE(w.title, 'General Course (Unassigned)')::text AS course_title,
   COALESCE(e.batch_name, 'Batch 1')::text AS batch_name,
   COALESCE(e.status, 'ACTIVE')::text AS status,
   COALESCE(e.created_at, u.created_at, now()) AS enrolled_at
 FROM "Enrollment" e
-LEFT JOIN auth.users u ON e.user_id = u.id
-LEFT JOIN "Workshop" w ON e.course_id = w.id;
+JOIN auth.users u ON e.user_id = u.id
+LEFT JOIN "Workshop" w ON e.course_id = w.id
+WHERE u.email IS NOT NULL AND trim(u.email) != '';
 
 ALTER VIEW public.lms_student_details OWNER TO postgres;
 GRANT SELECT ON public.lms_student_details TO authenticated, anon, service_role;
+
+-- 7b. Create RPC delete_lms_student to delete student from database and LMS
+DROP FUNCTION IF EXISTS public.delete_lms_student(uuid, uuid, text);
+
+CREATE OR REPLACE FUNCTION public.delete_lms_student(
+  target_enrollment_id uuid DEFAULT NULL,
+  target_user_id uuid DEFAULT NULL,
+  target_email text DEFAULT NULL
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  resolved_user_id uuid;
+  caller_role text;
+BEGIN
+  caller_role := COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '');
+  IF caller_role NOT IN ('SUPER_ADMIN', 'ADMIN') AND current_user != 'postgres' AND current_user != 'service_role' THEN
+    RAISE EXCEPTION 'Forbidden: Only administrators can delete student accounts.';
+  END IF;
+
+  IF target_user_id IS NOT NULL THEN
+    resolved_user_id := target_user_id;
+  ELSIF target_enrollment_id IS NOT NULL THEN
+    SELECT user_id INTO resolved_user_id FROM "Enrollment" WHERE id = target_enrollment_id;
+  ELSIF target_email IS NOT NULL THEN
+    SELECT id INTO resolved_user_id FROM auth.users WHERE lower(email) = lower(trim(target_email));
+  END IF;
+
+  IF target_enrollment_id IS NOT NULL THEN
+    DELETE FROM "Enrollment" WHERE id = target_enrollment_id;
+  END IF;
+
+  IF resolved_user_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE id = resolved_user_id 
+      AND (raw_app_meta_data->>'role' IN ('SUPER_ADMIN', 'ADMIN'))
+    ) THEN
+      DELETE FROM "Enrollment" WHERE user_id = resolved_user_id;
+      DELETE FROM public."User" WHERE id = resolved_user_id::text;
+      DELETE FROM auth.users WHERE id = resolved_user_id;
+    END IF;
+  ELSIF target_email IS NOT NULL THEN
+    DELETE FROM auth.users 
+    WHERE lower(email) = lower(trim(target_email))
+    AND (raw_app_meta_data->>'role' NOT IN ('SUPER_ADMIN', 'ADMIN') OR raw_app_meta_data->>'role' IS NULL);
+  END IF;
+
+  RETURN true;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_lms_student(uuid, uuid, text) TO authenticated, anon, service_role;
 
 
 -- 8. Create DeviceSession table for student multi-device limits

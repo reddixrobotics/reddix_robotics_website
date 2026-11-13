@@ -43,10 +43,10 @@ export default function AdminInternships() {
         await internshipService.create(formData);
       }
       setIsModalOpen(false);
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch (error: any) {
       console.error('Failed to save internship:', error);
-      alert('Failed to save internship');
+      alert('Failed to save internship: ' + (error?.message || error?.details || 'Please check your inputs and try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -58,10 +58,10 @@ export default function AdminInternships() {
     try {
       await internshipService.delete(deletingItem.id);
       setIsDeleteDialogOpen(false);
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch (error: any) {
       console.error('Failed to delete internship:', error);
-      alert('Failed to delete internship');
+      alert('Failed to delete internship: ' + (error?.message || error?.details || 'Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

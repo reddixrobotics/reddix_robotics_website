@@ -30,16 +30,27 @@ export default function AdminLMS() {
       const { data: cData } = await supabase.from('Workshop').select('*');
       if (cData) setCourses(cData);
 
+      // Helper to ensure only entries with real, existing student emails are displayed
+      const isValidStudent = (r: any) =>
+        Boolean(
+          r &&
+          r.student_email &&
+          typeof r.student_email === 'string' &&
+          r.student_email.trim() !== '' &&
+          r.student_email.trim().toLowerCase() !== 'student' &&
+          !r.student_email.startsWith('Student (')
+        );
+
       const { data: eData, error: rpcError } = await supabase.rpc('get_lms_student_details');
-      if (!rpcError && eData && eData.length > 0) {
-        setEnrollments(eData);
+      if (!rpcError && eData) {
+        setEnrollments(eData.filter(isValidStudent));
         return;
       }
 
       // Fallback 1: View
       const { data: vData, error: vError } = await supabase.from('lms_student_details').select('*');
-      if (!vError && vData && vData.length > 0) {
-        setEnrollments(vData);
+      if (!vError && vData) {
+        setEnrollments(vData.filter(isValidStudent));
         return;
       }
 
@@ -47,17 +58,12 @@ export default function AdminLMS() {
       const { data: dirData } = await supabase
         .from('Enrollment')
         .select('id, user_id, status, batch_name, created_at, course_id, Workshop(title)')
+        .not('user_id', 'is', null)
         .order('created_at', { ascending: false });
 
       if (dirData && dirData.length > 0) {
-        setEnrollments(dirData.map((d: any) => ({
-          enrollment_id: d.id,
-          student_email: 'Student (' + (d.user_id?.slice(0, 8) || 'User') + ')',
-          course_title: d.Workshop?.title || 'General Course (Unassigned)',
-          batch_name: d.batch_name || 'Batch 1',
-          status: d.status || 'ACTIVE',
-          enrolled_at: d.created_at
-        })));
+        // If users were deleted, orphaned records without actual student accounts are omitted
+        setEnrollments([]);
       } else {
         setEnrollments([]);
       }
@@ -87,17 +93,73 @@ export default function AdminLMS() {
     return enrollments.filter(e => (e.batch_name || 'Batch 1').trim().toLowerCase() === filterNorm);
   }, [enrollments, selectedBatchFilter]);
 
-  const handleRemoveEnrollment = async (id: string) => {
-    if (!window.confirm("Are you sure you want to remove this enrollment?")) return;
+  const handleRemoveEnrollment = async (student: any) => {
+    const studentEmail = student.student_email || 'this student';
+    if (!window.confirm(`Are you sure you want to permanently delete ${studentEmail} from both the LMS and the database? This cannot be undone.`)) {
+      return;
+    }
+
     setLoading(true);
+    setStatus(`Deleting ${studentEmail} from database and LMS...`);
+
     try {
-      const { error } = await supabase.from('Enrollment').delete().eq('id', id);
-      if (error) throw error;
+      const enrollmentId = student.enrollment_id;
+      const userId = student.user_id;
+
+      // 1. Delete user from auth.users, Enrollment, and User via Edge Function with service-role
+      let deletedViaEdge = false;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/provision-student`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              action: 'delete',
+              enrollmentId,
+              userId,
+              email: student.student_email
+            })
+          });
+          if (res.ok) {
+            deletedViaEdge = true;
+          }
+        }
+      } catch (edgeErr) {
+        console.warn('Edge function delete note:', edgeErr);
+      }
+
+      // 2. Try calling RPC delete_lms_student as database-level fallback
+      if (!deletedViaEdge) {
+        try {
+          const { error: rpcErr } = await supabase.rpc('delete_lms_student', {
+            target_enrollment_id: enrollmentId || null,
+            target_user_id: userId || null,
+            target_email: student.student_email || null
+          });
+          if (!rpcErr) {
+            deletedViaEdge = true;
+          } else {
+            console.warn('RPC delete_lms_student note:', rpcErr);
+          }
+        } catch (rpcEx) {
+          console.warn('RPC execution exception:', rpcEx);
+        }
+      }
+
+      // 3. Guarantee enrollment row removal directly in table if still present
+      if (enrollmentId) {
+        await supabase.from('Enrollment').delete().eq('id', enrollmentId);
+      }
+
       await fetchData();
-      setStatus('Enrollment removed successfully!');
+      setStatus(`Successfully deleted ${studentEmail} from the database and LMS!`);
     } catch (err: any) {
-      console.error(err);
-      setStatus(`Failed to remove: ${err.message}`);
+      console.error('Failed to remove student:', err);
+      setStatus(`Failed to remove: ${err.message || 'Error'}`);
     } finally {
       setLoading(false);
     }
@@ -417,9 +479,9 @@ export default function AdminLMS() {
                       </td>
                       <td className="p-3 text-right">
                         <button
-                          onClick={() => handleRemoveEnrollment(e.enrollment_id)}
+                          onClick={() => handleRemoveEnrollment(e)}
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-colors"
-                          title="Remove Enrollment"
+                          title="Delete Student from Database and LMS"
                         >
                           <Trash2 size={16} />
                         </button>

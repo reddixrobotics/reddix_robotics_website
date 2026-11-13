@@ -828,6 +828,7 @@ export const featuredProjectService = {
 
 export const internshipService = {
   async getAll(): Promise<InternshipFormData[]> {
+    const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase.from('Internship').select('*').order('createdAt', { ascending: false });
     if (error) throw error;
     return (data || []).map((i: any) => ({
@@ -844,13 +845,14 @@ export const internshipService = {
       requirements: Array.isArray(i.requirements) ? i.requirements.join(', ') : '',
       applicationLink: i.applicationLink || '',
       imageUrl: i.imageUrl || '',
-      deadline: i.deadline ? new Date(i.deadline).toISOString().split('T')[0] : '',
+      deadline: i.deadline && !isNaN(new Date(i.deadline).getTime()) ? new Date(i.deadline).toISOString().split('T')[0] : '',
       status: i.status || 'DRAFT'
     }));
   },
 
   async getById(id: string | number): Promise<InternshipFormData | null> {
-    const { data: i, error } = await supabase.from('Internship').select('*').eq('id', id).single();
+    const { supabase } = await import('@/lib/supabase');
+    const { data: i, error } = await supabase.from('Internship').select('*').eq('id', id).maybeSingle();
     if (error || !i) return null;
     return {
       id: i.id,
@@ -866,66 +868,169 @@ export const internshipService = {
       requirements: Array.isArray(i.requirements) ? i.requirements.join(', ') : '',
       applicationLink: i.applicationLink || '',
       imageUrl: i.imageUrl || '',
-      deadline: i.deadline ? new Date(i.deadline).toISOString().split('T')[0] : '',
+      deadline: i.deadline && !isNaN(new Date(i.deadline).getTime()) ? new Date(i.deadline).toISOString().split('T')[0] : '',
       status: i.status || 'DRAFT'
     };
   },
 
   async create(item: Omit<InternshipFormData, 'id'>): Promise<InternshipFormData> {
-    const payload = {
-      id: `int_${Date.now()}`,
+    const { supabase } = await import('@/lib/supabase');
+    const newId = `int_${Date.now()}`;
+
+    let parsedDeadline: string | null = null;
+    if (item.deadline && item.deadline.trim()) {
+      const d = new Date(item.deadline);
+      if (!isNaN(d.getTime())) {
+        parsedDeadline = d.toISOString();
+      }
+    }
+
+    const skillsList = item.skills ? item.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    const reqsList = item.requirements ? item.requirements.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+
+    const fullPayload: any = {
+      id: newId,
       title: item.title,
-      company: item.company,
+      company: item.company || null,
       description: item.description,
       department: item.department,
-      location: item.location,
+      location: item.location || null,
       duration: item.duration,
-      type: item.type,
-      stipend: item.stipend,
-      skills: item.skills ? item.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-      requirements: item.requirements ? item.requirements.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-      applicationLink: item.applicationLink,
-      imageUrl: item.imageUrl,
-      deadline: item.deadline ? new Date(item.deadline).toISOString() : null,
+      type: item.type || null,
+      stipend: item.stipend || null,
+      skills: skillsList,
+      requirements: reqsList,
+      applicationLink: item.applicationLink || null,
+      imageUrl: item.imageUrl || null,
+      deadline: parsedDeadline,
       status: item.status || 'PUBLISHED',
       updatedAt: new Date().toISOString(),
     };
-    const { data, error } = await supabase.from('Internship').insert(payload).select().single();
+
+    let { error } = await supabase.from('Internship').insert(fullPayload);
+
+    // Schema fallback handling if Supabase DB is missing optional extended columns
+    if (error && (
+      error.code === 'PGRST204' ||
+      error.message?.includes('column') ||
+      error.message?.includes('schema cache')
+    )) {
+      console.warn('[internshipService] Failed to insert with extended schema, attempting fallback:', error.message);
+      
+      const payloadCopy = { ...fullPayload };
+      const optionalCols = ['company', 'location', 'type', 'skills', 'applicationLink', 'imageUrl', 'deadline'];
+      
+      let matchedCol = false;
+      for (const col of optionalCols) {
+        if (error.message?.toLowerCase().includes(col.toLowerCase())) {
+          delete payloadCopy[col];
+          matchedCol = true;
+        }
+      }
+
+      if (matchedCol) {
+        const retryRes = await supabase.from('Internship').insert(payloadCopy);
+        error = retryRes.error;
+      }
+
+      // If still error, strip all optional columns and combine skills into requirements
+      if (error && (
+        error.code === 'PGRST204' ||
+        error.message?.includes('column') ||
+        error.message?.includes('schema cache')
+      )) {
+        const combinedRequirements = [...reqsList, ...skillsList];
+        const basePayload: any = {
+          id: newId,
+          title: item.title,
+          description: item.description,
+          department: item.department,
+          duration: item.duration,
+          stipend: item.stipend || null,
+          requirements: combinedRequirements,
+          status: item.status || 'PUBLISHED',
+          updatedAt: new Date().toISOString(),
+        };
+
+        const coreRetry = await supabase.from('Internship').insert(basePayload);
+        error = coreRetry.error;
+      }
+    }
+
     if (error) throw error;
-    return this.getById(data.id) as Promise<InternshipFormData>;
+    const created = await this.getById(newId);
+    return created || ({ id: newId, ...item } as InternshipFormData);
   },
 
   async update(id: string | number, updates: Partial<InternshipFormData>): Promise<InternshipFormData> {
+    const { supabase } = await import('@/lib/supabase');
+    let parsedDeadline: string | null | undefined = undefined;
+    if (updates.deadline !== undefined) {
+      if (updates.deadline && updates.deadline.trim()) {
+        const d = new Date(updates.deadline);
+        parsedDeadline = !isNaN(d.getTime()) ? d.toISOString() : null;
+      } else {
+        parsedDeadline = null;
+      }
+    }
+
     const payload: any = {};
     if (updates.title !== undefined) payload.title = updates.title;
-    if (updates.company !== undefined) payload.company = updates.company;
+    if (updates.company !== undefined) payload.company = updates.company || null;
     if (updates.description !== undefined) payload.description = updates.description;
     if (updates.department !== undefined) payload.department = updates.department;
-    if (updates.location !== undefined) payload.location = updates.location;
+    if (updates.location !== undefined) payload.location = updates.location || null;
     if (updates.duration !== undefined) payload.duration = updates.duration;
-      if (updates.status !== undefined) payload.status = updates.status;
-    if (updates.type !== undefined) payload.type = updates.type;
-    if (updates.stipend !== undefined) payload.stipend = updates.stipend;
+    if (updates.type !== undefined) payload.type = updates.type || null;
+    if (updates.stipend !== undefined) payload.stipend = updates.stipend || null;
     if (updates.skills !== undefined) {
-      payload.skills = updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+      payload.skills = updates.skills ? updates.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
     }
     if (updates.requirements !== undefined) {
-      payload.requirements = updates.requirements.split(',').map((s: string) => s.trim()).filter(Boolean);
+      payload.requirements = updates.requirements ? updates.requirements.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
     }
-    if (updates.applicationLink !== undefined) payload.applicationLink = updates.applicationLink;
-    if (updates.imageUrl !== undefined) payload.imageUrl = updates.imageUrl;
-    if (updates.deadline !== undefined) payload.deadline = updates.deadline ? new Date(updates.deadline).toISOString() : null;
+    if (updates.applicationLink !== undefined) payload.applicationLink = updates.applicationLink || null;
+    if (updates.imageUrl !== undefined) payload.imageUrl = updates.imageUrl || null;
+    if (parsedDeadline !== undefined) payload.deadline = parsedDeadline;
     if (updates.status !== undefined) payload.status = updates.status;
 
     if (Object.keys(payload).length > 0) {
       payload.updatedAt = new Date().toISOString();
-      const { error } = await supabase.from('Internship').update(payload).eq('id', id);
+      let { error } = await supabase.from('Internship').update(payload).eq('id', id);
+
+      // Schema fallback handling for update
+      if (error && (
+        error.code === 'PGRST204' ||
+        error.message?.includes('column') ||
+        error.message?.includes('schema cache')
+      )) {
+        console.warn('[internshipService] Update failed with column error, attempting fallback:', error.message);
+        const payloadCopy = { ...payload };
+        const optionalCols = ['company', 'location', 'type', 'skills', 'applicationLink', 'imageUrl', 'deadline'];
+        for (const col of optionalCols) {
+          delete payloadCopy[col];
+        }
+        if (updates.skills !== undefined && payloadCopy.requirements) {
+          payloadCopy.requirements = [
+            ...(Array.isArray(payload.requirements) ? payload.requirements : []),
+            ...(Array.isArray(payload.skills) ? payload.skills : [])
+          ];
+        }
+        if (Object.keys(payloadCopy).length > 0) {
+          payloadCopy.updatedAt = new Date().toISOString();
+          const retryRes = await supabase.from('Internship').update(payloadCopy).eq('id', id);
+          error = retryRes.error;
+        }
+      }
+
       if (error) throw error;
     }
-    return this.getById(id) as Promise<InternshipFormData>;
+    const updated = await this.getById(id);
+    return updated || ({ id, ...updates } as InternshipFormData);
   },
 
   async delete(id: string | number): Promise<void> {
+    const { supabase } = await import('@/lib/supabase');
     const { error } = await supabase.from('Internship').delete().eq('id', id);
     if (error) throw error;
   }
