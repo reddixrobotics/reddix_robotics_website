@@ -276,9 +276,18 @@ export default function AdminCourseBuilder() {
     
     setNewMaterialData(prev => ({ ...prev, isUploading: true }));
     try {
-      const isFile = newMaterialData.type !== 'VIDEO_YOUTUBE';
-      const publicUrl = isFile ? await uploadFile(newMaterialData.file as File) : String(newMaterialData.file).trim();
-      const finalType = (newMaterialData.type === 'VIDEO_YOUTUBE' || newMaterialData.type === 'VIDEO_FILE') ? 'VIDEO' : newMaterialData.type;
+      const isLink = newMaterialData.type === 'VIDEO_YOUTUBE' || newMaterialData.type === 'PRESENTATION_LINK' || newMaterialData.type === 'DOCUMENT_LINK';
+      const publicUrl = isLink ? String(newMaterialData.file).trim() : await uploadFile(newMaterialData.file as File);
+      
+      let finalType = newMaterialData.type;
+      if (newMaterialData.type === 'VIDEO_YOUTUBE' || newMaterialData.type === 'VIDEO_FILE') {
+        finalType = 'VIDEO';
+      } else if (newMaterialData.type === 'PRESENTATION_LINK' || newMaterialData.type === 'DOCUMENT_PPT') {
+        finalType = 'DOCUMENT_PPT';
+      } else if (newMaterialData.type === 'DOCUMENT_LINK' || newMaterialData.type === 'DOCUMENT_PDF') {
+        finalType = 'DOCUMENT_PDF';
+      }
+
       const chosenBatch = newMaterialData.batchName || (activeBatch === 'ALL' ? 'ALL' : activeBatch);
 
       let { error } = await supabase.from('LearningMaterial').insert({
@@ -645,8 +654,10 @@ export default function AdminCourseBuilder() {
                                 >
                                   <option value="VIDEO_YOUTUBE">Video Link (YouTube / Drive / MP4)</option>
                                   <option value="VIDEO_FILE">Upload Video File (.mp4)</option>
-                                  <option value="DOCUMENT_PDF">PDF Document</option>
-                                  <option value="DOCUMENT_PPT">Presentation (PPT)</option>
+                                  <option value="DOCUMENT_PPT">Upload Presentation File (.pptx, .ppt)</option>
+                                  <option value="PRESENTATION_LINK">Presentation Link (Google Slides / Canva / Web)</option>
+                                  <option value="DOCUMENT_PDF">Upload PDF Document (.pdf)</option>
+                                  <option value="DOCUMENT_LINK">Document Link (Google Docs / Web)</option>
                                 </select>
 
                                 <select
@@ -665,7 +676,25 @@ export default function AdminCourseBuilder() {
                                   <input 
                                     required 
                                     type="text" 
-                                    placeholder="Paste YouTube Link..." 
+                                    placeholder="Paste YouTube Link or Drive URL..." 
+                                    value={newMaterialData.file as any || ''} 
+                                    onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} 
+                                    className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none flex-1 min-w-[200px]" 
+                                  />
+                                ) : newMaterialData.type === 'PRESENTATION_LINK' ? (
+                                  <input 
+                                    required 
+                                    type="url" 
+                                    placeholder="Paste Google Slides, Canva, or Presentation URL..." 
+                                    value={newMaterialData.file as any || ''} 
+                                    onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} 
+                                    className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none flex-1 min-w-[200px]" 
+                                  />
+                                ) : newMaterialData.type === 'DOCUMENT_LINK' ? (
+                                  <input 
+                                    required 
+                                    type="url" 
+                                    placeholder="Paste Google Docs, Notion, or Document URL..." 
                                     value={newMaterialData.file as any || ''} 
                                     onChange={e => setNewMaterialData({...newMaterialData, file: e.target.value as any})} 
                                     className="p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-strong)] text-sm outline-none flex-1 min-w-[200px]" 
@@ -674,6 +703,15 @@ export default function AdminCourseBuilder() {
                                   <input 
                                     required 
                                     type="file" 
+                                    accept={
+                                      newMaterialData.type === 'DOCUMENT_PPT' 
+                                        ? '.pptx,.ppt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' 
+                                        : newMaterialData.type === 'DOCUMENT_PDF'
+                                        ? '.pdf,application/pdf'
+                                        : newMaterialData.type === 'VIDEO_FILE'
+                                        ? 'video/mp4,video/*'
+                                        : undefined
+                                    }
                                     onChange={e => setNewMaterialData({...newMaterialData, file: e.target.files?.[0] || null})} 
                                     className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-[var(--color-brand)] file:text-white hover:file:bg-red-700" 
                                   />

@@ -8,47 +8,67 @@ import { InternshipFormData } from '../components/forms/InternshipForm';
 
 // ─── File Upload Service ───────────────────────────────────────────────────────
 
-import { JobFormData } from '../components/forms/JobForm';
-import { InternshipFormData } from '../components/forms/InternshipForm';
-
 export const uploadFile = async (file: File): Promise<string> => {
-  const formData = new FormData();
-  formData.append('file', file);
-
+  if (!file) throw new Error("No file provided");
   const { supabase } = await import('@/lib/supabase');
-  const uploadedFile = formData.get('file') as File;
-  if (!uploadedFile) throw new Error("No file provided");
-  const ext = uploadedFile.name.split('.').pop()?.toLowerCase() || '';
+  const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
 
   // Security Hardening: Whitelist permitted file extensions
   const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'mp4', 'ppt', 'pptx', 'doc', 'docx'];
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
-    throw new Error(`File type .${ext} is not allowed for security reasons.`);
+    throw new Error(`File type .${ext} is not allowed. Permitted extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
   }
 
   // Security Hardening: Maximum file size cap (50 MB)
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
-  if (uploadedFile.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_FILE_SIZE) {
     throw new Error("File exceeds the maximum allowed upload size of 50MB.");
   }
 
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+  // Clean filename: timestamp + sanitized original name
+  const sanitizedName = (file.name || 'doc')
+    .replace(/\.[^/.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .substring(0, 30);
+  const fileName = `${Date.now()}-${sanitizedName || Math.random().toString(36).substring(7)}.${ext}`;
   
-  let mimeType = uploadedFile.type;
+  let mimeType = file.type;
   if (!mimeType || mimeType === 'application/octet-stream') {
     if (ext === 'pdf') mimeType = 'application/pdf';
     else if (ext === 'pptx') mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
     else if (ext === 'ppt') mimeType = 'application/vnd.ms-powerpoint';
     else if (ext === 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    else if (ext === 'doc') mimeType = 'application/msword';
+    else if (ext === 'mp4') mimeType = 'video/mp4';
+    else if (ext === 'png') mimeType = 'image/png';
+    else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+    else if (ext === 'webp') mimeType = 'image/webp';
     else mimeType = 'application/octet-stream';
   }
 
-  const { data, error } = await supabase.storage.from('public-media').upload(fileName, uploadedFile, { upsert: true, contentType: mimeType });
-  if (error) throw error;
+  // 1. Try public-media bucket first
+  let { data, error } = await supabase.storage.from('public-media').upload(fileName, file, { 
+    upsert: true, 
+    contentType: mimeType 
+  });
+
+  // 2. Fallback to application-documents if public-media fails
+  if (error) {
+    console.warn('public-media upload failed, attempting application-documents fallback...', error);
+    const fallbackRes = await supabase.storage.from('application-documents').upload(fileName, file, {
+      upsert: true,
+      contentType: mimeType
+    });
+    if (fallbackRes.error) {
+      throw new Error(`Upload failed: ${error.message || fallbackRes.error.message}`);
+    }
+    const { data: fallbackUrl } = supabase.storage.from('application-documents').getPublicUrl(fallbackRes.data.path);
+    return fallbackUrl.publicUrl;
+  }
   
   const { data: publicUrl } = supabase.storage.from('public-media').getPublicUrl(data.path);
   return publicUrl.publicUrl;
-}
+};
 
 // ─── Dashboard Service ─────────────────────────────────────────────────────────
 

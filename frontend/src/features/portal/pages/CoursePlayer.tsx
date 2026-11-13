@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, Video, FileText, ChevronLeft, ChevronDown, ChevronRight, Lock } from 'lucide-react';
+import { BookOpen, Video, FileText, ChevronLeft, ChevronDown, ChevronRight, Lock, Presentation } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
 import SecureDocumentViewer from '../components/SecureDocumentViewer';
 import DoubtsPanel from '../components/DoubtsPanel';
@@ -387,7 +387,13 @@ export default function CoursePlayer() {
                           : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border-strong)]'
                       }`}
                     >
-                      {mat.material_type === 'VIDEO' ? <Video size={16} /> : <FileText size={16} />}
+                      {mat.material_type === 'VIDEO' ? (
+                        <Video size={16} />
+                      ) : mat.material_type === 'DOCUMENT_PPT' ? (
+                        <Presentation size={16} />
+                      ) : (
+                        <FileText size={16} />
+                      )}
                       {mat.title}
                     </button>
                   ))}
