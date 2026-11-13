@@ -165,28 +165,22 @@ export default function CoursePlayer() {
     setLoading(false);
   }
 
-  // Filter modules according to the active batch
+  // Filter modules according to the active batch.
+  // Modules represent the SHARED course structure — all enrolled students see the same modules/lessons.
+  // Batch isolation is enforced ONLY at the material level (recordings, PDFs, PPTs) in handleLessonSelect.
   const applyModuleFilter = (allMods: any[], targetBatch: string, initialLoad: boolean = false) => {
-    const studentBatchNorm = targetBatch.trim().toLowerCase();
-
-    // Check if there are modules specifically created/tagged for this student's batch
-    const hasBatchSpecificModules = allMods.some((m: any) => {
-      const b = (m.batch_name || '').trim().toLowerCase();
-      return b === studentBatchNorm;
-    });
-
+    // Show ALL modules regardless of batch_name tag.
+    // A module tagged 'Batch 1' still represents a lesson slot that every batch attends.
+    // What differs between batches is which RECORDINGS/MATERIALS are inside that lesson.
     const filteredModules = allMods.filter((m: any) => {
       const mBatch = (m.batch_name || '').trim().toLowerCase();
-      if (mBatch === studentBatchNorm || mBatch === 'all' || mBatch === 'common') {
-        return true;
-      }
-      if (mBatch && mBatch !== 'batch 1' && mBatch !== studentBatchNorm) {
-        return false;
-      }
-      if (!hasBatchSpecificModules && (!mBatch || mBatch === 'batch 1')) {
-        return true;
-      }
-      return false;
+      // Hide modules explicitly tagged for a DIFFERENT batch only (strict exclusion).
+      // 'all', 'common', empty/null, and the student's own batch → always visible.
+      if (!mBatch || mBatch === 'all' || mBatch === 'common') return true;
+      // If tagged for a specific batch, only hide it when it belongs to a DIFFERENT named batch.
+      // This keeps per-batch-override modules visible to their batch while hiding them from others.
+      const studentBatchNorm = targetBatch.trim().toLowerCase();
+      return mBatch === studentBatchNorm;
     });
 
     const sortedModules = filteredModules.map((m: any) => ({
