@@ -168,42 +168,75 @@ export default function CoursePlayer() {
     setLoading(false);
   }
 
+  // Helper: check if a learning material is accessible to the student's batch
+  const isMaterialAccessible = (mat: any, targetBatch: string) => {
+    const studentBatchNorm = (targetBatch || 'Batch 1').trim().toLowerCase();
+    const isBatch1 = studentBatchNorm === 'batch 1';
+    const matBatch = (mat.batch_name || '').trim().toLowerCase();
+
+    // 1. Shared / Common across all cohorts
+    if (matBatch === 'all' || matBatch === 'common') return true;
+
+    // 2. Batch 1 cohort (includes legacy untagged materials)
+    if (isBatch1) {
+      return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
+    }
+
+    // 3. Batch 2 or higher cohorts (strictly matches assigned batch)
+    return matBatch === studentBatchNorm;
+  };
+
   // Filter modules according to the active batch.
-  // Modules represent the SHARED course structure — all enrolled students see the same modules/lessons.
-  // Batch isolation is enforced ONLY at the material level (recordings, PDFs, PPTs) in handleLessonSelect.
+  // STRICT DISPLAY RULE: ONLY show modules and lessons that actually have CREATED content for this batch.
+  // Empty modules or lessons with no materials for this batch are completely omitted.
   const applyModuleFilter = (allMods: any[], targetBatch: string, initialLoad: boolean = false) => {
-    // Show ALL modules regardless of batch_name tag.
-    // A module tagged 'Batch 1' still represents a lesson slot that every batch attends.
-    // What differs between batches is which RECORDINGS/MATERIALS are inside that lesson.
-    const filteredModules = allMods.filter((m: any) => {
-      const mBatch = (m.batch_name || '').trim().toLowerCase();
-      // Hide modules explicitly tagged for a DIFFERENT batch only (strict exclusion).
-      // 'all', 'common', empty/null, and the student's own batch → always visible.
-      if (!mBatch || mBatch === 'all' || mBatch === 'common') return true;
-      // If tagged for a specific batch, only hide it when it belongs to a DIFFERENT named batch.
-      // This keeps per-batch-override modules visible to their batch while hiding them from others.
-      const studentBatchNorm = targetBatch.trim().toLowerCase();
-      return mBatch === studentBatchNorm;
-    });
+    const studentBatchNorm = targetBatch.trim().toLowerCase();
 
-    const sortedModules = filteredModules.map((m: any) => ({
-      ...m,
-      Lesson: (m.Lesson || []).sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
-    }));
+    const filteredModules = allMods
+      .filter((m: any) => {
+        const mBatch = (m.batch_name || '').trim().toLowerCase();
+        // If module is tagged for a specific DIFFERENT batch, hide it
+        if (mBatch && mBatch !== 'all' && mBatch !== 'common' && mBatch !== studentBatchNorm) {
+          return false;
+        }
+        return true;
+      })
+      .map((m: any) => {
+        // Filter lessons to ONLY those that contain at least one created material for this batch
+        const validLessons = (m.Lesson || [])
+          .map((lesson: any) => {
+            const accessibleMats = (lesson.LearningMaterial || []).filter((mat: any) =>
+              isMaterialAccessible(mat, targetBatch)
+            );
+            return {
+              ...lesson,
+              LearningMaterial: accessibleMats
+            };
+          })
+          .filter((lesson: any) => lesson.LearningMaterial.length > 0)
+          .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
-    setModules(sortedModules);
+        return {
+          ...m,
+          Lesson: validLessons
+        };
+      })
+      // Only keep modules that have at least one lesson with created materials
+      .filter((m: any) => m.Lesson && m.Lesson.length > 0);
 
-    if (sortedModules.length > 0) {
-      setExpandedModules(new Set([sortedModules[0].id]));
+    setModules(filteredModules);
+
+    if (filteredModules.length > 0) {
+      setExpandedModules(new Set([filteredModules[0].id]));
       let targetLesson: any = null;
       if (!initialLoad && activeLesson) {
-        for (const mod of sortedModules) {
+        for (const mod of filteredModules) {
           targetLesson = mod.Lesson?.find((l: any) => l.id === activeLesson.id);
           if (targetLesson) break;
         }
       }
-      if (!targetLesson && sortedModules[0].Lesson && sortedModules[0].Lesson.length > 0) {
-        targetLesson = sortedModules[0].Lesson[0];
+      if (!targetLesson && filteredModules[0].Lesson && filteredModules[0].Lesson.length > 0) {
+        targetLesson = filteredModules[0].Lesson[0];
       }
 
       if (targetLesson) {
@@ -245,29 +278,10 @@ export default function CoursePlayer() {
 
     const rawMaterials = (dbMats && dbMats.length > 0) ? dbMats : (lesson.LearningMaterial || []);
 
-    // Filter materials according to student's active batch:
-    // STRICT BATCH ISOLATION:
-    // - Batch 2 students ONLY see materials tagged for Batch 2 or ALL (Common).
-    //   They MUST NEVER see Batch 1 recordings or Batch 1 PDFs!
-    // - Batch 1 students ONLY see materials tagged for Batch 1 or ALL (Common).
-    //   They MUST NEVER see Batch 2 recordings or Batch 2 PDFs!
-    const accessibleMaterials = rawMaterials.filter((mat: any) => {
-      const matBatch = (mat.batch_name || '').trim().toLowerCase();
-
-      // 1. Common / Shared materials (tagged 'ALL' or 'Common') are visible across all batches
-      if (matBatch === 'all' || matBatch === 'common') {
-        return true;
-      }
-
-      // 2. If viewing Batch 1:
-      if (isBatch1) {
-        return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
-      }
-
-      // 3. If viewing Batch 2 or any other batch cohort:
-      // Strictly match their assigned batch! Batch 1 materials are NEVER shown.
-      return matBatch === activeBatch;
-    });
+    // Filter materials according to student's active batch with strict isolation
+    const accessibleMaterials = rawMaterials.filter((mat: any) =>
+      isMaterialAccessible(mat, activeBatch)
+    );
 
     // Enforce display order: Video -> PPT -> PDF
     const getRank = (mat: any) => {
