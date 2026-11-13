@@ -225,6 +225,12 @@ export default function CoursePlayer() {
     setExpandedModules(newSet);
   };
 
+  const handleBatchChange = (newBatch: string) => {
+    setStudentBatch(newBatch);
+    setSearchParams({ batch: newBatch });
+    applyModuleFilter(rawModules, newBatch, false);
+  };
+
   const handleLessonSelect = async (lesson: any, batchOverride?: string) => {
     setActiveLesson(lesson);
     setActiveMaterial(null);
@@ -233,18 +239,16 @@ export default function CoursePlayer() {
     const activeBatch = (batchOverride || studentBatch).trim().toLowerCase();
     const isBatch1 = activeBatch === 'batch 1';
 
-    // Materials can come directly from the embedded query or fallback query
-    let rawMaterials = lesson.LearningMaterial || [];
-    if (!rawMaterials || rawMaterials.length === 0) {
-      const { data: dbMats } = await supabase
-        .from('LearningMaterial')
-        .select('*')
-        .eq('lesson_id', lesson.id)
-        .order('order_index');
-      if (dbMats) rawMaterials = dbMats;
-    }
+    // Always fetch fresh materials directly from database for this lesson
+    const { data: dbMats } = await supabase
+      .from('LearningMaterial')
+      .select('*')
+      .eq('lesson_id', lesson.id)
+      .order('order_index');
 
-    // Filter materials according to student's batch:
+    const rawMaterials = (dbMats && dbMats.length > 0) ? dbMats : (lesson.LearningMaterial || []);
+
+    // Filter materials according to student's active batch:
     // STRICT BATCH ISOLATION:
     // - Batch 2 students ONLY see materials tagged for Batch 2 or ALL (Common).
     //   They MUST NEVER see Batch 1 recordings or Batch 1 PDFs!
@@ -258,12 +262,12 @@ export default function CoursePlayer() {
         return true;
       }
 
-      // 2. If student is in Batch 1:
+      // 2. If viewing Batch 1:
       if (isBatch1) {
         return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
       }
 
-      // 3. If student is in Batch 2 or any other batch cohort:
+      // 3. If viewing Batch 2 or any other batch cohort:
       // Strictly match their assigned batch! Batch 1 materials are NEVER shown.
       return matBatch === activeBatch;
     });
@@ -282,6 +286,8 @@ export default function CoursePlayer() {
     setMaterials(accessibleMaterials);
     if (accessibleMaterials.length > 0) {
       setActiveMaterial(accessibleMaterials[0]); // Auto-display first material
+    } else {
+      setActiveMaterial(null);
     }
   };
 
@@ -292,13 +298,38 @@ export default function CoursePlayer() {
       
       {/* Sidebar: Modules & Lessons */}
       <div className="w-80 border-r border-[var(--border-strong)] bg-[var(--surface-secondary)] flex flex-col h-full overflow-hidden">
-        <div className="p-6 border-b border-[var(--border-strong)]">
-          <Link to="/portal" className="text-sm font-bold text-[var(--color-brand)] flex items-center gap-2 hover:underline mb-4">
-            <ChevronLeft size={16} /> Back to Dashboard
+        <div className="p-5 border-b border-[var(--border-strong)]">
+          <Link to="/portal" className="text-xs font-bold text-[var(--color-brand)] flex items-center gap-1.5 hover:underline mb-3">
+            <ChevronLeft size={14} /> Back to Dashboard
           </Link>
-          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">
+          <h2 className="font-black text-lg text-[var(--text-primary)] leading-tight mb-3">
             {course?.title || 'Robotics & ROS 2 Curriculum'}
           </h2>
+
+          {/* Batch Selector: Click Batch 1 or Batch 2 to view that batch's content */}
+          <div>
+            <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+              Active Cohort:
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {['Batch 1', 'Batch 2'].map(b => {
+                const isSelected = studentBatch.trim().toLowerCase() === b.trim().toLowerCase();
+                return (
+                  <button
+                    key={b}
+                    onClick={() => handleBatchChange(b)}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all text-center border ${
+                      isSelected
+                        ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm'
+                        : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-strong)] hover:border-[var(--color-brand)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    📁 {b}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
@@ -328,7 +359,7 @@ export default function CoursePlayer() {
                     {mod.Lesson?.map((lesson: any) => (
                       <button
                         key={lesson.id}
-                        onClick={() => handleLessonSelect(lesson)}
+                        onClick={() => handleLessonSelect(lesson, studentBatch)}
                         className={`w-full text-left p-3 pl-8 flex items-center gap-3 transition-colors ${
                           activeLesson?.id === lesson.id 
                             ? 'bg-[var(--color-brand)]/10 border-l-4 border-[var(--color-brand)]' 
@@ -390,9 +421,9 @@ export default function CoursePlayer() {
             ) : (
               <div className="p-12 text-center border border-dashed border-[var(--border-strong)] rounded-2xl bg-[var(--surface-secondary)] text-[var(--text-muted)] flex flex-col items-center">
                 <Lock size={48} className="mb-4 text-[var(--border-strong)]" />
-                <p className="font-bold text-lg text-[var(--text-primary)]">No content released yet for this lesson</p>
+                <p className="font-bold text-lg text-[var(--text-primary)]">No content released yet for {studentBatch}</p>
                 <p className="text-sm mt-1 max-w-md text-[var(--text-secondary)]">
-                  Recordings and class notes will appear here once published by your instructor.
+                  Recordings and class notes for {studentBatch} will appear here once published by your instructor.
                 </p>
               </div>
             )}
