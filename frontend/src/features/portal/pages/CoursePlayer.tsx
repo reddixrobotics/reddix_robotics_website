@@ -48,60 +48,63 @@ export default function CoursePlayer() {
   async function fetchCourseData() {
     setLoading(true);
 
-    // 1. Resolve student's batch with multi-source priority
-    const urlBatch = searchParams.get('batch') || (location.state as any)?.batch;
-    let currentBatch = urlBatch ? String(urlBatch).trim() : '';
-
+    // 1. Authoritative resolution of student's batch directly from the database account
     const { data: { user } } = await supabase.auth.getUser();
-    if (user && !currentBatch) {
-      const userEmail = (user.email || '').trim().toLowerCase();
+    let currentBatch = '';
 
-      // Check authoritative lms_student_details view by email
+    if (user) {
+      // Priority A: Direct Enrollment record for this student
       try {
-        const { data: vData } = await supabase
-          .from('lms_student_details')
-          .select('batch_name, course_id')
-          .ilike('student_email', userEmail);
+        const { data: enrs } = await supabase
+          .from('Enrollment')
+          .select('batch_name, course_id, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-        if (vData && vData.length > 0) {
+        if (enrs && enrs.length > 0) {
           const match = activeCourseId 
-            ? vData.find((v: any) => v.course_id === activeCourseId && v.batch_name)
+            ? enrs.find((e: any) => e.course_id === activeCourseId && e.batch_name)
             : null;
-          const chosen = match || vData.find((v: any) => v.batch_name) || vData[0];
+          const chosen = match || enrs.find((e: any) => e.batch_name) || enrs[0];
           if (chosen?.batch_name) currentBatch = chosen.batch_name.trim();
         }
       } catch (err) {
-        console.error('lms_student_details lookup error:', err);
+        console.error('Enrollment query error:', err);
       }
 
-      // Check metadata
+      // Priority B: Authoritative lms_student_details view by email
+      if (!currentBatch && user.email) {
+        try {
+          const { data: vData } = await supabase
+            .from('lms_student_details')
+            .select('batch_name, course_id')
+            .ilike('student_email', user.email.trim());
+
+          if (vData && vData.length > 0) {
+            const match = activeCourseId 
+              ? vData.find((v: any) => v.course_id === activeCourseId && v.batch_name)
+              : null;
+            const chosen = match || vData.find((v: any) => v.batch_name) || vData[0];
+            if (chosen?.batch_name) currentBatch = chosen.batch_name.trim();
+          }
+        } catch (err) {
+          console.error('lms_student_details lookup error:', err);
+        }
+      }
+
+      // Priority C: User metadata
       if (!currentBatch) {
         const metaBatch = user.user_metadata?.batch_name || user.app_metadata?.batch_name;
         if (metaBatch) {
           currentBatch = String(metaBatch).trim();
         }
       }
+    }
 
-      // Check direct Enrollment
-      if (!currentBatch) {
-        try {
-          const { data: enrs } = await supabase
-            .from('Enrollment')
-            .select('batch_name, course_id, created_at')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (enrs && enrs.length > 0) {
-            const match = activeCourseId 
-              ? enrs.find((e: any) => e.course_id === activeCourseId && e.batch_name)
-              : null;
-            const chosen = match || enrs.find((e: any) => e.batch_name) || enrs[0];
-            if (chosen?.batch_name) currentBatch = chosen.batch_name.trim();
-          }
-        } catch {
-          // ignore
-        }
-      }
+    // Priority D: URL parameter or route state fallback (e.g. from dashboard link)
+    if (!currentBatch) {
+      const urlBatch = searchParams.get('batch') || (location.state as any)?.batch;
+      if (urlBatch) currentBatch = String(urlBatch).trim();
     }
 
     if (!currentBatch) {
@@ -225,12 +228,6 @@ export default function CoursePlayer() {
     setExpandedModules(newSet);
   };
 
-  const handleBatchChange = (newBatch: string) => {
-    setStudentBatch(newBatch);
-    setSearchParams({ batch: newBatch });
-    applyModuleFilter(rawModules, newBatch, false);
-  };
-
   const handleLessonSelect = async (lesson: any, batchOverride?: string) => {
     setActiveLesson(lesson);
     setActiveMaterial(null);
@@ -298,38 +295,13 @@ export default function CoursePlayer() {
       
       {/* Sidebar: Modules & Lessons */}
       <div className="w-80 border-r border-[var(--border-strong)] bg-[var(--surface-secondary)] flex flex-col h-full overflow-hidden">
-        <div className="p-5 border-b border-[var(--border-strong)]">
-          <Link to="/portal" className="text-xs font-bold text-[var(--color-brand)] flex items-center gap-1.5 hover:underline mb-3">
-            <ChevronLeft size={14} /> Back to Dashboard
+        <div className="p-6 border-b border-[var(--border-strong)]">
+          <Link to="/portal" className="text-sm font-bold text-[var(--color-brand)] flex items-center gap-2 hover:underline mb-4">
+            <ChevronLeft size={16} /> Back to Dashboard
           </Link>
-          <h2 className="font-black text-lg text-[var(--text-primary)] leading-tight mb-3">
+          <h2 className="font-black text-xl text-[var(--text-primary)] leading-tight">
             {course?.title || 'Robotics & ROS 2 Curriculum'}
           </h2>
-
-          {/* Batch Selector: Click Batch 1 or Batch 2 to view that batch's content */}
-          <div>
-            <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-              Active Cohort:
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {['Batch 1', 'Batch 2'].map(b => {
-                const isSelected = studentBatch.trim().toLowerCase() === b.trim().toLowerCase();
-                return (
-                  <button
-                    key={b}
-                    onClick={() => handleBatchChange(b)}
-                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all text-center border ${
-                      isSelected
-                        ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm'
-                        : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-strong)] hover:border-[var(--color-brand)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    📁 {b}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
@@ -421,9 +393,9 @@ export default function CoursePlayer() {
             ) : (
               <div className="p-12 text-center border border-dashed border-[var(--border-strong)] rounded-2xl bg-[var(--surface-secondary)] text-[var(--text-muted)] flex flex-col items-center">
                 <Lock size={48} className="mb-4 text-[var(--border-strong)]" />
-                <p className="font-bold text-lg text-[var(--text-primary)]">No content released yet for {studentBatch}</p>
+                <p className="font-bold text-lg text-[var(--text-primary)]">No content released yet for this lesson</p>
                 <p className="text-sm mt-1 max-w-md text-[var(--text-secondary)]">
-                  Recordings and class notes for {studentBatch} will appear here once published by your instructor.
+                  Recordings and class notes will appear here once published by your instructor.
                 </p>
               </div>
             )}
