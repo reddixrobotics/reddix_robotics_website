@@ -398,14 +398,28 @@ export default function AdminCourseBuilder() {
                       className="w-full p-4 pr-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:border-[var(--color-brand)] outline-none font-bold appearance-none cursor-pointer"
                     >
                       {availableBatches.map(b => {
-                        const count = modules.filter(m => (m.batch_name || '').trim().toLowerCase() === b.trim().toLowerCase()).length;
+                        const target = b.trim().toLowerCase();
+                        const count = modules.filter(m => {
+                          const mBatch = (m.batch_name || '').trim().toLowerCase();
+                          if (mBatch === target) return true;
+                          if (mBatch && mBatch !== 'all' && mBatch !== 'common' && mBatch !== target) return false;
+                          return (m.Lesson || []).some((l: any) =>
+                            (l.LearningMaterial || []).some((mat: any) => {
+                              const matBatch = (mat.batch_name || '').trim().toLowerCase();
+                              if (target === 'batch 1') {
+                                return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
+                              }
+                              return matBatch === target;
+                            })
+                          );
+                        }).length;
                         return (
                           <option key={b} value={b}>
                             📁 {b} — ({count} {count === 1 ? 'module' : 'modules'})
                           </option>
                         );
                       })}
-                      <option value="ALL">🌐 All Batches (Full Overview)</option>
+                      <option value="ALL">🌐 All Batches (Full Overview — {modules.length} modules)</option>
                     </select>
                     <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
                   </div>
