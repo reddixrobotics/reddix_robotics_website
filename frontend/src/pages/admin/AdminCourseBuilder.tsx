@@ -165,17 +165,36 @@ export default function AdminCourseBuilder() {
     }
   };
 
-  // Filter modules: show batch-specific modules or common curriculum modules (ALL / Common)
-  // If none match specifically, show course modules so lessons can be populated with batch materials
+  // Filter modules: ONLY show modules that were created for this batch or actually contain materials for this batch.
+  // Predefined/empty modules belonging to other batches or with no content are completely omitted.
   const currentBatchModules = useMemo(() => {
     if (activeBatch === 'ALL') return modules;
     const target = activeBatch.trim().toLowerCase();
-    const matching = modules.filter(m => {
-      const b = (m.batch_name || '').trim().toLowerCase();
-      return b === target || b === 'all' || b === 'common';
+
+    return modules.filter(m => {
+      const mBatch = (m.batch_name || '').trim().toLowerCase();
+
+      // 1. If the module is explicitly assigned to this batch, show it
+      if (mBatch === target) return true;
+
+      // 2. If the module is assigned to a DIFFERENT named batch, hide it
+      if (mBatch && mBatch !== 'all' && mBatch !== 'common' && mBatch !== target) {
+        return false;
+      }
+
+      // 3. For shared/universal modules, ONLY show if it actually has content created for this batch
+      const hasBatchMaterial = (m.Lesson || []).some((l: any) =>
+        (l.LearningMaterial || []).some((mat: any) => {
+          const matBatch = (mat.batch_name || '').trim().toLowerCase();
+          if (target === 'batch 1') {
+            return matBatch === 'batch 1' || matBatch === '' || !mat.batch_name;
+          }
+          return matBatch === target;
+        })
+      );
+
+      return hasBatchMaterial;
     });
-    if (matching.length > 0) return matching;
-    return modules;
   }, [modules, activeBatch]);
 
   // Check for legacy unassigned modules
@@ -441,40 +460,6 @@ export default function AdminCourseBuilder() {
 
       {selectedWorkshop && (
         <div className="space-y-6">
-          {/* Migration helper for existing unassigned modules */}
-          {unassignedModules.length > 0 && activeBatch !== 'ALL' && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between text-sm text-amber-300 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Layers size={18} className="text-amber-400" />
-                <span>Found {unassignedModules.length} module(s) created without batch assignment.</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleClaimUnassigned}
-                className="px-4 py-2 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 text-xs"
-              >
-                Assign to {activeBatch}
-              </button>
-            </div>
-          )}
-
-          {/* Quick Action: Share Curriculum Across All Batches */}
-          {hasBatch1OnlyModules && (
-            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-blue-300 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Layers size={18} className="text-blue-400 flex-shrink-0" />
-                <span>Modules are currently marked as Batch 1. Make this curriculum shared across <strong>all cohorts</strong> (Batch 1, 2, 3...) so all students see the course syllabus?</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleMakeCurriculumUniversal}
-                className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 text-xs whitespace-nowrap shadow-sm"
-              >
-                🌐 Make Curriculum Universal
-              </button>
-            </div>
-          )}
-
           {/* Active Batch Banner */}
           <div className="bg-[var(--surface-secondary)] border border-[var(--border-strong)] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-[var(--text-secondary)] shadow-sm">
             <div className="flex items-center gap-2">
@@ -533,7 +518,7 @@ export default function AdminCourseBuilder() {
                       <h2 className="font-bold text-lg text-[var(--text-primary)]">Module {i + 1}: {mod.title}</h2>
                       <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-[var(--bg-primary)] border border-cyan-500/30 text-cyan-400 inline-flex items-center gap-1">
                         <Layers size={10} />
-                        {mod.batch_name === 'ALL' || !mod.batch_name ? '🌐 Universal Curriculum' : `📁 ${mod.batch_name}`}
+                        📁 {mod.batch_name || activeBatch}
                       </span>
                     </div>
                   )}
