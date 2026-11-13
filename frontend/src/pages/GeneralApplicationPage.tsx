@@ -28,40 +28,94 @@ export default function GeneralApplicationPage() {
     
     setIsSubmitting(true);
     try {
-      // 1. Upload Resume
       const { supabase } = await import('@/lib/supabase');
-        const fileExt = resumeFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        const { error } = await supabase.storage.from('application-documents').upload(fileName, resumeFile);
-        if (error) throw new Error('Upload failed: ' + error.message);
-        const { data: publicUrlData } = supabase.storage.from('application-documents').getPublicUrl(fileName);
-        const resumeUrl = publicUrlData.publicUrl;
+      const fileExt = resumeFile.name.split('.').pop()?.toLowerCase() || 'pdf';
+      const fileName = `resumes/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      
+      let resumeUrl = '';
+      
+      // 1. Upload Resume: Try public-media first, then application-documents
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from('public-media')
+        .upload(fileName, resumeFile, { upsert: true });
 
-      // 2. Submit Application
-      const appData = {
+      if (!uploadErr && uploadData) {
+        const { data: pData } = supabase.storage.from('public-media').getPublicUrl(fileName);
+        resumeUrl = pData.publicUrl;
+      } else {
+        const { error: appDocErr } = await supabase.storage
+          .from('application-documents')
+          .upload(fileName, resumeFile, { upsert: true });
+        
+        if (!appDocErr) {
+          const { data: pData } = supabase.storage.from('application-documents').getPublicUrl(fileName);
+          resumeUrl = pData.publicUrl;
+        } else {
+          console.warn('Storage upload error:', uploadErr?.message, appDocErr?.message);
+          throw new Error('Resume upload failed: ' + (uploadErr?.message || appDocErr?.message || 'Storage permission denied'));
+        }
+      }
+
+      // 2. Submit Application with auto-generated ID, timestamps, and schema fallbacks
+      const now = new Date().toISOString();
+      const applicationId = `app_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const combinedCoverLetter = formData.message 
+        ? `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}\n\n${formData.message}` 
+        : `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}`;
+
+      const primaryPayload: any = {
+        id: applicationId,
         type: 'GENERAL',
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
         resumeUrl,
-        coverLetter: formData.message ? `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}\n\n${formData.message}` : `Area of Interest: ${formData.areaOfInterest}\nLinkedIn: ${formData.linkedinUrl}`,
+        coverLetter: combinedCoverLetter,
+        status: 'RECEIVED',
+        createdAt: now,
+        updatedAt: now
       };
-      const { error: dbError } = await supabase.from('Application').insert(appData);
+
+      let { error: dbError } = await supabase.from('Application').insert(primaryPayload);
+
+      // Schema fallback: if camelCase columns don't exist, retry with snake_case
+      if (dbError && (dbError.message?.includes('column') || dbError.code === 'PGRST204' || dbError.message?.includes('schema cache'))) {
+        console.warn('Retrying general application insert with snake_case schema:', dbError.message);
+        const snakePayload: any = {
+          id: applicationId,
+          type: 'GENERAL',
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          resume_url: resumeUrl,
+          cover_letter: combinedCoverLetter,
+          status: 'RECEIVED',
+          created_at: now,
+          updated_at: now
+        };
+        const retryRes = await supabase.from('Application').insert(snakePayload);
+        dbError = retryRes.error;
+      }
+
       if (dbError) throw dbError;
       
-      await supabase.functions.invoke('send-email', {
-        body: {
-          to: appData.email,
-          subject: 'Application Received: Reddix Robotics',
-          text: 'Hello ' + appData.name + ',\n\nWe have successfully received your application.\n\nBest,\nReddix Robotics Team'
-        }
-      });
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: formData.email.trim(),
+            subject: 'Application Received: Reddix Robotics',
+            text: 'Hello ' + formData.name.trim() + ',\n\nWe have successfully received your application.\n\nBest,\nReddix Robotics Team'
+          }
+        });
+      } catch {
+        // non-blocking email notification
+      }
 
       setHasApplied(true);
       setShowModal(true);
     } catch (error: any) {
       console.error('Submission failed', error);
-      alert(error.response?.data?.message || 'Failed to submit application. Please try again.');
+      alert('Failed to submit application: ' + (error?.message || error?.details || 'Please check your inputs and try again.'));
     } finally {
       setIsSubmitting(false);
     }
